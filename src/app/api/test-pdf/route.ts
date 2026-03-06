@@ -1,6 +1,7 @@
-import { Document, Page, Text, renderToBuffer } from "@react-pdf/renderer";
-import { NextResponse } from "next/server";
 import React from "react";
+import { NextResponse } from "next/server";
+
+import { Document, Page, renderToBuffer,Text } from "@react-pdf/renderer";
 
 export async function GET() {
   const doc = React.createElement(
