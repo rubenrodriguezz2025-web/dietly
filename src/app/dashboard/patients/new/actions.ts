@@ -1,0 +1,91 @@
+'use server';
+
+import { redirect } from 'next/navigation';
+
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import { ActivityLevel } from '@/types/dietly';
+
+const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
+  sedentary: 1.2,
+  lightly_active: 1.375,
+  moderately_active: 1.55,
+  very_active: 1.725,
+  extra_active: 1.9,
+};
+
+function calculateTMB(
+  sex: string,
+  weight_kg: number,
+  height_cm: number,
+  date_of_birth: string
+): number {
+  const age = Math.floor(
+    (Date.now() - new Date(date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+  );
+  // Mifflin-St Jeor
+  const base = 10 * weight_kg + 6.25 * height_cm - 5 * age;
+  return sex === 'male' ? base + 5 : base - 161;
+}
+
+export async function createPatient(
+  _prev: { error?: string },
+  formData: FormData
+): Promise<{ error?: string }> {
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect('/login');
+
+  const name = formData.get('name') as string;
+  const email = (formData.get('email') as string) || null;
+  const date_of_birth = (formData.get('date_of_birth') as string) || null;
+  const sex = (formData.get('sex') as string) || null;
+  const weight_kg = formData.get('weight_kg') ? Number(formData.get('weight_kg')) : null;
+  const height_cm = formData.get('height_cm') ? Number(formData.get('height_cm')) : null;
+  const activity_level = (formData.get('activity_level') as ActivityLevel) || null;
+  const goal = (formData.get('goal') as string) || null;
+  const dietary_restrictions =
+    (formData.getAll('dietary_restrictions') as string[]).join(', ') || null;
+  const allergies = (formData.get('allergies') as string) || null;
+  const intolerances = (formData.get('intolerances') as string) || null;
+  const preferences = (formData.get('preferences') as string) || null;
+  const medical_notes = (formData.get('medical_notes') as string) || null;
+
+  // Calcular TMB y TDEE si hay suficientes datos
+  let tmb: number | null = null;
+  let tdee: number | null = null;
+  if (sex && weight_kg && height_cm && date_of_birth) {
+    tmb = Math.round(calculateTMB(sex, weight_kg, height_cm, date_of_birth));
+    if (activity_level) {
+      tdee = Math.round(tmb * ACTIVITY_FACTORS[activity_level]);
+    }
+  }
+
+  const { data: patient, error } = await (supabase as any).from('patients').insert({
+    nutritionist_id: user.id,
+    name,
+    email,
+    date_of_birth,
+    sex,
+    weight_kg,
+    height_cm,
+    activity_level,
+    goal,
+    dietary_restrictions,
+    allergies,
+    intolerances,
+    preferences,
+    medical_notes,
+    tmb,
+    tdee,
+  }).select('id').single();
+
+  if (error) {
+    return { error: 'Error al guardar el paciente. Inténtalo de nuevo.' };
+  }
+
+  redirect(`/dashboard/patients/${patient.id}`);
+}
