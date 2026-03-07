@@ -63,9 +63,9 @@ export function PricingCard({
           <div className='flex justify-center gap-0.5 text-zinc-400'>
             <span className='font-semibold'>
               {yearPrice && isBillingIntervalYearly
-                ? '$' + yearPrice / 100
+                ? yearPrice / 100 + '€'
                 : monthPrice
-                ? '$' + monthPrice / 100
+                ? monthPrice / 100 + '€'
                 : 'Custom'}
             </span>
             <span>{yearPrice && isBillingIntervalYearly ? '/year' : monthPrice ? '/month' : null}</span>
@@ -91,7 +91,7 @@ export function PricingCard({
                 className='w-full'
                 onClick={() => createCheckoutAction({ price: currentPrice })}
               >
-                Get Started
+                Empezar ahora
               </Button>
             )}
             {!currentPrice && (
