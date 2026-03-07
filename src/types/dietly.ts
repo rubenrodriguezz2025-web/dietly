@@ -14,7 +14,52 @@ export type PatientGoal =
   | 'maintenance'
   | 'muscle_gain'
   | 'health';
-export type PlanStatus = 'draft' | 'approved' | 'sent';
+export type PlanStatus = 'generating' | 'draft' | 'approved' | 'sent' | 'error';
+
+// ── Plan content types ────────────────────────────────────────────────────────
+
+export type Ingredient = {
+  name: string;
+  quantity: number;
+  unit: string;
+};
+
+export type Meal = {
+  meal_type: string;
+  meal_name: string;
+  time_suggestion: string;
+  calories: number;
+  macros: { protein_g: number; carbs_g: number; fat_g: number };
+  ingredients: Ingredient[];
+  preparation: string;
+  notes: string;
+};
+
+export type PlanDay = {
+  day_number: number;
+  day_name: string;
+  total_calories: number;
+  total_macros: { protein_g: number; carbs_g: number; fat_g: number };
+  meals: Meal[];
+};
+
+export type ShoppingList = {
+  produce: string[];
+  protein: string[];
+  dairy: string[];
+  grains: string[];
+  pantry: string[];
+};
+
+export type PlanContent = {
+  week_summary: {
+    target_daily_calories: number;
+    target_macros: { protein_g: number; carbs_g: number; fat_g: number };
+    weekly_averages: { calories: number; protein_g: number; carbs_g: number; fat_g: number };
+  };
+  days: PlanDay[];
+  shopping_list: ShoppingList;
+};
 
 export type Profile = {
   id: string;
@@ -85,9 +130,11 @@ export const GOAL_LABELS: Record<PatientGoal, string> = {
 };
 
 export const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {
+  generating: 'Generando...',
   draft: 'Borrador',
   approved: 'Aprobado',
   sent: 'Enviado',
+  error: 'Error',
 };
 
 export const SEX_LABELS = {

@@ -12,6 +12,8 @@ import {
 } from '@/types/dietly';
 import { Button } from '@/components/ui/button';
 
+import { GenerateButton } from './generate-button';
+
 export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
@@ -60,9 +62,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             {patient.email && <p className='mt-0.5 text-sm text-zinc-500'>{patient.email}</p>}
           </div>
         </div>
-        <Button asChild>
-          <Link href={`/dashboard/patients/${id}/generate`}>+ Generar plan</Link>
-        </Button>
+        <GenerateButton patientId={id} />
       </div>
 
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
@@ -152,9 +152,9 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
           {!plans || plans.length === 0 ? (
             <div className='flex flex-col items-center rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
               <p className='text-sm text-zinc-500'>Sin planes todavía.</p>
-              <Button asChild size='sm' className='mt-4'>
-                <Link href={`/dashboard/patients/${id}/generate`}>Generar primer plan</Link>
-              </Button>
+              <div className='mt-4'>
+                <GenerateButton patientId={id} />
+              </div>
             </div>
           ) : (
             <div className='flex flex-col gap-2'>
