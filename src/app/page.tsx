@@ -4,29 +4,72 @@ import { PricingSection } from '@/features/pricing/components/pricing-section';
 
 import { CookieBanner } from './(marketing)/_components/cookie-banner';
 
-// ── Animaciones CSS (Server Component — sin 'use client') ─────────────────────
+// ── Sistema de diseño ─────────────────────────────────────────────────────────
+//
+//  Fondo base:   #0a0f0a   (negro verdoso)
+//  Superficie:   #0d140d   (fondo elevado)
+//  Borde:        #1a2e1a   (borde sutil)
+//  Acento 1:     #1a7a45   (verde primario)
+//  Acento 2:     #22c55e   (verde brillante / highlight)
+//
+// ── Estilos globales (Server Component — sin 'use client') ────────────────────
 
-const ANIMATIONS = `
+const CSS = `
+  /* — Animaciones — */
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(22px); }
+    from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes glowRing {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,.3); }
-    50%       { box-shadow: 0 0 0 12px rgba(22,163,74,0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,.25); }
+    50%       { box-shadow: 0 0 0 14px rgba(34,197,94,0); }
   }
-  @keyframes blink {
+  @keyframes pulse {
     0%, 100% { opacity: 1; }
-    50%       { opacity: .4; }
+    50%       { opacity: .35; }
   }
   .fade-up  { opacity: 0; animation: fadeUp .65s cubic-bezier(.16,1,.3,1) forwards; }
-  .glow-btn { animation: glowRing 2.5s ease-in-out infinite; }
-  .blink    { animation: blink 2s ease-in-out infinite; }
+  .glow-btn { animation: glowRing 2.6s ease-in-out infinite; }
+  .pulse    { animation: pulse 2s ease-in-out infinite; }
   .d1 { animation-delay: .08s; }
   .d2 { animation-delay: .18s; }
   .d3 { animation-delay: .30s; }
   .d4 { animation-delay: .44s; }
   .d5 { animation-delay: .58s; }
+
+  /* — Unificación sección de precios — */
+  #precios > section {
+    background-color: #0a0f0a !important;
+    border: 1px solid #1a2e1a !important;
+    border-radius: 1rem !important;
+  }
+  #precios .bg-black {
+    background-color: #0d140d !important;
+  }
+  #precios .border-zinc-800 {
+    border-color: #1a2e1a !important;
+  }
+  /* Ocultar imagen de fondo del boilerplate */
+  #precios img.absolute {
+    display: none !important;
+  }
+  /* Hover en tarjetas de funcionalidades */
+  .feature-card:hover {
+    border-color: rgba(26,122,69,.45) !important;
+    background: #0d1f12 !important;
+  }
+
+  /* Sustituir gradiente arcoíris del borde animado por verde */
+  #precios .animate-spin-slow {
+    background-image: linear-gradient(
+      135deg,
+      #051a0c 0%,
+      #1a7a45 35%,
+      #22c55e 50%,
+      #1a7a45 65%,
+      #051a0c 100%
+    ) !important;
+  }
 `;
 
 // ── Página ─────────────────────────────────────────────────────────────────────
@@ -34,8 +77,7 @@ const ANIMATIONS = `
 export default function HomePage() {
   return (
     <>
-      {/* eslint-disable-next-line react/no-danger */}
-      <style dangerouslySetInnerHTML={{ __html: ANIMATIONS }} />
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       <div className='flex flex-col gap-6 lg:gap-8'>
         <HeroSection />
@@ -43,7 +85,9 @@ export default function HomePage() {
         <HowItWorksSection />
         <FeaturesSection />
         <LegalTrustBar />
-        <PricingSection />
+        <div id='precios'>
+          <PricingSection />
+        </div>
         <FinalCTASection />
       </div>
 
@@ -52,21 +96,38 @@ export default function HomePage() {
   );
 }
 
+// ── Primitivos reutilizables ───────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className='mb-2 text-xs font-semibold uppercase tracking-widest text-[#1a7a45]'>
+      {children}
+    </p>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className='font-alt text-2xl font-bold text-zinc-100 lg:text-3xl'>{children}</h2>
+  );
+}
+
 // ── Hero ───────────────────────────────────────────────────────────────────────
 
 function HeroSection() {
   return (
-    <section className='relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950 px-6 py-20 lg:px-20 lg:py-36'>
-      {/* Blob de fondo verde */}
+    <section className='relative overflow-hidden rounded-2xl border border-[#1a2e1a] bg-[#0a0f0a] px-6 py-20 lg:px-20 lg:py-36'>
+      {/* Blob de fondo */}
       <div
         aria-hidden
-        className='pointer-events-none absolute left-1/2 top-0 h-[480px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-950/50 blur-3xl'
+        className='pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl'
+        style={{ background: 'radial-gradient(ellipse, rgba(26,122,69,.18) 0%, transparent 70%)' }}
       />
 
       <div className='relative z-10 mx-auto max-w-3xl text-center'>
         {/* Badge */}
-        <div className='fade-up mb-6 inline-flex items-center gap-2.5 rounded-full border border-green-900 bg-green-950/60 px-4 py-1.5 text-sm font-medium text-green-400'>
-          <span className='blink h-1.5 w-1.5 rounded-full bg-green-400' />
+        <div className='fade-up mb-6 inline-flex items-center gap-2.5 rounded-full border border-[#1a7a45]/35 bg-[#0d1f12] px-4 py-1.5 text-sm font-medium text-[#22c55e]'>
+          <span className='pulse h-1.5 w-1.5 rounded-full bg-[#22c55e]' />
           Para nutricionistas y dietistas en España
         </div>
 
@@ -77,9 +138,9 @@ function HeroSection() {
 
         {/* Subtítulo */}
         <p className='fade-up d2 mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400 lg:text-xl'>
-          Dietly usa IA para generar el borrador. Tú lo revisas con tu criterio
-          profesional, ajustas lo que necesites y lo entregas con tu marca.
-          <span className='block mt-1 text-base text-zinc-500'>
+          Dietly usa IA para generar el borrador. Tú lo revisas con tu criterio profesional,
+          ajustas lo que necesites y lo entregas con tu marca.
+          <span className='mt-1 block text-base text-zinc-500'>
             Sin copiar y pegar. Sin plantillas genéricas. Sin perder horas.
           </span>
         </p>
@@ -88,13 +149,13 @@ function HeroSection() {
         <div className='fade-up d3 mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row'>
           <Link
             href='/signup'
-            className='glow-btn w-full rounded-xl bg-green-600 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-500 sm:w-auto'
+            className='glow-btn w-full rounded-xl bg-[#1a7a45] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#22c55e] hover:text-black sm:w-auto'
           >
             Empieza gratis — 14 días de prueba
           </Link>
           <a
             href='#como-funciona'
-            className='w-full rounded-xl border border-zinc-800 px-7 py-3.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200 sm:w-auto'
+            className='w-full rounded-xl border border-[#1a2e1a] px-7 py-3.5 text-sm font-medium text-zinc-400 transition-colors hover:border-[#1a7a45]/60 hover:text-zinc-200 sm:w-auto'
           >
             Ver cómo funciona →
           </a>
@@ -109,14 +170,14 @@ function HeroSection() {
       </div>
 
       {/* Barra de métricas */}
-      <div className='fade-up d5 relative z-10 mx-auto mt-16 max-w-xl overflow-hidden rounded-2xl border border-zinc-800'>
-        <div className='grid grid-cols-3 divide-x divide-zinc-800'>
+      <div className='fade-up d5 relative z-10 mx-auto mt-16 max-w-xl overflow-hidden rounded-2xl border border-[#1a2e1a]'>
+        <div className='grid grid-cols-3 divide-x divide-[#1a2e1a]'>
           {[
             { num: '2 min', label: 'por plan completo' },
             { num: '7 días', label: 'con macros por comida' },
             { num: '100%', label: 'revisado por ti' },
           ].map((s) => (
-            <div key={s.num} className='bg-zinc-900 px-4 py-5 text-center'>
+            <div key={s.num} className='bg-[#0d140d] px-4 py-5 text-center'>
               <p className='font-alt text-2xl font-bold text-white'>{s.num}</p>
               <p className='mt-0.5 text-xs text-zinc-500'>{s.label}</p>
             </div>
@@ -146,14 +207,10 @@ const PAINS = [
 
 function PainSection() {
   return (
-    <section className='rounded-2xl border border-zinc-800/60 bg-zinc-900/30 px-6 py-14 lg:px-16 lg:py-20'>
+    <section className='rounded-2xl border border-[#1a2e1a] bg-[#0d140d] px-6 py-14 lg:px-16 lg:py-20'>
       <div className='mx-auto max-w-4xl'>
-        <p className='mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-600'>
-          El problema
-        </p>
-        <h2 className='font-alt text-2xl font-bold text-zinc-100 lg:text-3xl'>
-          ¿Sigues tardando más de 1 hora en cada plan?
-        </h2>
+        <SectionLabel>El problema</SectionLabel>
+        <SectionHeading>¿Sigues tardando más de 1 hora en cada plan?</SectionHeading>
         <p className='mt-3 max-w-xl text-sm text-zinc-500'>
           El método manual que usan la mayoría de nutricionistas tiene un coste invisible que
           se acumula semana tras semana.
@@ -163,9 +220,9 @@ function PainSection() {
           {PAINS.map((pain) => (
             <div
               key={pain.title}
-              className='flex gap-4 rounded-xl border border-red-900/40 bg-red-950/20 p-5'
+              className='flex gap-4 rounded-xl border border-[#1a2e1a] bg-[#0a0f0a] p-5'
             >
-              <span className='mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-red-950 text-xs font-bold text-red-400'>
+              <span className='mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[#111811] text-xs font-bold text-zinc-600'>
                 ✕
               </span>
               <div>
@@ -199,7 +256,7 @@ const STEPS = [
     n: '3',
     tiempo: 'Tu criterio',
     title: 'Revisas, ajustas y entregas',
-    desc: 'Edita cualquier comida con tu criterio clínico. Aprueba el plan y envíalo como PDF con tu logo y colores. Tu paciente lo ve en el móvil como una app — sin descargas, sin login.',
+    desc: 'Edita cualquier comida con tu criterio clínico. Aprueba el plan y envíalo como PDF con tu logo. Tu paciente lo ve en el móvil como una app — sin descargas, sin login.',
   },
 ];
 
@@ -207,24 +264,26 @@ function HowItWorksSection() {
   return (
     <section
       id='como-funciona'
-      className='rounded-2xl border border-zinc-900 bg-zinc-950 px-6 py-14 lg:px-16 lg:py-20'
+      className='rounded-2xl border border-[#1a2e1a] bg-[#0a0f0a] px-6 py-14 lg:px-16 lg:py-20'
     >
       <div className='mx-auto max-w-4xl'>
-        <p className='mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-600'>
-          Cómo funciona
-        </p>
-        <h2 className='font-alt text-2xl font-bold text-zinc-100 lg:text-3xl'>
-          De los datos del paciente al plan entregado en 5 minutos
-        </h2>
+        <SectionLabel>Cómo funciona</SectionLabel>
+        <SectionHeading>De los datos del paciente al plan entregado en 5 minutos</SectionHeading>
 
         <div className='mt-12 grid grid-cols-1 gap-10 lg:grid-cols-3'>
           {STEPS.map((step) => (
             <div key={step.n} className='flex flex-col gap-4'>
               <div className='flex items-center gap-3'>
-                <span className='flex h-9 w-9 items-center justify-center rounded-full border border-green-800 bg-green-950 font-alt text-sm font-bold text-green-400'>
+                <span
+                  className='flex h-9 w-9 items-center justify-center rounded-full font-alt text-sm font-bold text-[#22c55e]'
+                  style={{ border: '1px solid #1a7a45', background: '#0d1f12' }}
+                >
                   {step.n}
                 </span>
-                <span className='rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-xs font-medium text-zinc-500'>
+                <span
+                  className='rounded-full px-2.5 py-0.5 text-xs font-medium text-zinc-500'
+                  style={{ border: '1px solid #1a2e1a', background: '#0d140d' }}
+                >
                   {step.tiempo}
                 </span>
               </div>
@@ -235,7 +294,10 @@ function HowItWorksSection() {
         </div>
 
         {/* Nota profesional */}
-        <div className='mt-10 rounded-xl border border-zinc-800 bg-zinc-900/60 px-5 py-4'>
+        <div
+          className='mt-10 rounded-xl px-5 py-4'
+          style={{ border: '1px solid #1a2e1a', background: '#0d140d' }}
+        >
           <p className='text-xs leading-relaxed text-zinc-500'>
             <span className='font-semibold text-zinc-400'>Nota importante: </span>
             Dietly genera el borrador. El plan solo puede entregarse al paciente una vez que
@@ -253,37 +315,31 @@ function HowItWorksSection() {
 const FEATURES = [
   {
     icon: '⚡',
-    bg: 'bg-amber-950 text-amber-300',
     title: 'Planes en 2 minutos',
     desc: 'Claude AI genera 7 días completos con comidas, ingredientes en gramos, macros por comida y lista de la compra. Sin comidas en blanco, garantizado.',
   },
   {
     icon: '📄',
-    bg: 'bg-blue-950 text-blue-300',
     title: 'PDF con tu marca',
     desc: 'Tu logotipo, colores corporativos y nombre de clínica en cada PDF. Plan Profesional incluye branding 100% personalizado.',
   },
   {
     icon: '📱',
-    bg: 'bg-violet-950 text-violet-300',
     title: 'App del paciente',
     desc: 'El paciente abre un enlace y ve su plan en el móvil como una app. Plan por días, macros visibles, lista de compra. Sin descargas, sin login.',
   },
   {
     icon: '📅',
-    bg: 'bg-sky-950 text-sky-300',
     title: 'Agenda integrada',
     desc: 'Citas presenciales y videollamadas vinculadas a cada paciente. Sin Google Calendar externo, todo en el mismo sitio.',
   },
   {
     icon: '📝',
-    bg: 'bg-teal-950 text-teal-300',
     title: 'Cuestionario intake',
     desc: 'Envía un link al paciente antes de la primera consulta. Rellena sus datos y llega preparado. Tú ahorras tiempo de consulta.',
   },
   {
     icon: '🛡️',
-    bg: 'bg-green-950 text-green-300',
     title: 'Cumplimiento legal',
     desc: 'RGPD, Ley 44/2003 y Ley 41/2002. Dietly actúa como encargado del tratamiento. T&Cs con cobertura completa para tu consulta.',
   },
@@ -291,14 +347,10 @@ const FEATURES = [
 
 function FeaturesSection() {
   return (
-    <section className='px-0 py-2'>
+    <section className='rounded-2xl border border-[#1a2e1a] bg-[#0d140d] px-6 py-14 lg:px-16 lg:py-20'>
       <div className='mx-auto max-w-5xl text-center'>
-        <p className='mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-600'>
-          Funcionalidades
-        </p>
-        <h2 className='font-alt text-2xl font-bold text-zinc-100 lg:text-3xl'>
-          Todo lo que necesitas para tu consulta
-        </h2>
+        <SectionLabel>Funcionalidades</SectionLabel>
+        <SectionHeading>Todo lo que necesitas para tu consulta</SectionHeading>
         <p className='mx-auto mt-3 max-w-lg text-sm text-zinc-500'>
           No es solo generación de planes. Es el flujo de trabajo completo del nutricionista moderno.
         </p>
@@ -307,10 +359,15 @@ function FeaturesSection() {
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className='rounded-xl border border-zinc-800 bg-zinc-950 p-5 transition-colors hover:border-zinc-700 hover:bg-zinc-900'
+              className='feature-card rounded-xl p-5 transition-colors'
+              style={{
+                border: '1px solid #1a2e1a',
+                background: '#0a0f0a',
+              }}
             >
               <span
-                className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${f.bg}`}
+                className='flex h-10 w-10 items-center justify-center rounded-xl text-lg'
+                style={{ background: '#0d1f12' }}
               >
                 {f.icon}
               </span>
@@ -334,7 +391,10 @@ const TRUST = [
 
 function LegalTrustBar() {
   return (
-    <section className='rounded-xl border border-zinc-800/50 bg-zinc-900/30 px-6 py-5'>
+    <section
+      className='rounded-xl px-6 py-5'
+      style={{ border: '1px solid #1a2e1a', background: 'rgba(13,20,13,.6)' }}
+    >
       <div className='flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-10'>
         {TRUST.map((item) => (
           <div key={item.icon} className='flex items-center gap-2'>
@@ -351,17 +411,19 @@ function LegalTrustBar() {
 
 function FinalCTASection() {
   return (
-    <section className='relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950 px-6 py-16 text-center lg:px-16 lg:py-24'>
+    <section
+      className='relative overflow-hidden rounded-2xl px-6 py-16 text-center lg:px-16 lg:py-24'
+      style={{ border: '1px solid #1a2e1a', background: '#0a0f0a' }}
+    >
       {/* Blob */}
       <div
         aria-hidden
-        className='pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-950/35 blur-3xl'
+        className='pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl'
+        style={{ background: 'radial-gradient(ellipse, rgba(26,122,69,.15) 0%, transparent 70%)' }}
       />
 
       <div className='relative z-10 mx-auto max-w-xl'>
-        <p className='mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-600'>
-          ¿Todo claro?
-        </p>
+        <SectionLabel>¿Todo claro?</SectionLabel>
         <h2 className='font-alt text-2xl font-bold text-zinc-100 lg:text-4xl'>
           Empieza a ahorrar horas esta semana
         </h2>
@@ -372,7 +434,7 @@ function FinalCTASection() {
         <div className='mt-8'>
           <Link
             href='/signup'
-            className='glow-btn inline-flex items-center gap-2 rounded-xl bg-green-600 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-green-500'
+            className='glow-btn inline-flex items-center gap-2 rounded-xl bg-[#1a7a45] px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#22c55e] hover:text-black'
           >
             Crear cuenta gratis →
           </Link>
