@@ -3,7 +3,6 @@
 import { useActionState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 import { createAppointment } from './actions';
 
@@ -14,6 +13,13 @@ const selectClass =
 
 const textareaClass =
   'w-full rounded-md border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50 resize-none';
+
+// Slots de 07:00 a 21:00 cada 30 minutos
+const TIME_SLOTS: string[] = [];
+for (let h = 7; h <= 21; h++) {
+  TIME_SLOTS.push(`${String(h).padStart(2, '0')}:00`);
+  if (h < 21) TIME_SLOTS.push(`${String(h).padStart(2, '0')}:30`);
+}
 
 export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
   const [state, action, pending] = useActionState(createAppointment, {});
@@ -50,7 +56,13 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
           <label className='text-sm font-medium text-zinc-300'>
             Fecha <span className='text-red-500'>*</span>
           </label>
-          <Input name='date' type='date' required disabled={pending} />
+          <input
+            name='date'
+            type='date'
+            required
+            disabled={pending}
+            className={selectClass}
+          />
         </div>
 
         {/* Hora */}
@@ -58,7 +70,12 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
           <label className='text-sm font-medium text-zinc-300'>
             Hora <span className='text-red-500'>*</span>
           </label>
-          <Input name='time' type='time' required disabled={pending} />
+          <select name='time' required disabled={pending} defaultValue='' className={selectClass}>
+            <option value='' disabled>Selecciona hora</option>
+            {TIME_SLOTS.map((slot) => (
+              <option key={slot} value={slot}>{slot}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -78,7 +95,7 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
         <p className='rounded-md bg-red-950 px-3 py-2 text-sm text-red-400'>{state.error}</p>
       )}
 
-      {!state?.error && state && Object.keys(state).length === 0 && (
+      {state?.success && (
         <p className='text-sm text-emerald-500'>Cita guardada correctamente.</p>
       )}
 
