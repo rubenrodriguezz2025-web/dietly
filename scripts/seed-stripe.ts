@@ -10,23 +10,10 @@
  *   STRIPE_PRICE_PRO_ID=price_...
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-
+import dotenv from 'dotenv';
 import Stripe from 'stripe';
 
-// Cargar .env.local manualmente si no está cargado
-const envPath = path.join(process.cwd(), '.env.local');
-if (fs.existsSync(envPath)) {
-  const lines = fs.readFileSync(envPath, 'utf-8').split('\n');
-  for (const line of lines) {
-    const match = line.match(/^([^#=]+)=(.*)$/);
-    if (match) {
-      const [, key, val] = match;
-      process.env[key.trim()] = val.trim().replace(/^["']|["']$/g, '');
-    }
-  }
-}
+dotenv.config({ path: '.env.local' });
 
 const secretKey = process.env.STRIPE_SECRET_KEY;
 if (!secretKey) {
