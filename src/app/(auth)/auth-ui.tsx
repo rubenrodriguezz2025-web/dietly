@@ -37,9 +37,12 @@ export function AuthUI({
     const response = await signInWithEmail(email);
 
     if (response?.error) {
+      const msg = (response.error as { message?: string })?.message;
+      console.error('[AuthUI] signInWithEmail error:', response.error);
       toast({
         variant: 'destructive',
-        description: 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
+        title: 'Error al enviar el enlace',
+        description: msg ?? 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
       });
     } else {
       toast({

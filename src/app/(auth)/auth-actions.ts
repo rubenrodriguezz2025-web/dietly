@@ -25,20 +25,31 @@ export async function signInWithOAuth(provider: 'github' | 'google'): Promise<Ac
 }
 
 export async function signInWithEmail(email: string): Promise<ActionResponse> {
+  // ── Debug: verificar que las env vars están cargadas ──────────────────────
+  console.log('[signInWithEmail] NEXT_PUBLIC_SUPABASE_URL defined:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log('[signInWithEmail] NEXT_PUBLIC_SUPABASE_ANON_KEY defined:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+  const redirectTo = getURL('/auth/callback');
+  console.log('[signInWithEmail] emailRedirectTo:', redirectTo);
+  console.log('[signInWithEmail] email:', email);
+
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: getURL('/auth/callback'),
+      emailRedirectTo: redirectTo,
     },
   });
 
   if (error) {
-    console.error(error);
+    console.error('[signInWithEmail] Supabase error status:', error.status);
+    console.error('[signInWithEmail] Supabase error message:', error.message);
+    console.error('[signInWithEmail] Supabase error full:', JSON.stringify(error));
     return { data: null, error: error };
   }
 
+  console.log('[signInWithEmail] OTP enviado correctamente a:', email);
   return { data: null, error: null };
 }
 
