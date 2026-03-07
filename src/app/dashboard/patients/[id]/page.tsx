@@ -34,11 +34,19 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
 
   if (!patient) notFound();
 
-  const { data: plans } = (await (supabase as any)
+  const { data: plans, error: plansError } = (await (supabase as any)
     .from('nutrition_plans')
     .select('id, status, week_start_date, created_at')
     .eq('patient_id', id)
-    .order('created_at', { ascending: false })) as { data: NutritionPlan[] | null };
+    .order('created_at', { ascending: false })) as { data: NutritionPlan[] | null; error: { code: string; message: string; details: string } | null };
+
+  if (plansError) {
+    console.error('[PatientPage] nutrition_plans query error code:', plansError.code);
+    console.error('[PatientPage] nutrition_plans query error message:', plansError.message);
+    console.error('[PatientPage] nutrition_plans query error details:', plansError.details);
+  } else {
+    console.log('[PatientPage] nutrition_plans rows returned:', plans?.length ?? 0);
+  }
 
   // Obtener intake_token y respuesta del cuestionario (admin client para leer el token)
   const { data: patientExtra } = await (supabaseAdminClient as any)

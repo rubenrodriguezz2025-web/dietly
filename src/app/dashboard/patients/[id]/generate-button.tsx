@@ -28,8 +28,16 @@ export function GenerateButton({ patientId }: { patientId: string }) {
       });
 
       if (!res.ok || !res.body) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          const body = await res.clone().json();
+          detail = body.detail ?? body.error ?? detail;
+          console.error('[GenerateButton] HTTP error body:', body);
+        } catch {
+          console.error('[GenerateButton] HTTP error status:', res.status);
+        }
         setState('error');
-        setErrorMsg('Error de conexión. Inténtalo de nuevo.');
+        setErrorMsg(`Error (${detail}). Inténtalo de nuevo.`);
         return;
       }
 
@@ -58,9 +66,10 @@ export function GenerateButton({ patientId }: { patientId: string }) {
           }
         }
       }
-    } catch {
+    } catch (err) {
+      console.error('[GenerateButton] fetch error:', err);
       setState('error');
-      setErrorMsg('Error de conexión. Inténtalo de nuevo.');
+      setErrorMsg('Error de red. Comprueba tu conexión e inténtalo de nuevo.');
     }
   }
 

@@ -246,7 +246,11 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (createError || !planRecord) {
-    return Response.json({ error: 'Error creando el plan' }, { status: 500 });
+    console.error('[plans/generate] createError status:', createError?.code);
+    console.error('[plans/generate] createError message:', createError?.message);
+    console.error('[plans/generate] createError details:', createError?.details);
+    console.error('[plans/generate] createError hint:', createError?.hint);
+    return Response.json({ error: 'Error creando el plan', detail: createError?.message }, { status: 500 });
   }
 
   const planId = planRecord.id as string;
