@@ -24,32 +24,35 @@ export async function signInWithOAuth(provider: 'github' | 'google'): Promise<Ac
   return redirect(data.url);
 }
 
-export async function signInWithEmail(email: string): Promise<ActionResponse> {
-  // ── Debug: verificar que las env vars están cargadas ──────────────────────
-  console.log('[signInWithEmail] NEXT_PUBLIC_SUPABASE_URL defined:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log('[signInWithEmail] NEXT_PUBLIC_SUPABASE_ANON_KEY defined:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-  const redirectTo = getURL('/auth/callback');
-  console.log('[signInWithEmail] emailRedirectTo:', redirectTo);
-  console.log('[signInWithEmail] email:', email);
-
+export async function signInWithEmail(email: string, password: string): Promise<ActionResponse> {
   const supabase = await createSupabaseServerClient();
 
-  const { error } = await supabase.auth.signInWithOtp({
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    console.error('[signInWithEmail] error:', error.message);
+    return { data: null, error: error };
+  }
+
+  redirect('/dashboard');
+}
+
+export async function signUpWithEmail(email: string, password: string): Promise<ActionResponse> {
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase.auth.signUp({
     email,
+    password,
     options: {
-      emailRedirectTo: redirectTo,
+      emailRedirectTo: getURL('/auth/callback'),
     },
   });
 
   if (error) {
-    console.error('[signInWithEmail] Supabase error status:', error.status);
-    console.error('[signInWithEmail] Supabase error message:', error.message);
-    console.error('[signInWithEmail] Supabase error full:', JSON.stringify(error));
+    console.error('[signUpWithEmail] error:', error.message);
     return { data: null, error: error };
   }
 
-  console.log('[signInWithEmail] OTP enviado correctamente a:', email);
   return { data: null, error: null };
 }
 
