@@ -9,6 +9,45 @@ import type { Patient, PlanContent, PlanDay } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
 
+// ── Update day (inline editing) ───────────────────────────────────────────────
+
+export async function updateDay(
+  planId: string,
+  dayNumber: number,
+  updatedDay: PlanDay
+): Promise<{ error?: string }> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const { data: plan } = (await (supabase as any)
+    .from('nutrition_plans')
+    .select('content')
+    .eq('id', planId)
+    .eq('nutritionist_id', user.id)
+    .single()) as { data: { content: PlanContent } | null };
+
+  if (!plan) return { error: 'Plan no encontrado.' };
+
+  const content = plan.content as PlanContent;
+  const updatedDays = content.days.map((d) =>
+    d.day_number === dayNumber ? updatedDay : d
+  );
+
+  const { error } = await (supabase as any)
+    .from('nutrition_plans')
+    .update({ content: { ...content, days: updatedDays } })
+    .eq('id', planId)
+    .eq('nutritionist_id', user.id);
+
+  if (error) return { error: 'Error guardando los cambios. Inténtalo de nuevo.' };
+
+  revalidatePath(`/dashboard/plans/${planId}`);
+  return {};
+}
+
 // ── Approve ───────────────────────────────────────────────────────────────────
 
 export async function approvePlan(

@@ -2,11 +2,10 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import type { Meal, NutritionPlan, PlanContent, PlanDay } from '@/types/dietly';
+import type { NutritionPlan, PlanContent } from '@/types/dietly';
 import { PLAN_STATUS_LABELS } from '@/types/dietly';
 
-import { ApproveButton } from './approve-button';
-import { RegenerateDayButton } from './regenerate-day-button';
+import { PlanEditor } from './plan-editor';
 
 export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -72,33 +71,30 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
 
-        <div className='flex items-center gap-3'>
-          {plan.status === 'approved' && (
-            <a
-              href={`/api/plans/${id}/pdf`}
-              download
-              className='inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700'
+        {plan.status === 'approved' && (
+          <a
+            href={`/api/plans/${id}/pdf`}
+            download
+            className='inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='14'
+              height='14'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
             >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='14'
-                height='14'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              >
-                <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' />
-                <polyline points='7 10 12 15 17 10' />
-                <line x1='12' y1='15' x2='12' y2='3' />
-              </svg>
-              Descargar PDF
-            </a>
-          )}
-          {plan.status === 'draft' && <ApproveButton planId={id} />}
-        </div>
+              <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' />
+              <polyline points='7 10 12 15 17 10' />
+              <line x1='12' y1='15' x2='12' y2='3' />
+            </svg>
+            Descargar PDF
+          </a>
+        )}
       </div>
 
       {/* Generating spinner */}
@@ -166,11 +162,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 
       {/* Days */}
       {!isGenerating && content?.days && content.days.length > 0 ? (
-        <div className='flex flex-col gap-6'>
-          {content.days.map((day) => (
-            <DayCard key={day.day_number} day={day} planId={id} />
-          ))}
-        </div>
+        <PlanEditor days={content.days} planId={id} isDraft={plan.status === 'draft'} />
       ) : (
         !isGenerating && (
           <div className='rounded-xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500'>
@@ -182,141 +174,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
   );
 }
 
-// ── Day card ──────────────────────────────────────────────────────────────────
-
-function DayCard({ day, planId }: { day: PlanDay; planId: string }) {
-  const invalidMealIndexes = day.meals
-    .map((m, i) => (m.calories <= 0 || m.ingredients.length < 2 ? i : -1))
-    .filter((i) => i >= 0);
-
-  const hasInvalidMeals = invalidMealIndexes.length > 0;
-
-  return (
-    <div
-      className={`rounded-xl border bg-zinc-950 ${hasInvalidMeals ? 'border-red-800' : 'border-zinc-800'}`}
-    >
-      {/* Day header */}
-      <div className='flex items-center justify-between border-b border-zinc-800 px-5 py-4'>
-        <div>
-          <h3 className='font-semibold text-zinc-100'>{day.day_name}</h3>
-          <div className='mt-0.5 flex gap-3 text-xs text-zinc-500'>
-            <span>{day.total_calories} kcal</span>
-            <span>·</span>
-            <span>{day.total_macros.protein_g}g P</span>
-            <span>·</span>
-            <span>{day.total_macros.carbs_g}g C</span>
-            <span>·</span>
-            <span>{day.total_macros.fat_g}g G</span>
-          </div>
-        </div>
-        {hasInvalidMeals && (
-          <div className='flex items-center gap-3'>
-            <span className='text-xs text-red-400'>
-              {invalidMealIndexes.length} comida{invalidMealIndexes.length > 1 ? 's' : ''} con error
-            </span>
-            <RegenerateDayButton planId={planId} dayNumber={day.day_number} dayName={day.day_name} />
-          </div>
-        )}
-      </div>
-
-      {/* Meals */}
-      <div className='divide-y divide-zinc-900'>
-        {day.meals.map((meal, i) => (
-          <MealCard key={i} meal={meal} isInvalid={invalidMealIndexes.includes(i)} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Meal card ─────────────────────────────────────────────────────────────────
-
-const MEAL_TYPE_LABELS: Record<string, string> = {
-  desayuno: 'Desayuno',
-  media_manana: 'Media mañana',
-  almuerzo: 'Almuerzo',
-  merienda: 'Merienda',
-  cena: 'Cena',
-};
-
-function MealCard({ meal, isInvalid }: { meal: Meal; isInvalid: boolean }) {
-  return (
-    <div className={`px-5 py-4 ${isInvalid ? 'bg-red-950/20' : ''}`}>
-      {/* Meal header */}
-      <div className='flex flex-wrap items-start justify-between gap-2'>
-        <div>
-          <div className='flex items-center gap-2'>
-            {isInvalid && (
-              <span className='rounded bg-red-900 px-1.5 py-0.5 text-xs font-medium text-red-300'>
-                Error
-              </span>
-            )}
-            <span className='text-xs font-medium uppercase tracking-wider text-zinc-600'>
-              {MEAL_TYPE_LABELS[meal.meal_type] ?? meal.meal_type}
-            </span>
-            {meal.time_suggestion && (
-              <span className='text-xs text-zinc-700'>{meal.time_suggestion}</span>
-            )}
-          </div>
-          <h4 className='mt-1 font-medium text-zinc-100'>{meal.meal_name}</h4>
-        </div>
-
-        {/* Macros — always visible (F-02) */}
-        <div className='flex flex-shrink-0 gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs'>
-          <MacroChip value={meal.calories} unit='kcal' bold />
-          <span className='text-zinc-700'>|</span>
-          <MacroChip value={meal.macros.protein_g} unit='P' />
-          <MacroChip value={meal.macros.carbs_g} unit='C' />
-          <MacroChip value={meal.macros.fat_g} unit='G' />
-        </div>
-      </div>
-
-      {/* Ingredients — always visible (F-03) */}
-      {meal.ingredients.length > 0 && (
-        <ul className='mt-3 flex flex-wrap gap-2'>
-          {meal.ingredients.map((ing, i) => (
-            <li
-              key={i}
-              className='rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-400'
-            >
-              {ing.name}{' '}
-              <span className='text-zinc-600'>
-                {ing.quantity} {ing.unit}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {/* Preparation */}
-      {meal.preparation && (
-        <p className='mt-3 text-sm leading-relaxed text-zinc-500'>{meal.preparation}</p>
-      )}
-
-      {/* Notes */}
-      {meal.notes && <p className='mt-1 text-xs italic text-zinc-600'>{meal.notes}</p>}
-    </div>
-  );
-}
-
 // ── Utility components ────────────────────────────────────────────────────────
-
-function MacroChip({
-  value,
-  unit,
-  bold,
-}: {
-  value: number;
-  unit: string;
-  bold?: boolean;
-}) {
-  return (
-    <span className={bold ? 'font-semibold text-zinc-200' : 'text-zinc-400'}>
-      {value}
-      <span className='ml-0.5 text-zinc-600'>{unit}</span>
-    </span>
-  );
-}
 
 function MacroStat({
   label,
