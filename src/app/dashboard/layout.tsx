@@ -15,6 +15,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
   }
 
   return (
+    <div className='mx-auto w-full max-w-[1400px] px-6 lg:px-10'>
     <div className='flex min-h-[calc(100vh-200px)] gap-8 py-6'>
       <aside className='hidden w-52 flex-shrink-0 lg:block'>
         <nav className='flex flex-col gap-1'>
@@ -24,6 +25,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
         </nav>
       </aside>
       <div className='min-w-0 flex-1'>{children}</div>
+    </div>
     </div>
   );
 }

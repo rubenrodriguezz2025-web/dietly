@@ -15,6 +15,14 @@ import { CookieBanner } from './(marketing)/_components/cookie-banner';
 // ── Estilos globales (Server Component — sin 'use client') ────────────────────
 
 const CSS = `
+  /* — Fondo global de la landing (body) — */
+  body {
+    background-image:
+      radial-gradient(ellipse 90vw 70vh at 50% -5%, rgba(26,122,69,.15) 0%, transparent 68%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
   /* — Animaciones — */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
@@ -40,8 +48,11 @@ const CSS = `
   /* — Unificación sección de precios — */
   #precios > section {
     background-color: #0a0f0a !important;
-    border: 1px solid #1a2e1a !important;
-    border-radius: 1rem !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: 1px solid #1a2e1a !important;
+    border-bottom: 1px solid #1a2e1a !important;
   }
   #precios .bg-black {
     background-color: #0d140d !important;
@@ -79,17 +90,15 @@ export default function HomePage() {
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
-      <div className='flex flex-col gap-6 lg:gap-8'>
-        <HeroSection />
-        <PainSection />
-        <HowItWorksSection />
-        <FeaturesSection />
-        <LegalTrustBar />
-        <div id='precios'>
-          <PricingSection />
-        </div>
-        <FinalCTASection />
+      <HeroSection />
+      <PainSection />
+      <HowItWorksSection />
+      <FeaturesSection />
+      <LegalTrustBar />
+      <div id='precios'>
+        <PricingSection />
       </div>
+      <FinalCTASection />
 
       <CookieBanner />
     </>
@@ -116,15 +125,8 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function HeroSection() {
   return (
-    <section className='relative overflow-hidden rounded-2xl border border-[#1a2e1a] bg-[#0a0f0a] px-6 py-20 lg:px-20 lg:py-36'>
-      {/* Blob de fondo */}
-      <div
-        aria-hidden
-        className='pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl'
-        style={{ background: 'radial-gradient(ellipse, rgba(26,122,69,.18) 0%, transparent 70%)' }}
-      />
-
-      <div className='relative z-10 mx-auto max-w-3xl text-center'>
+    <section className='bg-[#0a0f0a] py-20 lg:py-36'>
+      <div className='relative z-10 mx-auto max-w-3xl px-6 text-center lg:px-10'>
         {/* Badge */}
         <div className='fade-up mb-6 inline-flex items-center gap-2.5 rounded-full border border-[#1a7a45]/35 bg-[#0d1f12] px-4 py-1.5 text-sm font-medium text-[#22c55e]'>
           <span className='pulse h-1.5 w-1.5 rounded-full bg-[#22c55e]' />
@@ -207,8 +209,8 @@ const PAINS = [
 
 function PainSection() {
   return (
-    <section className='rounded-2xl border border-[#1a2e1a] bg-[#0d140d] px-6 py-14 lg:px-16 lg:py-20'>
-      <div className='mx-auto max-w-4xl'>
+    <section className='bg-[#0d140d] py-14 lg:py-20'>
+      <div className='mx-auto max-w-4xl px-6 lg:px-16'>
         <SectionLabel>El problema</SectionLabel>
         <SectionHeading>¿Sigues tardando más de 1 hora en cada plan?</SectionHeading>
         <p className='mt-3 max-w-xl text-sm text-zinc-500'>
@@ -264,9 +266,9 @@ function HowItWorksSection() {
   return (
     <section
       id='como-funciona'
-      className='rounded-2xl border border-[#1a2e1a] bg-[#0a0f0a] px-6 py-14 lg:px-16 lg:py-20'
+      className='bg-[#0a0f0a] py-14 lg:py-20'
     >
-      <div className='mx-auto max-w-4xl'>
+      <div className='mx-auto max-w-4xl px-6 lg:px-16'>
         <SectionLabel>Cómo funciona</SectionLabel>
         <SectionHeading>De los datos del paciente al plan entregado en 5 minutos</SectionHeading>
 
@@ -347,8 +349,8 @@ const FEATURES = [
 
 function FeaturesSection() {
   return (
-    <section className='rounded-2xl border border-[#1a2e1a] bg-[#0d140d] px-6 py-14 lg:px-16 lg:py-20'>
-      <div className='mx-auto max-w-5xl text-center'>
+    <section className='bg-[#0d140d] py-14 lg:py-20'>
+      <div className='mx-auto max-w-5xl px-6 text-center lg:px-16'>
         <SectionLabel>Funcionalidades</SectionLabel>
         <SectionHeading>Todo lo que necesitas para tu consulta</SectionHeading>
         <p className='mx-auto mt-3 max-w-lg text-sm text-zinc-500'>
@@ -392,10 +394,10 @@ const TRUST = [
 function LegalTrustBar() {
   return (
     <section
-      className='rounded-xl px-6 py-5'
-      style={{ border: '1px solid #1a2e1a', background: 'rgba(13,20,13,.6)' }}
+      className='py-5'
+      style={{ background: 'rgba(13,20,13,.6)', borderTop: '1px solid #1a2e1a', borderBottom: '1px solid #1a2e1a' }}
     >
-      <div className='flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-10'>
+      <div className='mx-auto flex max-w-5xl flex-col items-center justify-center gap-4 px-6 sm:flex-row sm:gap-10'>
         {TRUST.map((item) => (
           <div key={item.icon} className='flex items-center gap-2'>
             <span className='text-base'>{item.icon}</span>
@@ -411,18 +413,8 @@ function LegalTrustBar() {
 
 function FinalCTASection() {
   return (
-    <section
-      className='relative overflow-hidden rounded-2xl px-6 py-16 text-center lg:px-16 lg:py-24'
-      style={{ border: '1px solid #1a2e1a', background: '#0a0f0a' }}
-    >
-      {/* Blob */}
-      <div
-        aria-hidden
-        className='pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl'
-        style={{ background: 'radial-gradient(ellipse, rgba(26,122,69,.15) 0%, transparent 70%)' }}
-      />
-
-      <div className='relative z-10 mx-auto max-w-xl'>
+    <section className='bg-[#0a0f0a] py-16 text-center lg:py-24'>
+      <div className='mx-auto max-w-xl px-6'>
         <SectionLabel>¿Todo claro?</SectionLabel>
         <h2 className='font-alt text-2xl font-bold text-zinc-100 lg:text-4xl'>
           Empieza a ahorrar horas esta semana

@@ -36,12 +36,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang='es'>
-      <body className={cn('font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
-        <div className='m-auto flex h-full max-w-[1440px] flex-col px-4'>
+      <body className={cn('bg-[#050a05] font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
+        <div className='flex min-h-screen flex-col'>
           <AppBar />
-          <main className='relative flex-1'>
-            <div className='relative h-full'>{children}</div>
-          </main>
+          <main className='relative flex-1'>{children}</main>
           <Footer />
         </div>
         <Toaster />
@@ -53,7 +51,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
 
 async function AppBar() {
   return (
-    <header className='flex items-center justify-between py-8'>
+    <header className='flex items-center justify-between px-6 py-8 lg:px-10'>
       <Logo />
       <Navigation />
     </header>
@@ -63,7 +61,7 @@ async function AppBar() {
 function Footer() {
   return (
     <footer className='mt-8 flex flex-col gap-8 text-neutral-400 lg:mt-32'>
-      <div className='flex flex-col justify-between gap-8 lg:flex-row'>
+      <div className='flex flex-col justify-between gap-8 px-6 lg:flex-row lg:px-10'>
         <div>
           <Logo />
         </div>
@@ -105,7 +103,7 @@ function Footer() {
           </div>
         </div>
       </div>
-      <div className='border-t border-zinc-800 py-6 text-center'>
+      <div className='border-t border-zinc-800 px-6 py-6 text-center lg:px-10'>
         <span className='text-neutral4 text-xs'>
           Copyright {new Date().getFullYear()} © Dietly ·
           {' '}<a href='/legal/privacidad' className='hover:text-zinc-300 transition-colors'>Privacidad</a>
