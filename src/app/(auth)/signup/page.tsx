@@ -6,9 +6,16 @@ import { signInWithEmail, signInWithOAuth } from '../auth-actions';
 import { AuthUI } from '../auth-ui';
 
 export default async function SignUp() {
-  const session = await getSession();
+  let hasSession = false;
+  try {
+    const session = await getSession();
+    hasSession = !!session;
+  } catch (err) {
+    console.error('[SignUp] Error al obtener la sesión:', err);
+    // Continúa y renderiza el formulario aunque getSession falle
+  }
 
-  if (session) {
+  if (hasSession) {
     redirect('/dashboard');
   }
 
