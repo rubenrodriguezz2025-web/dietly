@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import {
   ACTIVITY_LABELS,
@@ -12,6 +13,7 @@ import {
   SEX_LABELS,
 } from '@/types/dietly';
 
+import { CopyButton } from './copy-button';
 import { GenerateButton } from './generate-button';
 
 export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,6 +39,26 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
     .select('id, status, week_start_date, created_at')
     .eq('patient_id', id)
     .order('created_at', { ascending: false })) as { data: NutritionPlan[] | null };
+
+  // Obtener intake_token y respuesta del cuestionario (admin client para leer el token)
+  const { data: patientExtra } = await (supabaseAdminClient as any)
+    .from('patients')
+    .select('intake_token')
+    .eq('id', id)
+    .single();
+
+  const { data: intakeForm } = await (supabaseAdminClient as any)
+    .from('intake_forms')
+    .select('answers, completed_at')
+    .eq('patient_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const intakeToken: string | null = patientExtra?.intake_token ?? null;
+  const intakeUrl = intakeToken
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/p/intake/${intakeToken}`
+    : null;
 
   const age = patient.date_of_birth
     ? Math.floor(
@@ -165,6 +187,46 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
           )}
         </div>
       </div>
+
+      {/* Cuestionario de intake */}
+      <Section title='Cuestionario de salud (intake)'>
+        {intakeForm ? (
+          <div className='flex flex-col gap-4'>
+            <p className='text-sm text-zinc-400'>
+              Enviado el{' '}
+              {new Date(intakeForm.completed_at).toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </p>
+            <div className='grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3'>
+              {Object.entries(intakeForm.answers as Record<string, string>).map(([key, value]) =>
+                value ? (
+                  <DataField key={key} label={key.replace(/_/g, ' ')} value={String(value)} />
+                ) : null
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className='flex flex-col gap-3'>
+            <p className='text-sm text-zinc-500'>
+              El paciente aún no ha rellenado el cuestionario.
+            </p>
+            {intakeUrl && (
+              <div className='flex flex-col gap-2'>
+                <p className='text-xs text-zinc-600'>Envía este enlace al paciente:</p>
+                <div className='flex items-center gap-2'>
+                  <code className='flex-1 truncate rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300'>
+                    {intakeUrl}
+                  </code>
+                  <CopyButton text={intakeUrl} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Section>
     </div>
   );
 }

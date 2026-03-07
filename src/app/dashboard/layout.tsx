@@ -19,6 +19,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
       <aside className='hidden w-52 flex-shrink-0 lg:block'>
         <nav className='flex flex-col gap-1'>
           <SidebarLink href='/dashboard'>Inicio</SidebarLink>
+          <SidebarLink href='/dashboard/agenda'>Agenda</SidebarLink>
           <SidebarLink href='/dashboard/patients/new'>Nuevo paciente</SidebarLink>
         </nav>
       </aside>
