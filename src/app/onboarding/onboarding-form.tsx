@@ -41,12 +41,13 @@ export function OnboardingForm() {
 
       <div className='flex flex-col gap-2'>
         <label htmlFor='clinic_name' className='text-sm font-medium'>
-          Nombre de la clínica
+          Nombre de la clínica{' '}
+          <span className='font-normal text-zinc-500'>(opcional)</span>
         </label>
         <Input
           id='clinic_name'
           name='clinic_name'
-          placeholder='Ej: Clínica Nutrición Activa'
+          placeholder='Ej: Clínica Nutrición Activa o tu nombre profesional'
           disabled={pending}
         />
       </div>
