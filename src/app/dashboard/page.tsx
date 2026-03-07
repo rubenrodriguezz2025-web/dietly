@@ -2,8 +2,11 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { getSubscription } from '@/features/account/controllers/get-subscription';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { GOAL_LABELS,NutritionPlan, Patient } from '@/types/dietly';
+import { GOAL_LABELS, NutritionPlan, Patient } from '@/types/dietly';
+
+import { BannerUpgrade } from './banner-upgrade';
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -45,8 +48,23 @@ export default async function DashboardPage() {
     .select('id', { count: 'exact', head: true })
     .eq('status', 'draft') as { count: number | null };
 
+  // Estado de suscripción — usado para el banner de upgrade
+  const suscripcion = await getSubscription();
+  const estadoSub = suscripcion?.status ?? 'none';
+
+  // Días restantes de trial (si aplica)
+  let diasRestantesTrial: number | null = null;
+  if (estadoSub === 'trialing' && suscripcion?.trial_end) {
+    const ahora = Date.now();
+    const fin = new Date(suscripcion.trial_end).getTime();
+    diasRestantesTrial = Math.max(0, Math.ceil((fin - ahora) / (1000 * 60 * 60 * 24)));
+  }
+
   return (
     <div className='flex flex-col gap-8'>
+      {/* Banner de upgrade — visible si no hay suscripción activa */}
+      <BannerUpgrade estado={estadoSub} diasRestantesTrialDia={diasRestantesTrial} />
+
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
