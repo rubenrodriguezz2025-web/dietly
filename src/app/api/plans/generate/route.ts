@@ -1,10 +1,10 @@
 import type { NextRequest } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { ActivityLevel, Patient, PatientGoal, PlanContent, PlanDay } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
+import Anthropic from '@anthropic-ai/sdk';
 
 // Vercel: allow up to 5 minutes for 7 sequential Claude calls
 export const maxDuration = 300;

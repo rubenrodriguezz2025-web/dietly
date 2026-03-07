@@ -15,7 +15,7 @@ export function ApproveButton({ planId }: { planId: string }) {
       <Button type='submit' disabled={pending}>
         {pending ? 'Aprobando...' : 'Aprobar plan'}
       </Button>
-      <p className='text-xs text-zinc-600'>El plan pasará a estado "Aprobado"</p>
+      <p className='text-xs text-zinc-600'>El plan pasará a estado &quot;Aprobado&quot;</p>
     </form>
   );
 }

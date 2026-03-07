@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { Patient, NutritionPlan, GOAL_LABELS } from '@/types/dietly';
 import { Button } from '@/components/ui/button';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import { GOAL_LABELS,NutritionPlan, Patient } from '@/types/dietly';
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();

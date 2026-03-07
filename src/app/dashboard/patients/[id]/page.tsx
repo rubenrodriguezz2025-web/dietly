@@ -1,16 +1,16 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
+import { Button } from '@/components/ui/button';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import {
-  Patient,
-  NutritionPlan,
   ACTIVITY_LABELS,
   GOAL_LABELS,
-  SEX_LABELS,
+  NutritionPlan,
+  Patient,
   PLAN_STATUS_LABELS,
+  SEX_LABELS,
 } from '@/types/dietly';
-import { Button } from '@/components/ui/button';
 
 import { GenerateButton } from './generate-button';
 

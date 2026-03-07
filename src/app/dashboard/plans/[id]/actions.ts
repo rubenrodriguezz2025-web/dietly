@@ -2,12 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import Anthropic from '@anthropic-ai/sdk';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Patient, PlanContent, PlanDay } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
+import Anthropic from '@anthropic-ai/sdk';
 
 // ── Approve ───────────────────────────────────────────────────────────────────
 
