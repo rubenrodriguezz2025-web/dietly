@@ -4,8 +4,8 @@ import { useState, useTransition } from 'react';
 
 import type { Ingredient, Meal, PlanDay } from '@/types/dietly';
 
-import { RegenerateDayButton } from './regenerate-day-button';
 import { updateDay } from './actions';
+import { RegenerateDayButton } from './regenerate-day-button';
 
 const MEAL_TYPE_LABELS: Record<string, string> = {
   desayuno: 'Desayuno',
