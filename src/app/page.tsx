@@ -15,14 +15,6 @@ import { CookieBanner } from './(marketing)/_components/cookie-banner';
 // ── Estilos globales (Server Component — sin 'use client') ────────────────────
 
 const CSS = `
-  /* — Fondo global de la landing (body) — */
-  body {
-    background-image:
-      radial-gradient(ellipse 90vw 70vh at 50% -5%, rgba(26,122,69,.15) 0%, transparent 68%);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-  }
-
   /* — Animaciones — */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
@@ -125,8 +117,14 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function HeroSection() {
   return (
-    <section className='bg-[#0a0f0a] py-20 lg:py-36'>
-      <div className='relative z-10 mx-auto max-w-3xl px-6 text-center lg:px-10'>
+    <section className='relative overflow-hidden bg-[#0a0f0a] py-20 lg:py-36'>
+      {/* Blob verde — full-width, solo en el hero */}
+      <div
+        aria-hidden
+        className='pointer-events-none absolute inset-0'
+        style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, rgba(26,122,69,.22) 0%, transparent 70%)' }}
+      />
+      <div className='relative z-10 mx-auto max-w-6xl px-6 text-center'>
         {/* Badge */}
         <div className='fade-up mb-6 inline-flex items-center gap-2.5 rounded-full border border-[#1a7a45]/35 bg-[#0d1f12] px-4 py-1.5 text-sm font-medium text-[#22c55e]'>
           <span className='pulse h-1.5 w-1.5 rounded-full bg-[#22c55e]' />
@@ -210,7 +208,7 @@ const PAINS = [
 function PainSection() {
   return (
     <section className='bg-[#0d140d] py-14 lg:py-20'>
-      <div className='mx-auto max-w-4xl px-6 lg:px-16'>
+      <div className='mx-auto max-w-6xl px-6'>
         <SectionLabel>El problema</SectionLabel>
         <SectionHeading>¿Sigues tardando más de 1 hora en cada plan?</SectionHeading>
         <p className='mt-3 max-w-xl text-sm text-zinc-500'>
@@ -268,7 +266,7 @@ function HowItWorksSection() {
       id='como-funciona'
       className='bg-[#0a0f0a] py-14 lg:py-20'
     >
-      <div className='mx-auto max-w-4xl px-6 lg:px-16'>
+      <div className='mx-auto max-w-6xl px-6'>
         <SectionLabel>Cómo funciona</SectionLabel>
         <SectionHeading>De los datos del paciente al plan entregado en 5 minutos</SectionHeading>
 
@@ -350,7 +348,7 @@ const FEATURES = [
 function FeaturesSection() {
   return (
     <section className='bg-[#0d140d] py-14 lg:py-20'>
-      <div className='mx-auto max-w-5xl px-6 text-center lg:px-16'>
+      <div className='mx-auto max-w-6xl px-6 text-center'>
         <SectionLabel>Funcionalidades</SectionLabel>
         <SectionHeading>Todo lo que necesitas para tu consulta</SectionHeading>
         <p className='mx-auto mt-3 max-w-lg text-sm text-zinc-500'>
@@ -397,7 +395,7 @@ function LegalTrustBar() {
       className='py-5'
       style={{ background: 'rgba(13,20,13,.6)', borderTop: '1px solid #1a2e1a', borderBottom: '1px solid #1a2e1a' }}
     >
-      <div className='mx-auto flex max-w-5xl flex-col items-center justify-center gap-4 px-6 sm:flex-row sm:gap-10'>
+      <div className='mx-auto flex max-w-6xl flex-col items-center justify-center gap-4 px-6 sm:flex-row sm:gap-10'>
         {TRUST.map((item) => (
           <div key={item.icon} className='flex items-center gap-2'>
             <span className='text-base'>{item.icon}</span>
