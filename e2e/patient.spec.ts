@@ -81,7 +81,7 @@ test.describe('Gestión de pacientes', () => {
     await page.goto('/dashboard');
 
     // La lista de pacientes debe contener el nombre
-    await expect(page.getByRole('link', { name: PACIENTE.name })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('link', { name: PACIENTE.name }).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('paciente creado aparece en el selector de la agenda', async ({ page }) => {
@@ -95,7 +95,7 @@ test.describe('Gestión de pacientes', () => {
   test('link del cuestionario intake se puede copiar', async ({ page }) => {
     // Navegar a la ficha del paciente (buscar desde dashboard)
     await page.goto('/dashboard');
-    await page.getByRole('link', { name: PACIENTE.name }).click();
+    await page.getByRole('link', { name: PACIENTE.name }).first().click();
     await expect(page).toHaveURL(/\/dashboard\/patients\//);
 
     // Sección del cuestionario

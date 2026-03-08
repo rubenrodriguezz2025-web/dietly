@@ -17,7 +17,8 @@ import { PACIENTE, login } from './helpers';
 /** Navega a la ficha del paciente E2E y devuelve el ID del plan generado. */
 async function navigateToPatient(page: Page): Promise<void> {
   await page.goto('/dashboard');
-  await page.getByRole('link', { name: PACIENTE.name }).click();
+  // .first() por si hay pacientes duplicados de runs anteriores (e2e-setup limpia, pero por si acaso)
+  await page.getByRole('link', { name: PACIENTE.name }).first().click();
   await expect(page).toHaveURL(/\/dashboard\/patients\/[a-z0-9-]+$/, { timeout: 10_000 });
 }
 

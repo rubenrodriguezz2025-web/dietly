@@ -75,5 +75,9 @@ export async function POST(request: Request) {
     return Response.json({ error: `Profile upsert failed: ${profileError.message}` }, { status: 500 });
   }
 
+  // Limpiar pacientes de test de runs anteriores para evitar acumulación de duplicados
+  // que causan strict mode violations en los selectores de Playwright
+  await supabase.from('patients').delete().eq('nutritionist_id', userId);
+
   return Response.json({ success: true, userId });
 }
