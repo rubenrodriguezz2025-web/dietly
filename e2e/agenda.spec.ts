@@ -115,15 +115,21 @@ test.describe('Agenda de citas', () => {
   });
 
   test('navegar al mes siguiente y al anterior funciona', async ({ page }) => {
-    // Ir al siguiente mes
-    await page.getByRole('link', { name: 'Siguiente →' }).click();
+    // Ir al siguiente mes — esperar a que la URL cambie antes de leerla
+    await Promise.all([
+      page.waitForURL(/\?mes=/),
+      page.getByRole('link', { name: 'Siguiente →' }).click(),
+    ]);
 
     const url = new URL(page.url());
     const mesSig = url.searchParams.get('mes');
     expect(mesSig).toBeTruthy();
 
     // Volver al mes anterior
-    await page.getByRole('link', { name: '← Anterior' }).click();
+    await Promise.all([
+      page.waitForURL(/\?mes=/),
+      page.getByRole('link', { name: '← Anterior' }).click(),
+    ]);
 
     const urlAnt = new URL(page.url());
     const mesAnt = urlAnt.searchParams.get('mes');

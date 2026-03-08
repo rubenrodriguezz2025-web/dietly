@@ -61,17 +61,14 @@ export async function POST(request: Request) {
     userId = created.user.id;
   }
 
-  // Crear perfil si no existe
-  const { data: profile } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
-  if (!profile) {
-    await supabase.from('profiles').insert({
-      id: userId,
-      full_name: 'Nutricionista E2E',
-      specialty: 'general',
-      clinic_name: 'Clínica E2E Test',
-      subscription_tier: 'professional',
-    });
-  }
+  // Crear o actualizar perfil (upsert para manejar filas creadas por triggers con full_name null)
+  await supabase.from('profiles').upsert({
+    id: userId,
+    full_name: 'Nutricionista E2E',
+    specialty: 'general',
+    clinic_name: 'Clínica E2E Test',
+    subscription_tier: 'professional',
+  });
 
   return Response.json({ success: true, userId });
 }

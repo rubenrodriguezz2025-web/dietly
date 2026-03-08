@@ -73,8 +73,8 @@ test.describe('Gestión de pacientes', () => {
     await expect(page.getByText(PACIENTE.preferences)).toBeVisible();
     await expect(page.getByText(PACIENTE.medicalNotes)).toBeVisible();
 
-    // Botón de generar plan presente
-    await expect(page.getByRole('button', { name: '+ Generar plan' })).toBeVisible();
+    // Botón de generar plan presente (puede aparecer en header y en empty-state)
+    await expect(page.getByRole('button', { name: '+ Generar plan' }).first()).toBeVisible();
   });
 
   test('paciente creado aparece en el dashboard', async ({ page }) => {

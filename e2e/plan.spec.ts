@@ -29,8 +29,8 @@ test.describe('Generación y aprobación de plan', () => {
   test('generar plan muestra progreso de 7 días y crea borrador', async ({ page }) => {
     await navigateToPatient(page);
 
-    // Clic en "Generar plan"
-    const generateBtn = page.getByRole('button', { name: '+ Generar plan' });
+    // Clic en "Generar plan" (puede haber 2: header + empty-state)
+    const generateBtn = page.getByRole('button', { name: '+ Generar plan' }).first();
     await expect(generateBtn).toBeVisible();
     await generateBtn.click();
 
