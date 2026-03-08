@@ -2,13 +2,15 @@ import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Cargar variables de entorno de test
-dotenv.config({ path: path.resolve(__dirname, '.env.test') });
+// Cargar .env.local primero (Supabase vars) y .env.test después (sobreescribe TEST_*)
+dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '.env.test'), override: true });
 
 const BASE_URL = process.env.TEST_BASE_URL ?? 'https://dietly.es';
 
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false, // Los tests comparten estado de usuario → secuencial
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

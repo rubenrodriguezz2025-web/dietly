@@ -30,7 +30,7 @@ test.describe('Autenticación', () => {
     await expect(page.getByRole('heading', { name: 'Empieza gratis con Dietly' })).toBeVisible();
 
     await page.getByLabel('Email').fill(NEW_EMAIL);
-    await page.getByLabel('Contraseña').fill(NEW_PASS);
+    await page.getByLabel('Contraseña', { exact: true }).fill(NEW_PASS);
     await page.getByLabel('Confirmar contraseña').fill(NEW_PASS);
     await page.getByRole('button', { name: 'Crear cuenta gratis' }).click();
 
@@ -42,7 +42,7 @@ test.describe('Autenticación', () => {
   test('registro con contraseñas que no coinciden muestra error', async ({ page }) => {
     await page.goto('/signup');
     await page.getByLabel('Email').fill('otro@test.com');
-    await page.getByLabel('Contraseña').fill('Pass1234!');
+    await page.getByLabel('Contraseña', { exact: true }).fill('Pass1234!');
     await page.getByLabel('Confirmar contraseña').fill('Pass9999!');
     await page.getByRole('button', { name: 'Crear cuenta gratis' }).click();
 
@@ -52,7 +52,7 @@ test.describe('Autenticación', () => {
   test('registro con contraseña corta muestra error', async ({ page }) => {
     await page.goto('/signup');
     await page.getByLabel('Email').fill('otro@test.com');
-    await page.getByLabel('Contraseña').fill('corta');
+    await page.getByLabel('Contraseña', { exact: true }).fill('corta');
     await page.getByLabel('Confirmar contraseña').fill('corta');
     await page.getByRole('button', { name: 'Crear cuenta gratis' }).click();
 
