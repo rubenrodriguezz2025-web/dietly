@@ -9,10 +9,8 @@
  * Requiere E2E_SETUP_SECRET en .env.test (o .env.local) y en Vercel.
  */
 import * as dotenv from 'dotenv';
-import * as path from 'path';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env.test'), override: true });
+dotenv.config({ path: '.env.test' });
 
 export default async function globalSetup() {
   const baseUrl = process.env.TEST_BASE_URL ?? 'https://dietly.es';
