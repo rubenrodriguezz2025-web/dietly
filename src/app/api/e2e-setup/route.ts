@@ -62,13 +62,18 @@ export async function POST(request: Request) {
   }
 
   // Crear o actualizar perfil (upsert para manejar filas creadas por triggers con full_name null)
-  await supabase.from('profiles').upsert({
+  // NOTA: subscription_tier no existe en el schema — la columna real es subscription_status
+  const { error: profileError } = await supabase.from('profiles').upsert({
     id: userId,
     full_name: 'Nutricionista E2E',
     specialty: 'general',
     clinic_name: 'Clínica E2E Test',
-    subscription_tier: 'professional',
+    subscription_status: 'active',
   });
+
+  if (profileError) {
+    return Response.json({ error: `Profile upsert failed: ${profileError.message}` }, { status: 500 });
+  }
 
   return Response.json({ success: true, userId });
 }

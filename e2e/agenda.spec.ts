@@ -27,6 +27,12 @@ const FECHA_CITA = nextMonday();
 const HORA_CITA = '10:00';
 /** Mes de FECHA_CITA en formato YYYY-MM (puede ser el mes siguiente si nextMonday cruza mes) */
 const MES_CITA = FECHA_CITA.substring(0, 7);
+/** Mes siguiente a MES_CITA para verificar navegación */
+const [_year, _month] = MES_CITA.split('-').map(Number);
+const MES_SIGUIENTE =
+  _month === 12
+    ? `${_year + 1}-01`
+    : `${_year}-${String(_month + 1).padStart(2, '0')}`;
 
 test.describe('Agenda de citas', () => {
   test.beforeEach(async ({ page }) => {
@@ -115,25 +121,19 @@ test.describe('Agenda de citas', () => {
   });
 
   test('navegar al mes siguiente y al anterior funciona', async ({ page }) => {
-    // Ir al siguiente mes — esperar a que la URL cambie antes de leerla
-    await Promise.all([
-      page.waitForURL(/\?mes=/),
-      page.getByRole('link', { name: 'Siguiente →' }).click(),
-    ]);
+    // Ir al siguiente mes — esperar la URL exacta del mes siguiente
+    await page.getByRole('link', { name: 'Siguiente →' }).click();
+    await page.waitForURL(new RegExp(`mes=${MES_SIGUIENTE}`), { timeout: 10_000 });
 
-    const url = new URL(page.url());
-    const mesSig = url.searchParams.get('mes');
-    expect(mesSig).toBeTruthy();
+    const mesSig = new URL(page.url()).searchParams.get('mes');
+    expect(mesSig).toBe(MES_SIGUIENTE);
 
-    // Volver al mes anterior
-    await Promise.all([
-      page.waitForURL(/\?mes=/),
-      page.getByRole('link', { name: '← Anterior' }).click(),
-    ]);
+    // Volver al mes anterior — el enlace "← Anterior" de la página del mes siguiente apunta a MES_CITA
+    await page.getByRole('link', { name: '← Anterior' }).click();
+    await page.waitForURL(new RegExp(`mes=${MES_CITA}`), { timeout: 10_000 });
 
-    const urlAnt = new URL(page.url());
-    const mesAnt = urlAnt.searchParams.get('mes');
-    expect(mesAnt).toBeTruthy();
+    const mesAnt = new URL(page.url()).searchParams.get('mes');
+    expect(mesAnt).toBe(MES_CITA);
     expect(mesAnt).not.toBe(mesSig);
   });
 
