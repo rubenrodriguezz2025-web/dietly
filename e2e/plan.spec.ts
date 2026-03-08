@@ -106,8 +106,8 @@ test.describe('Generación y aprobación de plan', () => {
     const nombreComida = page.locator('[title="Clic para editar"]').first();
     await nombreComida.click();
 
-    // Debe aparecer un input
-    const inputComida = page.locator('input[class*="border-\\[\\#1a7a45\\]"]').first();
+    // Debe aparecer un input (el EditableField entra en modo edición con autoFocus)
+    const inputComida = page.locator('input[class*="bg-zinc-900"]').first();
     await expect(inputComida).toBeVisible({ timeout: 3_000 });
 
     // Modificar el valor

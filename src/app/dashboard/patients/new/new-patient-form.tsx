@@ -35,11 +35,13 @@ function Field({
 }) {
   return (
     <div className='flex flex-col gap-1.5'>
-      <label className='text-sm font-medium text-zinc-300'>
-        {label}
-        {required && <span className='ml-1 text-red-500'>*</span>}
+      <label className='flex flex-col gap-1.5'>
+        <span className='text-sm font-medium text-zinc-300'>
+          {label}
+          {required && <span className='ml-1 text-red-500'>*</span>}
+        </span>
+        {children}
       </label>
-      {children}
     </div>
   );
 }

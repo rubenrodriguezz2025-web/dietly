@@ -28,7 +28,7 @@ export async function login(page: Page): Promise<void> {
   await page.getByLabel('Email').fill(EMAIL);
   await page.getByLabel('Contraseña').fill(PASSWORD);
   await page.getByRole('button', { name: 'Iniciar sesión' }).click();
-  await page.waitForURL('**/dashboard', { timeout: 15_000 });
+  await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
 }
 
 /**

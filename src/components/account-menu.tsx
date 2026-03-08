@@ -35,7 +35,7 @@ export function AccountMenu({ signOut }: { signOut: () => Promise<ActionResponse
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className='rounded-full'>
+      <DropdownMenuTrigger className='rounded-full' aria-label='Menú de cuenta'>
         <IoPersonCircleOutline size={24} />
       </DropdownMenuTrigger>
       <DropdownMenuContent className='me-4'>

@@ -15,11 +15,8 @@ import { expect, test } from '@playwright/test';
 import { PACIENTE, login } from './helpers';
 
 test.describe('Descarga de PDF', () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page);
-  });
-
   test('descargar PDF de un plan aprobado', async ({ page }) => {
+    await login(page);
     // Navegar al dashboard y buscar un plan aprobado para el paciente E2E
     await page.goto('/dashboard');
 

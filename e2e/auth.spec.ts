@@ -83,7 +83,7 @@ test.describe('Autenticación', () => {
   test('logout redirige a /login', async ({ page }) => {
     await login(page);
     // Abrir menu de cuenta y cerrar sesión
-    await page.getByRole('button', { name: /cuenta|perfil|person/i }).click();
+    await page.getByRole('button', { name: 'Menú de cuenta' }).click();
     await page.getByRole('menuitem', { name: 'Cerrar sesión' }).click();
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
   });

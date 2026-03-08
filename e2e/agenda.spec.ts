@@ -23,21 +23,17 @@ function nextMonday(): string {
   return d.toISOString().split('T')[0];
 }
 
-/** Mes en formato YYYY-MM para la URL */
-function currentMonthParam(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
 const FECHA_CITA = nextMonday();
 const HORA_CITA = '10:00';
+/** Mes de FECHA_CITA en formato YYYY-MM (puede ser el mes siguiente si nextMonday cruza mes) */
+const MES_CITA = FECHA_CITA.substring(0, 7);
 
 test.describe('Agenda de citas', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
-    // Navegar al mes actual explícitamente para que las citas nuevas sean visibles
-    await page.goto(`/dashboard/agenda?mes=${currentMonthParam()}`);
-    await expect(page.getByRole('heading', { name: /agenda|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre/i })).toBeVisible();
+    // Navegar al mes de la cita para que sea visible en el calendario
+    await page.goto(`/dashboard/agenda?mes=${MES_CITA}`);
+    await expect(page.getByRole('heading', { name: /enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre/i })).toBeVisible();
   });
 
   test('crear cita presencial con paciente y verificar en calendario', async ({ page }) => {
