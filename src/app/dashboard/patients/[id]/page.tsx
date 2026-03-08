@@ -16,6 +16,25 @@ import {
 import { CopyButton } from './copy-button';
 import { GenerateButton } from './generate-button';
 
+// Etiquetas legibles para las claves del cuestionario intake
+const INTAKE_LABELS: Record<string, string> = {
+  comidas_al_dia:         'Comidas al día',
+  hora_desayuno:          'Hora desayuno',
+  hora_almuerzo:          'Hora almuerzo',
+  hora_merienda:          'Hora merienda',
+  hora_cena:              'Hora cena',
+  alergias_intolerancias: 'Alergias e intolerancias',
+  alimentos_no_gustados:  'Alimentos que no le gustan',
+  come_fuera:             '¿Come fuera de casa?',
+  frecuencia_fuera:       'Frecuencia comer fuera',
+  cocina_en_casa:         '¿Cocina en casa?',
+  actividad_fisica:       'Actividad física',
+  objetivo_personal:      'Objetivo personal',
+  dieta_especial:         'Dieta especial',
+  condicion_medica:       'Condición médica',
+  observaciones:          'Observaciones',
+};
+
 export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
@@ -41,11 +60,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
     .order('created_at', { ascending: false })) as { data: NutritionPlan[] | null; error: { code: string; message: string; details: string } | null };
 
   if (plansError) {
-    console.error('[PatientPage] nutrition_plans query error code:', plansError.code);
-    console.error('[PatientPage] nutrition_plans query error message:', plansError.message);
-    console.error('[PatientPage] nutrition_plans query error details:', plansError.details);
-  } else {
-    console.log('[PatientPage] nutrition_plans rows returned:', plans?.length ?? 0);
+    console.error('[PatientPage] nutrition_plans error:', plansError.message);
   }
 
   // Obtener intake_token y respuesta del cuestionario (admin client para leer el token)
@@ -211,7 +226,11 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             <div className='grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3'>
               {Object.entries(intakeForm.answers as Record<string, string>).map(([key, value]) =>
                 value ? (
-                  <DataField key={key} label={key.replace(/_/g, ' ')} value={String(value)} />
+                  <DataField
+                    key={key}
+                    label={INTAKE_LABELS[key] ?? key.replace(/_/g, ' ')}
+                    value={String(value)}
+                  />
                 ) : null
               )}
             </div>

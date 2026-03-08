@@ -1,5 +1,4 @@
 import React from 'react';
-import { NextResponse } from 'next/server';
 
 import { NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
@@ -20,7 +19,7 @@ export async function GET(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    return Response.json({ error: 'No autorizado' }, { status: 401 });
   }
 
   // Obtener el plan con datos del paciente
@@ -32,11 +31,11 @@ export async function GET(
     .single();
 
   if (error || !plan) {
-    return NextResponse.json({ error: 'Plan no encontrado' }, { status: 404 });
+    return Response.json({ error: 'Plan no encontrado' }, { status: 404 });
   }
 
   if (plan.status !== 'approved') {
-    return NextResponse.json(
+    return Response.json(
       { error: 'El plan debe estar aprobado antes de generar el PDF' },
       { status: 400 }
     );
@@ -44,7 +43,7 @@ export async function GET(
 
   const content = plan.content as PlanContent | null;
   if (!content?.days?.length) {
-    return NextResponse.json(
+    return Response.json(
       { error: 'El plan no tiene contenido' },
       { status: 400 }
     );
@@ -73,11 +72,12 @@ export async function GET(
       profile,
     });
 
-    const buffer = await renderToBuffer(elemento);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const buffer = await renderToBuffer(elemento as any);
 
     const nombreArchivo = `plan-nutricional-${patient.name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
 
-    return new NextResponse(buffer, {
+    return new Response(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${nombreArchivo}"`,
@@ -86,7 +86,7 @@ export async function GET(
     });
   } catch (err) {
     console.error('Error generando PDF:', err);
-    return NextResponse.json(
+    return Response.json(
       { error: 'Error al generar el PDF. Inténtalo de nuevo.' },
       { status: 500 }
     );

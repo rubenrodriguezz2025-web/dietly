@@ -1,7 +1,6 @@
 import React from "react";
-import { NextResponse } from "next/server";
 
-import { Document, Page, renderToBuffer,Text } from "@react-pdf/renderer";
+import { Document, Page, renderToBuffer, Text } from "@react-pdf/renderer";
 
 export async function GET() {
   const doc = React.createElement(
@@ -14,9 +13,10 @@ export async function GET() {
     )
   );
 
-  const buffer = await renderToBuffer(doc);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const buffer = await renderToBuffer(doc as any);
 
-  return new NextResponse(buffer, {
+  return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": 'inline; filename="test.pdf"',

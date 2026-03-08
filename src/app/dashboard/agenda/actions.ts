@@ -43,10 +43,7 @@ export async function createAppointment(
 
 // ── Cambiar estado de cita ────────────────────────────────────────────────────
 
-export async function updateAppointmentStatus(
-  _prev: { error?: string },
-  formData: FormData
-): Promise<{ error?: string }> {
+export async function updateAppointmentStatus(formData: FormData): Promise<void> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -56,26 +53,20 @@ export async function updateAppointmentStatus(
   const id = formData.get('id') as string;
   const status = formData.get('status') as string;
 
-  if (!id || !status) return { error: 'Datos incompletos.' };
+  if (!id || !status) return;
 
-  const { error } = await (supabase as any)
+  await (supabase as any)
     .from('appointments')
     .update({ status })
     .eq('id', id)
     .eq('nutritionist_id', user.id);
 
-  if (error) return { error: 'Error al actualizar la cita.' };
-
   revalidatePath('/dashboard/agenda');
-  return {};
 }
 
 // ── Eliminar cita ─────────────────────────────────────────────────────────────
 
-export async function deleteAppointment(
-  _prev: { error?: string },
-  formData: FormData
-): Promise<{ error?: string }> {
+export async function deleteAppointment(formData: FormData): Promise<void> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -83,16 +74,13 @@ export async function deleteAppointment(
   if (!user) redirect('/login');
 
   const id = formData.get('id') as string;
-  if (!id) return { error: 'ID de cita no proporcionado.' };
+  if (!id) return;
 
-  const { error } = await (supabase as any)
+  await (supabase as any)
     .from('appointments')
     .delete()
     .eq('id', id)
     .eq('nutritionist_id', user.id);
 
-  if (error) return { error: 'Error al eliminar la cita.' };
-
   revalidatePath('/dashboard/agenda');
-  return {};
 }

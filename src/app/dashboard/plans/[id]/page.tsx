@@ -28,6 +28,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 
   const content = plan.content as PlanContent | null;
   const isGenerating = plan.status === 'generating';
+  const hasError = plan.status === 'error';
 
   return (
     <div className='flex flex-col gap-8'>
@@ -97,11 +98,42 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
         )}
       </div>
 
+      {/* Error state */}
+      {hasError && (
+        <div className='flex flex-col gap-3 rounded-xl border border-red-900 bg-red-950/30 p-6'>
+          <p className='text-sm font-medium text-red-400'>
+            La generación del plan falló en algún punto.
+          </p>
+          {plan.patients && (
+            <Link
+              href={`/dashboard/patients/${plan.patients.id}`}
+              className='w-fit rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-200 transition-colors hover:bg-zinc-700'
+            >
+              ← Volver al paciente y generar de nuevo
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Generating spinner */}
       {isGenerating && (
-        <div className='flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
-          <div className='h-5 w-5 animate-spin rounded-full border-2 border-zinc-500 border-t-zinc-200' />
-          <p className='text-zinc-400'>Generando el plan nutricional... Esto puede tardar 2-3 minutos.</p>
+        <div className='flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
+          <div className='flex items-center gap-3'>
+            <div className='h-5 w-5 animate-spin rounded-full border-2 border-zinc-500 border-t-zinc-200' />
+            <p className='text-zinc-400'>Generando el plan nutricional... Esto puede tardar 2-3 minutos.</p>
+          </div>
+          <p className='text-xs text-zinc-600'>
+            Si llevas más de 5 minutos aquí,{' '}
+            {plan.patients && (
+              <Link
+                href={`/dashboard/patients/${plan.patients.id}`}
+                className='text-zinc-400 underline hover:text-zinc-200'
+              >
+                vuelve a la ficha del paciente
+              </Link>
+            )}{' '}
+            y genera un nuevo plan.
+          </p>
         </div>
       )}
 
