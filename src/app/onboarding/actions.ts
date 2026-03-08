@@ -16,7 +16,7 @@ export async function saveProfile(formData: FormData) {
   }
 
   const full_name = formData.get('full_name') as string;
-  const clinic_name = (formData.get('clinic_name') as string).trim() || full_name;
+  const clinic_name = (formData.get('clinic_name') as string).trim() || null;
   const specialty = formData.get('specialty') as string;
 
   const { error } = await supabase.from('profiles').upsert({

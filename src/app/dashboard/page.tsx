@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { getSubscription } from '@/features/account/controllers/get-subscription';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { GOAL_LABELS, NutritionPlan, Patient } from '@/types/dietly';
+import { GOAL_LABELS, NutritionPlan, Patient, PLAN_STATUS_LABELS } from '@/types/dietly';
 
 import { BannerUpgrade } from './banner-upgrade';
 
@@ -26,13 +26,14 @@ export default async function DashboardPage() {
 
   if (!profile) redirect('/onboarding');
 
-  // Pacientes activos
+  // Pacientes activos del nutricionista autenticado
   const { data: patients } = (await (supabase as any)
     .from('patients')
     .select('id, name, email, goal, created_at')
+    .eq('nutritionist_id', user.id)
     .order('created_at', { ascending: false })) as { data: Patient[] | null };
 
-  // Planes este mes
+  // Planes generados este mes por el nutricionista autenticado
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
@@ -40,13 +41,20 @@ export default async function DashboardPage() {
   const { count: plansThisMonth } = await (supabase as any)
     .from('nutrition_plans')
     .select('id', { count: 'exact', head: true })
+    .eq('nutritionist_id', user.id)
     .gte('created_at', startOfMonth.toISOString()) as { count: number | null };
 
-  // Planes pendientes de revisar
-  const { count: draftPlans } = await (supabase as any)
+  // Borradores pendientes de aprobar del nutricionista autenticado
+  const { data: draftPlans } = (await (supabase as any)
     .from('nutrition_plans')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'draft') as { count: number | null };
+    .select('id, week_start_date, created_at, patients(id, name)')
+    .eq('nutritionist_id', user.id)
+    .eq('status', 'draft')
+    .order('created_at', { ascending: false })) as {
+    data: (NutritionPlan & { patients: { id: string; name: string } | null })[] | null;
+  };
+
+  const draftCount = draftPlans?.length ?? 0;
 
   // Estado de suscripción — usado para el banner de upgrade
   const suscripcion = await getSubscription();
@@ -92,10 +100,25 @@ export default async function DashboardPage() {
         />
         <MetricCard
           label='Borradores pendientes'
-          value={draftPlans ?? 0}
-          highlight={!!draftPlans && draftPlans > 0}
+          value={draftCount}
+          highlight={draftCount > 0}
+          href={draftCount > 0 ? '#borradores' : undefined}
         />
       </div>
+
+      {/* Borradores pendientes de aprobar */}
+      {draftCount > 0 && (
+        <div id='borradores'>
+          <h2 className='mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500'>
+            Borradores pendientes de aprobar
+          </h2>
+          <div className='flex flex-col gap-2'>
+            {draftPlans!.map((plan) => (
+              <DraftPlanRow key={plan.id} plan={plan} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Lista de pacientes */}
       <div>
@@ -116,22 +139,76 @@ export default async function DashboardPage() {
   );
 }
 
+// ── Componentes ────────────────────────────────────────────────────────────────
+
 function MetricCard({
   label,
   value,
   highlight,
+  href,
 }: {
   label: string;
   value: number;
   highlight?: boolean;
+  href?: string;
 }) {
-  return (
-    <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+  const inner = (
+    <>
       <div className={`text-3xl font-bold ${highlight ? 'text-amber-400' : 'text-zinc-100'}`}>
         {value}
       </div>
       <div className='mt-1 text-sm text-zinc-500'>{label}</div>
+      {href && (
+        <div className='mt-2 text-xs text-amber-500/70'>Ver borradores →</div>
+      )}
+    </>
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        className='rounded-xl border border-amber-900/50 bg-zinc-950 p-5 transition-colors hover:border-amber-700/60 hover:bg-zinc-900'
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+      {inner}
     </div>
+  );
+}
+
+function DraftPlanRow({
+  plan,
+}: {
+  plan: NutritionPlan & { patients: { id: string; name: string } | null };
+}) {
+  return (
+    <Link
+      href={`/dashboard/plans/${plan.id}`}
+      className='flex items-center justify-between rounded-xl border border-amber-900/40 bg-zinc-950 p-4 transition-colors hover:border-amber-700/60 hover:bg-zinc-900'
+    >
+      <div className='flex flex-col gap-0.5'>
+        <span className='font-medium text-zinc-100'>
+          {plan.patients?.name ?? 'Paciente desconocido'}
+        </span>
+        <span className='text-xs text-zinc-500'>
+          Semana del{' '}
+          {new Date(plan.week_start_date).toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })}
+        </span>
+      </div>
+      <span className='rounded-full bg-amber-950 px-2.5 py-0.5 text-xs font-medium text-amber-400'>
+        {PLAN_STATUS_LABELS.draft}
+      </span>
+    </Link>
   );
 }
 
