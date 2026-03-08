@@ -9,10 +9,20 @@
  * Requiere E2E_SETUP_SECRET en .env.test (o .env.local) y en Vercel.
  */
 import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-dotenv.config({ path: '.env.test' });
+const envPath = path.resolve(process.cwd(), '.env.test');
+const dotenvResult = dotenv.config({ path: envPath });
 
 export default async function globalSetup() {
+  // ── Debug: verificar carga de variables ──────────────────────────────────
+  console.log('[global-setup] cwd:', process.cwd());
+  console.log('[global-setup] .env.test path:', envPath);
+  console.log('[global-setup] dotenv result:', dotenvResult.error ? `ERROR: ${dotenvResult.error.message}` : `OK (${Object.keys(dotenvResult.parsed ?? {}).join(', ')})`);
+  console.log('[global-setup] E2E_SETUP_SECRET:', process.env.E2E_SETUP_SECRET ? `SET (${process.env.E2E_SETUP_SECRET.slice(0, 4)}***)` : 'NOT SET');
+  console.log('[global-setup] TEST_EMAIL:', process.env.TEST_EMAIL ?? 'NOT SET');
+  console.log('[global-setup] TEST_BASE_URL:', process.env.TEST_BASE_URL ?? 'NOT SET');
+
   const baseUrl = process.env.TEST_BASE_URL ?? 'https://dietly.es';
   const email = process.env.TEST_EMAIL ?? 'test-e2e@dietly.es';
   const password = process.env.TEST_PASSWORD ?? 'TestDietly2025!';
