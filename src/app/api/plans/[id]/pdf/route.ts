@@ -72,7 +72,6 @@ export async function GET(
       profile,
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const buffer = await renderToBuffer(elemento as any);
 
     const nombreArchivo = `plan-nutricional-${patient.name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
