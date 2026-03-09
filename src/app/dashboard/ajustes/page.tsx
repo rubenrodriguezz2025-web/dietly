@@ -86,10 +86,14 @@ export default async function AjustesPage() {
             </span>
           )}
         </div>
-        <p className='mb-4 text-xs text-zinc-500'>
+        <p className='mb-1 text-xs text-zinc-500'>
           El logo aparece en el encabezado y portada de los PDFs que generas para tus
           pacientes.{' '}
           {!isPro && 'Disponible en el Plan Profesional.'}
+        </p>
+        <p className='mb-4 text-xs text-zinc-600'>
+          Si no tienes logo, puedes usar tu nombre o el de tu clínica — el PDF quedará
+          igualmente profesional.
         </p>
         <LogoForm currentLogoUrl={logoPreviewUrl} isPro={isPro} />
       </section>

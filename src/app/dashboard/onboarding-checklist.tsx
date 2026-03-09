@@ -15,17 +15,24 @@ type Props = {
 export function OnboardingChecklist({ logoUploaded, hasPatient, hasPlan, firstPatientId }: Props) {
   const [phase, setPhase] = useState<'checklist' | 'celebration' | 'done'>('checklist');
 
-  const steps = [
+  const steps: {
+    label: string;
+    complete: boolean;
+    optional?: boolean;
+    cta: string | null;
+    href: string | null;
+  }[] = [
     {
       label: 'Cuenta creada',
       complete: true,
-      cta: null as string | null,
-      href: null as string | null,
+      cta: null,
+      href: null,
     },
     {
-      label: 'Sube tu logo',
+      label: 'Personaliza tu perfil',
+      optional: true,
       complete: logoUploaded,
-      cta: 'Subir logo →',
+      cta: 'Ir a ajustes →',
       href: '/dashboard/ajustes',
     },
     {
@@ -124,16 +131,23 @@ export function OnboardingChecklist({ logoUploaded, hasPatient, hasPlan, firstPa
 
               {/* Texto + CTA */}
               <div className='flex min-w-0 flex-1 items-center justify-between gap-3'>
-                <span
-                  className={`text-sm ${
-                    step.complete
-                      ? 'text-zinc-600 line-through'
-                      : isActive
-                        ? 'font-medium text-zinc-100'
-                        : 'text-zinc-500'
-                  }`}
-                >
-                  {step.label}
+                <span className='flex min-w-0 items-center gap-1.5'>
+                  <span
+                    className={`text-sm ${
+                      step.complete
+                        ? 'text-zinc-600 line-through'
+                        : isActive
+                          ? 'font-medium text-zinc-100'
+                          : 'text-zinc-500'
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                  {step.optional && !step.complete && (
+                    <span className='flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-zinc-700'>
+                      opcional
+                    </span>
+                  )}
                 </span>
                 {isActive && step.cta && step.href && (
                   <Link

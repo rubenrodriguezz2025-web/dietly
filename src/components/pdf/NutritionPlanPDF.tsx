@@ -88,6 +88,13 @@ const s = StyleSheet.create({
     maxWidth: 100,
     objectFit: 'contain',
   },
+  // Nombre de clínica estilizado en header (Pro sin logo)
+  headerLogoClinica: {
+    fontSize: 13,
+    fontFamily: 'Helvetica-Bold',
+    color: C.blanco,
+    letterSpacing: 0.8,
+  },
 
   // ── Contenido interior ────────────────────────────────────────────────────
   cuerpo: {
@@ -108,6 +115,15 @@ const s = StyleSheet.create({
     color: C.blanco,
     letterSpacing: 2,
     marginBottom: 6,
+  },
+  // Nombre de clínica estilizado en portada (Pro sin logo)
+  portadaClinicaTexto: {
+    fontSize: 28,
+    fontFamily: 'Helvetica-Bold',
+    color: C.blanco,
+    letterSpacing: 1.5,
+    marginBottom: 6,
+    textAlign: 'center',
   },
   portadaLogoImg: {
     height: 56,
@@ -468,6 +484,13 @@ const s = StyleSheet.create({
     color: C.apagadoClaro,
     fontStyle: 'italic',
   },
+  // Nota para Pro sin logo
+  footerNota: {
+    fontSize: 6.5,
+    color: C.apagadoClaro,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
 });
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -511,10 +534,12 @@ function HeaderPagina({
   nombrePaciente,
   logoUri,
   isPro,
+  clinicName,
 }: {
   nombrePaciente: string;
   logoUri: string | null;
   isPro: boolean;
+  clinicName: string | null;
 }) {
   return (
     <View style={s.headerBarra} fixed>
@@ -522,7 +547,11 @@ function HeaderPagina({
         {isPro && logoUri ? (
           // eslint-disable-next-line jsx-a11y/alt-text -- componente PDF, no HTML
           <Image src={logoUri} style={s.headerLogoImg} />
+        ) : isPro && clinicName ? (
+          // Pro sin logo: nombre de clínica estilizado
+          <Text style={s.headerLogoClinica}>{clinicName}</Text>
         ) : (
+          // Plan Básico (o Pro sin logo ni clínica): marca Dietly
           <>
             <Text style={s.headerLogo}>Dietly</Text>
             <Text style={s.headerSeparador}>·</Text>
@@ -540,12 +569,14 @@ function Footer({
   collegeNumber,
   approvedAt,
   signatureUri,
+  logoUri,
   isPro,
 }: {
   nombreNutricionista: string;
   collegeNumber: string | null;
   approvedAt: string | null;
   signatureUri: string | null;
+  logoUri: string | null;
   isPro: boolean;
 }) {
   const partes: string[] = [`Elaborado por ${nombreNutricionista}`];
@@ -561,6 +592,11 @@ function Footer({
           <Image src={signatureUri} style={s.signatureImg} />
         )}
         <Text style={s.textoPie}>{textoFooter}</Text>
+        {isPro && !logoUri && (
+          <Text style={s.footerNota}>
+            Añade tu logo en Ajustes para personalizar este documento
+          </Text>
+        )}
       </View>
       <Text
         style={s.textoPieDerecha}
@@ -759,6 +795,7 @@ function ListaCompraPage({
   logoUri,
   signatureUri,
   isPro,
+  clinicName,
   nombreNutricionista,
   collegeNumber,
   approvedAt,
@@ -768,6 +805,7 @@ function ListaCompraPage({
   logoUri: string | null;
   signatureUri: string | null;
   isPro: boolean;
+  clinicName: string | null;
   nombreNutricionista: string;
   collegeNumber: string | null;
   approvedAt: string | null;
@@ -776,7 +814,7 @@ function ListaCompraPage({
 
   return (
     <Page size="A4" style={s.pagina}>
-      <HeaderPagina nombrePaciente={nombrePaciente} logoUri={logoUri} isPro={isPro} />
+      <HeaderPagina nombrePaciente={nombrePaciente} logoUri={logoUri} isPro={isPro} clinicName={clinicName} />
 
       <View style={s.cuerpo}>
         <Text style={s.tituloSeccion}>Lista de la compra</Text>
@@ -807,6 +845,7 @@ function ListaCompraPage({
         collegeNumber={collegeNumber}
         approvedAt={approvedAt}
         signatureUri={signatureUri}
+        logoUri={logoUri}
         isPro={isPro}
       />
     </Page>
@@ -832,8 +871,11 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, si
     collegeNumber,
     approvedAt: approved_at,
     signatureUri: signature_uri,
+    logoUri: logo_uri,
     isPro: is_pro,
   };
+
+  const clinicName = profile.clinic_name ?? null;
 
   return (
     <Document
@@ -843,11 +885,13 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, si
     >
       {/* ── Portada ── */}
       <Page size="A4" style={s.pagina}>
-        {/* Hero verde — logo del nutricionista si es Pro, "Dietly" si es Básico */}
+        {/* Hero verde — logo si Pro+logo, clínica si Pro sin logo, "Dietly" si Básico */}
         <View style={s.portadaHero}>
           {is_pro && logo_uri ? (
             // eslint-disable-next-line jsx-a11y/alt-text -- componente PDF, no HTML
             <Image src={logo_uri} style={s.portadaLogoImg} />
+          ) : is_pro && profile.clinic_name ? (
+            <Text style={s.portadaClinicaTexto}>{profile.clinic_name}</Text>
           ) : (
             <Text style={s.portadaLogoTexto}>Dietly</Text>
           )}
@@ -907,7 +951,7 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, si
 
       {/* ── Resumen semanal + primeros 2 días ── */}
       <Page size="A4" style={s.pagina}>
-        <HeaderPagina nombrePaciente={patient.name} logoUri={logo_uri} isPro={is_pro} />
+        <HeaderPagina nombrePaciente={patient.name} logoUri={logo_uri} isPro={is_pro} clinicName={clinicName} />
         <View style={s.cuerpo}>
           <Text style={s.tituloSeccion}>Resumen semanal</Text>
           <View style={s.filaResumen}>
@@ -939,7 +983,7 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, si
       {/* ── Días restantes (de 3 en adelante, uno por página) ── */}
       {content.days.slice(2).map((day) => (
         <Page key={day.day_number} size="A4" style={s.pagina}>
-          <HeaderPagina nombrePaciente={patient.name} logoUri={logo_uri} isPro={is_pro} />
+          <HeaderPagina nombrePaciente={patient.name} logoUri={logo_uri} isPro={is_pro} clinicName={clinicName} />
           <View style={s.cuerpo}>
             <SeccionDia day={day} />
           </View>
@@ -954,6 +998,7 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, si
         logoUri={logo_uri}
         signatureUri={signature_uri}
         isPro={is_pro}
+        clinicName={clinicName}
         nombreNutricionista={nombreNutricionista}
         collegeNumber={collegeNumber}
         approvedAt={approved_at}
