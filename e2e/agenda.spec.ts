@@ -72,12 +72,12 @@ test.describe('Agenda de citas', () => {
     await expect(page.getByText('Cita guardada correctamente')).toBeVisible({ timeout: 10_000 });
 
     // ── Verificar en el calendario ────────────────────────────────────────────
-    // La cita debe aparecer con la hora
-    await expect(page.getByText(HORA_CITA)).toBeVisible({ timeout: 10_000 });
+    // La cita debe aparecer con la hora — .first() porque puede haber varias citas a esa hora
+    await expect(page.getByText(HORA_CITA).first()).toBeVisible({ timeout: 10_000 });
     // Badge "presencial"
     await expect(page.getByText('presencial').first()).toBeVisible();
-    // Notas
-    await expect(page.getByText('Revisión inicial E2E Playwright')).toBeVisible();
+    // Notas — .first() por acumulación de runs anteriores
+    await expect(page.getByText('Revisión inicial E2E Playwright').first()).toBeVisible();
   });
 
   test('marcar cita como completada cambia el estado', async ({ page }) => {
@@ -88,8 +88,9 @@ test.describe('Agenda de citas', () => {
       return;
     }
 
-    // Botón ✓ junto a esa cita
-    const citaCard = page.locator('.rounded-xl').filter({ has: scheduledBadge });
+    // Botón ✓ junto a esa cita — .first() en el filter para evitar strict mode
+    // cuando hay múltiples citas programadas (no usar .first() dentro del has)
+    const citaCard = page.locator('.rounded-xl').filter({ has: page.getByText('Programada') }).first();
     const completeBtn = citaCard.locator('button[title="Marcar como completada"]');
     await expect(completeBtn).toBeVisible();
     await completeBtn.click();
