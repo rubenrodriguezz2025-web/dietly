@@ -56,6 +56,32 @@ const CSS = `
   .check-green { color: #22c55e; }
   .cross-red   { color: #ef4444; }
   .warn-amber  { color: #f59e0b; }
+
+  /* ── Fondo premium ─────────────────────────────────────────────────────── */
+
+  /* Degradado vertical que recorre toda la landing */
+  .landing-bg {
+    background: linear-gradient(to bottom, #0a1f10 0%, #071408 40%, #050a05 70%, #050a05 100%);
+  }
+
+  /* Capa de ruido — grain sutil tipo impresión de calidad */
+  .grain {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.038;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.72%22 numOctaves=%224%22 stitchTiles=%22stitch%22%2F%3E%3C%2Ffilter%3E%3Crect width=%22300%22 height=%22300%22 filter=%22url(%23noise)%22%2F%3E%3C%2Fsvg%3E");
+    background-size: 200px 200px;
+    background-repeat: repeat;
+  }
+
+  /* Separadores de sección — línea verde muy tenue */
+  .sect-div {
+    border-top: 1px solid rgba(26,122,69,0.10);
+  }
 `;
 
 // ─── Primitivos ───────────────────────────────────────────────────────────────
@@ -262,12 +288,43 @@ function DashboardMockup() {
 
 function HeroSection() {
   return (
-    <section className='relative overflow-hidden bg-[#050a05] pb-20 pt-10 lg:pb-28 lg:pt-16'>
-      {/* Blob radial verde */}
+    <section className='relative overflow-hidden pb-20 pt-10 lg:pb-28 lg:pt-16'>
+      {/* Blob 1 — superior izquierda, luz verde filtrada */}
       <div
         aria-hidden
-        className='pointer-events-none absolute inset-x-0 top-0 h-[520px]'
-        style={{ background: 'radial-gradient(ellipse 80% 50% at 50% -5%, rgba(26,122,69,.20) 0%, transparent 72%)' }}
+        className='pointer-events-none absolute'
+        style={{
+          top: '-120px',
+          left: '-160px',
+          width: '700px',
+          height: '600px',
+          background: 'radial-gradient(ellipse at center, rgba(26,122,69,0.20) 0%, transparent 68%)',
+          filter: 'blur(90px)',
+        }}
+      />
+      {/* Blob 2 — superior derecha, verde más profundo */}
+      <div
+        aria-hidden
+        className='pointer-events-none absolute'
+        style={{
+          top: '-80px',
+          right: '-120px',
+          width: '580px',
+          height: '520px',
+          background: 'radial-gradient(ellipse at center, rgba(13,51,32,0.28) 0%, transparent 65%)',
+          filter: 'blur(110px)',
+        }}
+      />
+      {/* Blob 3 — centro superior, halo difuso muy sutil */}
+      <div
+        aria-hidden
+        className='pointer-events-none absolute inset-x-0'
+        style={{
+          top: '0',
+          height: '400px',
+          background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(26,122,69,0.10) 0%, transparent 75%)',
+          filter: 'blur(40px)',
+        }}
       />
 
       <div className='relative z-10 mx-auto max-w-6xl px-5 text-center'>
@@ -339,7 +396,7 @@ const TOOLS = [
 
 function WorkflowBar() {
   return (
-    <section className='border-y border-[#1a2e1a] bg-[#0a0f0a] py-10'>
+    <section className='sect-div border-b border-[#1a2e1a]/60 py-10'>
       <div className='mx-auto max-w-6xl px-5'>
         <p className='mb-8 text-center text-sm font-semibold text-zinc-400'>
           Tu flujo de trabajo actual, unificado
@@ -396,7 +453,7 @@ const PAINS = [
 
 function ProblemSection() {
   return (
-    <section className='bg-[#050a05] py-16 lg:py-24'>
+    <section className='sect-div py-16 lg:py-24'>
       <div className='mx-auto max-w-6xl px-5'>
         <SectionLabel>El problema</SectionLabel>
         <H2>¿Cuánto tiempo pierdes cada semana?</H2>
@@ -449,7 +506,7 @@ const STEPS = [
 
 function HowItWorksSection() {
   return (
-    <section id='como-funciona' className='bg-[#0a0f0a] py-16 lg:py-24'>
+    <section id='como-funciona' className='sect-div py-16 lg:py-24'>
       <div className='mx-auto max-w-6xl px-5'>
         <SectionLabel>Cómo funciona</SectionLabel>
         <H2>La IA prepara. Tú apruebas. Tu paciente recibe.</H2>
@@ -539,7 +596,7 @@ function Cell({ value }: { value: boolean | 'warn' }) {
 
 function ComparisonSection() {
   return (
-    <section className='bg-[#050a05] py-16 lg:py-24'>
+    <section className='sect-div py-16 lg:py-24'>
       <div className='mx-auto max-w-6xl px-5'>
         <SectionLabel>Comparativa</SectionLabel>
         <H2>Todo lo que ya usas, en un solo flujo</H2>
@@ -656,7 +713,7 @@ const FEATURES = [
 
 function FeaturesSection() {
   return (
-    <section className='bg-[#0a0f0a] py-16 lg:py-24'>
+    <section className='sect-div py-16 lg:py-24'>
       <div className='mx-auto max-w-6xl px-5'>
         <div className='text-center'>
           <SectionLabel>Funcionalidades</SectionLabel>
@@ -713,7 +770,7 @@ const TESTIMONIOS = [
 
 function SocialProofSection() {
   return (
-    <section className='bg-[#050a05] py-16 lg:py-24'>
+    <section className='sect-div py-16 lg:py-24'>
       <div className='mx-auto max-w-6xl px-5'>
         <div className='text-center'>
           <SectionLabel>Testimonios</SectionLabel>
@@ -793,7 +850,7 @@ function PricingSection() {
   ] as const;
 
   return (
-    <section id='precios' className='bg-[#0a0f0a] py-16 lg:py-24'>
+    <section id='precios' className='sect-div py-16 lg:py-24'>
       <div className='mx-auto max-w-6xl px-5'>
         <div className='text-center'>
           <SectionLabel>Precios</SectionLabel>
@@ -863,7 +920,7 @@ function PricingSection() {
 
 function FinalCtaSection() {
   return (
-    <section className='bg-[#050a05] py-20 text-center lg:py-28'>
+    <section className='sect-div py-20 text-center lg:py-28'>
       <div
         aria-hidden
         className='pointer-events-none fixed inset-x-0 bottom-0 h-64'
@@ -913,15 +970,19 @@ export default function HomePage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <HeroSection />
-      <WorkflowBar />
-      <ProblemSection />
-      <HowItWorksSection />
-      <ComparisonSection />
-      <FeaturesSection />
-      <SocialProofSection />
-      <PricingSection />
-      <FinalCtaSection />
+      {/* Grain — capa de ruido fijo sobre toda la landing */}
+      <div className='grain' aria-hidden />
+      <div className='landing-bg'>
+        <HeroSection />
+        <WorkflowBar />
+        <ProblemSection />
+        <HowItWorksSection />
+        <ComparisonSection />
+        <FeaturesSection />
+        <SocialProofSection />
+        <PricingSection />
+        <FinalCtaSection />
+      </div>
     </>
   );
 }
