@@ -7,6 +7,7 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 import { GOAL_LABELS, NutritionPlan, Patient, PLAN_STATUS_LABELS } from '@/types/dietly';
 
 import { BannerUpgrade } from './banner-upgrade';
+import { OnboardingChecklist } from './onboarding-checklist';
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
   // Verificar onboarding
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name')
+    .select('full_name, clinic_name, logo_url, onboarding_completed_at')
     .eq('id', user.id)
     .single();
 
@@ -43,6 +44,12 @@ export default async function DashboardPage() {
     .select('id', { count: 'exact', head: true })
     .eq('nutritionist_id', user.id)
     .gte('created_at', startOfMonth.toISOString()) as { count: number | null };
+
+  // Total de planes del nutricionista (para el checklist de onboarding)
+  const { count: totalPlans } = await (supabase as any)
+    .from('nutrition_plans')
+    .select('id', { count: 'exact', head: true })
+    .eq('nutritionist_id', user.id) as { count: number | null };
 
   // Borradores pendientes de aprobar del nutricionista autenticado
   const { data: draftPlans } = (await (supabase as any)
@@ -79,14 +86,24 @@ export default async function DashboardPage() {
           <h1 className='text-2xl font-bold text-zinc-100'>
             Hola, {profile.full_name.split(' ')[0]}
           </h1>
-          {profile.clinic_name && (
+          {profile.clinic_name?.trim() ? (
             <p className='mt-1 text-sm text-zinc-500'>{profile.clinic_name}</p>
-          )}
+          ) : null}
         </div>
         <Button asChild>
           <Link href='/dashboard/patients/new'>+ Nuevo paciente</Link>
         </Button>
       </div>
+
+      {/* Checklist de onboarding — desaparece cuando se completan los 4 pasos */}
+      {!profile.onboarding_completed_at && (
+        <OnboardingChecklist
+          logoUploaded={!!profile.logo_url}
+          hasPatient={(patients?.length ?? 0) > 0}
+          hasPlan={(totalPlans ?? 0) > 0}
+          firstPatientId={patients?.[0]?.id}
+        />
+      )}
 
       {/* Métricas */}
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
