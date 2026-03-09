@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-import { GrupoDia } from './tarjeta-cita';
 import { NewAppointmentForm } from './new-appointment-form';
+import { GrupoDia } from './tarjeta-cita';
 
 // ── Tipos locales ─────────────────────────────────────────────────────────────
 
