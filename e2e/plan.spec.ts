@@ -55,8 +55,8 @@ test.describe('Generación y aprobación de plan', () => {
 
     // ── Verificar el plan ─────────────────────────────────────────────────────
 
-    // Estado "Borrador"
-    await expect(page.getByText('Borrador')).toBeVisible();
+    // Estado "Borrador" — exact para evitar strict mode con el párrafo descriptivo
+    await expect(page.getByText('Borrador', { exact: true })).toBeVisible();
 
     // Mensaje de revisión
     await expect(page.getByText(/Borrador generado por IA/i)).toBeVisible();
@@ -103,12 +103,13 @@ test.describe('Generación y aprobación de plan', () => {
 
     await expect(page).toHaveURL(/\/dashboard\/plans\//);
 
-    // Hacer clic en el nombre de la primera comida (EditableField)
-    const nombreComida = page.locator('[title="Clic para editar"]').first();
+    // Hacer clic en el nombre de la primera comida — dentro de <h4> para evitar
+    // los EditableNumber del header del día que también tienen title="Clic para editar"
+    const nombreComida = page.locator('h4 [title="Clic para editar"]').first();
     await nombreComida.click();
 
-    // Debe aparecer un input (el EditableField entra en modo edición con autoFocus)
-    const inputComida = page.locator('input[class*="bg-zinc-900"]').first();
+    // El EditableField (texto) entra en modo edición con autoFocus — filtrar por type text
+    const inputComida = page.locator('h4 input').first();
     await expect(inputComida).toBeVisible({ timeout: 3_000 });
 
     // Modificar el valor
@@ -137,7 +138,7 @@ test.describe('Generación y aprobación de plan', () => {
     }
 
     await expect(page).toHaveURL(/\/dashboard\/plans\//);
-    await expect(page.getByText('Borrador')).toBeVisible();
+    await expect(page.getByText('Borrador', { exact: true })).toBeVisible();
 
     // Aprobar el plan
     const approveBtn = page.getByRole('button', { name: 'Aprobar plan' });
