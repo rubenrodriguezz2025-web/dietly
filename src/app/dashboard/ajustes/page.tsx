@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 
 import { LogoForm } from './logo-form';
 import { ProfileForm } from './profile-form';
+import { SignatureForm } from './signature-form';
 
 export default async function AjustesPage() {
   const supabase = await createSupabaseServerClient();
@@ -17,7 +18,7 @@ export default async function AjustesPage() {
   // Perfil del nutricionista
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name, logo_url')
+    .select('full_name, clinic_name, logo_url, college_number, signature_url')
     .eq('id', user.id)
     .single();
 
@@ -39,6 +40,15 @@ export default async function AjustesPage() {
     logoPreviewUrl = signed?.signedUrl ?? null;
   }
 
+  // URL firmada de la firma para previsualización (1 hora de validez)
+  let signaturePreviewUrl: string | null = null;
+  if (profile?.signature_url) {
+    const { data: signed } = await supabase.storage
+      .from('nutritionist-signatures')
+      .createSignedUrl(profile.signature_url as string, 3600);
+    signaturePreviewUrl = signed?.signedUrl ?? null;
+  }
+
   return (
     <div className='flex flex-col gap-8'>
       <div>
@@ -56,6 +66,7 @@ export default async function AjustesPage() {
         <ProfileForm
           fullName={profile?.full_name ?? ''}
           clinicName={profile?.clinic_name ?? null}
+          collegeNumber={profile?.college_number ?? null}
         />
       </section>
 
@@ -81,6 +92,30 @@ export default async function AjustesPage() {
           {!isPro && 'Disponible en el Plan Profesional.'}
         </p>
         <LogoForm currentLogoUrl={logoPreviewUrl} isPro={isPro} />
+      </section>
+
+      {/* ── Firma digital (solo Pro) ── */}
+      <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
+        <div className='mb-4 flex items-center justify-between border-b border-zinc-800 pb-3'>
+          <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+            Firma digital
+          </h2>
+          {isPro ? (
+            <span className='rounded-full bg-[#1a7a45]/20 px-2 py-0.5 text-xs font-medium text-[#22c55e]'>
+              Plan Pro
+            </span>
+          ) : (
+            <span className='rounded-full bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-500'>
+              Plan Básico
+            </span>
+          )}
+        </div>
+        <p className='mb-4 text-xs text-zinc-500'>
+          La firma aparece sobre el pie de página en los PDFs aprobados.{' '}
+          Usa PNG o WebP con fondo transparente para mejor resultado.{' '}
+          {!isPro && 'Disponible en el Plan Profesional.'}
+        </p>
+        <SignatureForm currentSignatureUrl={signaturePreviewUrl} isPro={isPro} />
       </section>
     </div>
   );

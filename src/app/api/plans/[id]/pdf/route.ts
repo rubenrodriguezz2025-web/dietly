@@ -49,16 +49,17 @@ export async function GET(
     );
   }
 
-  // Obtener perfil del nutricionista (incluye logo_url)
+  // Obtener perfil del nutricionista (logo, firma, número de colegiado)
   const { data: profileData } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name, logo_url')
+    .select('full_name, clinic_name, logo_url, signature_url, college_number')
     .eq('id', user.id)
     .single();
 
-  const profile: Pick<Profile, 'full_name' | 'clinic_name'> = profileData ?? {
+  const profile: Pick<Profile, 'full_name' | 'clinic_name' | 'college_number'> = profileData ?? {
     full_name: '',
     clinic_name: null,
+    college_number: null,
   };
 
   // Verificar si el usuario tiene suscripción Pro activa
@@ -78,25 +79,40 @@ export async function GET(
       // Fallback: si tiene suscripción activa pero no podemos leer el nombre, es Pro
       productName === '');
 
-  // Construir data URI del logo si el usuario es Pro y tiene logo
-  let logo_uri: string | null = null;
-  if (is_pro && profileData?.logo_url) {
+  // Helper: descarga un archivo de Storage y devuelve data URI base64
+  async function downloadAsDataUri(bucket: string, path: string): Promise<string | null> {
     try {
-      const { data: logoBlob } = await supabase.storage
-        .from('nutritionist-logos')
-        .download(profileData.logo_url as string);
-
-      if (logoBlob) {
-        const arrayBuffer = await logoBlob.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const mimeType = (logoBlob as Blob).type || 'image/png';
-        logo_uri = `data:${mimeType};base64,${base64}`;
-      }
+      const { data: blob } = await supabase.storage.from(bucket).download(path);
+      if (!blob) return null;
+      const buf = await blob.arrayBuffer();
+      const b64 = Buffer.from(buf).toString('base64');
+      return `data:${(blob as Blob).type || 'image/png'};base64,${b64}`;
     } catch {
-      // Si falla la descarga del logo, continuar sin él
-      logo_uri = null;
+      return null;
     }
   }
+
+  // Construir data URIs de logo y firma (solo para Plan Pro)
+  let logo_uri: string | null = null;
+  let signature_uri: string | null = null;
+
+  if (is_pro) {
+    if (profileData?.logo_url) {
+      logo_uri = await downloadAsDataUri('nutritionist-logos', profileData.logo_url as string);
+    }
+    if (profileData?.signature_url) {
+      signature_uri = await downloadAsDataUri('nutritionist-signatures', profileData.signature_url as string);
+    }
+  }
+
+  // Fecha de aprobación formateada
+  const approved_at = plan.approved_at
+    ? new Date(plan.approved_at as string).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+    : null;
 
   const patient = plan.patients as Pick<Patient, 'name' | 'email'>;
 
@@ -108,7 +124,9 @@ export async function GET(
       patient,
       profile,
       logo_uri,
+      signature_uri,
       is_pro,
+      approved_at,
     });
 
     const buffer = await renderToBuffer(elemento as any);

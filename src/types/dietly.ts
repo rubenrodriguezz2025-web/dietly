@@ -66,6 +66,8 @@ export type Profile = {
   full_name: string;
   clinic_name: string | null;
   logo_url: string | null;
+  signature_url: string | null;
+  college_number: string | null;
   specialty: Specialty;
   subscription_status: string | null;
   created_at: string;
@@ -103,6 +105,8 @@ export type NutritionPlan = {
   content: unknown;
   patient_token: string;
   sent_at: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
   created_at: string;
   updated_at: string;
 };

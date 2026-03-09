@@ -63,7 +63,11 @@ export async function approvePlan(
 
   const { error } = await (supabase as any)
     .from('nutrition_plans')
-    .update({ status: 'approved' })
+    .update({
+      status: 'approved',
+      approved_at: new Date().toISOString(),
+      approved_by: user.id,
+    })
     .eq('id', planId)
     .eq('nutritionist_id', user.id);
 

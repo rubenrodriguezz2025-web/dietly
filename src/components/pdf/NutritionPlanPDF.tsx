@@ -44,7 +44,7 @@ const s = StyleSheet.create({
     fontSize: 10,
     color: C.texto,
     backgroundColor: C.blanco,
-    paddingBottom: 52,
+    paddingBottom: 80, // espacio para footer con firma opcional
     lineHeight: 1.4,
   },
 
@@ -443,11 +443,21 @@ const s = StyleSheet.create({
     right: 36,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     borderTopWidth: 1,
     borderTopColor: C.borde,
     borderTopStyle: 'solid',
     paddingTop: 7,
+  },
+  footerIzquierda: {
+    flexDirection: 'column',
+    gap: 4,
+  },
+  signatureImg: {
+    height: 32,
+    maxWidth: 110,
+    objectFit: 'contain',
+    alignSelf: 'flex-start',
   },
   textoPie: {
     fontSize: 7.5,
@@ -466,11 +476,15 @@ export type PropsPDF = {
   plan: { week_start_date: string };
   content: PlanContent;
   patient: Pick<Patient, 'name' | 'email'>;
-  profile: Pick<Profile, 'full_name' | 'clinic_name'>;
+  profile: Pick<Profile, 'full_name' | 'clinic_name' | 'college_number'>;
   /** Data URI (base64) del logo del nutricionista. Solo se muestra si is_pro=true. */
   logo_uri: string | null;
-  /** true = Plan Pro → mostrar logo en header y portada */
+  /** Data URI (base64) de la firma del nutricionista. Solo se muestra si is_pro=true. */
+  signature_uri: string | null;
+  /** true = Plan Pro → mostrar logo/firma en header, portada y footer */
   is_pro: boolean;
+  /** Fecha de aprobación formateada (dd/mm/yyyy) o null si aún no aprobado */
+  approved_at: string | null;
 };
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -521,10 +535,33 @@ function HeaderPagina({
   );
 }
 
-function Footer() {
+function Footer({
+  nombreNutricionista,
+  collegeNumber,
+  approvedAt,
+  signatureUri,
+  isPro,
+}: {
+  nombreNutricionista: string;
+  collegeNumber: string | null;
+  approvedAt: string | null;
+  signatureUri: string | null;
+  isPro: boolean;
+}) {
+  const partes: string[] = [`Elaborado por ${nombreNutricionista}`];
+  if (collegeNumber) partes.push(`Nº colegiado ${collegeNumber}`);
+  if (approvedAt) partes.push(`Aprobado el ${approvedAt}`);
+  const textoFooter = partes.join(' · ');
+
   return (
     <View style={s.piePagina} fixed>
-      <Text style={s.textoPie}>Dietly · Generado con IA · Revisado por nutricionista</Text>
+      <View style={s.footerIzquierda}>
+        {isPro && signatureUri && (
+          // eslint-disable-next-line jsx-a11y/alt-text -- componente PDF, no HTML
+          <Image src={signatureUri} style={s.signatureImg} />
+        )}
+        <Text style={s.textoPie}>{textoFooter}</Text>
+      </View>
       <Text
         style={s.textoPieDerecha}
         render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`}
@@ -720,18 +757,27 @@ function ListaCompraPage({
   content,
   nombrePaciente,
   logoUri,
+  signatureUri,
   isPro,
+  nombreNutricionista,
+  collegeNumber,
+  approvedAt,
 }: {
   content: PlanContent;
   nombrePaciente: string;
   logoUri: string | null;
+  signatureUri: string | null;
   isPro: boolean;
+  nombreNutricionista: string;
+  collegeNumber: string | null;
+  approvedAt: string | null;
 }) {
   const lista = construirListaCompra(content);
 
   return (
     <Page size="A4" style={s.pagina}>
       <HeaderPagina nombrePaciente={nombrePaciente} logoUri={logoUri} isPro={isPro} />
+
       <View style={s.cuerpo}>
         <Text style={s.tituloSeccion}>Lista de la compra</Text>
 
@@ -756,14 +802,20 @@ function ListaCompraPage({
           </View>
         ))}
       </View>
-      <Footer />
+      <Footer
+        nombreNutricionista={nombreNutricionista}
+        collegeNumber={collegeNumber}
+        approvedAt={approvedAt}
+        signatureUri={signatureUri}
+        isPro={isPro}
+      />
     </Page>
   );
 }
 
 // ── Documento PDF principal ───────────────────────────────────────────────────
 
-export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, is_pro }: PropsPDF) {
+export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, signature_uri, is_pro, approved_at }: PropsPDF) {
   const fechaSemana = new Date(plan.week_start_date).toLocaleDateString('es-ES', {
     day: 'numeric',
     month: 'long',
@@ -771,7 +823,17 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, is
   });
 
   const nombreNutricionista = profile.full_name || 'Nutricionista';
+  const collegeNumber = profile.college_number ?? null;
   const { target_daily_calories, target_macros } = content.week_summary;
+
+  // Objeto de props del footer reutilizable en todas las páginas
+  const footerProps = {
+    nombreNutricionista,
+    collegeNumber,
+    approvedAt: approved_at,
+    signatureUri: signature_uri,
+    isPro: is_pro,
+  };
 
   return (
     <Document
@@ -840,7 +902,7 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, is
           </View>
         </View>
 
-        <Footer />
+        <Footer {...footerProps} />
       </Page>
 
       {/* ── Resumen semanal + primeros 2 días ── */}
@@ -871,7 +933,7 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, is
             <SeccionDia key={day.day_number} day={day} />
           ))}
         </View>
-        <Footer />
+        <Footer {...footerProps} />
       </Page>
 
       {/* ── Días restantes (de 3 en adelante, uno por página) ── */}
@@ -881,12 +943,21 @@ export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, is
           <View style={s.cuerpo}>
             <SeccionDia day={day} />
           </View>
-          <Footer />
+          <Footer {...footerProps} />
         </Page>
       ))}
 
       {/* ── Lista de la compra ── */}
-      <ListaCompraPage content={content} nombrePaciente={patient.name} logoUri={logo_uri} isPro={is_pro} />
+      <ListaCompraPage
+        content={content}
+        nombrePaciente={patient.name}
+        logoUri={logo_uri}
+        signatureUri={signature_uri}
+        isPro={is_pro}
+        nombreNutricionista={nombreNutricionista}
+        collegeNumber={collegeNumber}
+        approvedAt={approved_at}
+      />
     </Document>
   );
 }
