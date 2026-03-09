@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState,useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
@@ -10,6 +10,9 @@ type Paciente = { id: string; name: string };
 
 const selectClass =
   'h-10 w-full rounded-md border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50';
+
+const inputClass =
+  'h-10 w-full rounded-md border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50';
 
 const textareaClass =
   'w-full rounded-md border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50 resize-none';
@@ -23,6 +26,7 @@ for (let h = 7; h <= 21; h++) {
 
 export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
   const [state, action, pending] = useActionState(createAppointment, {});
+  const [tipo, setTipo] = useState<string>('presencial');
 
   return (
     <form action={action} className='flex flex-col gap-4'>
@@ -45,7 +49,13 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
           <label className='text-sm font-medium text-zinc-300'>
             Tipo <span className='text-red-500'>*</span>
           </label>
-          <select name='type' className={selectClass} disabled={pending} defaultValue='presencial'>
+          <select
+            name='type'
+            className={selectClass}
+            disabled={pending}
+            value={tipo}
+            onChange={(e) => setTipo(e.target.value)}
+          >
             <option value='presencial'>Presencial</option>
             <option value='online'>Online (videollamada)</option>
           </select>
@@ -78,6 +88,23 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
           </select>
         </div>
       </div>
+
+      {/* URL de videollamada — solo para citas online */}
+      {tipo === 'online' && (
+        <div className='flex flex-col gap-1.5'>
+          <label className='text-sm font-medium text-zinc-300'>
+            Enlace de videollamada
+            <span className='ml-1 font-normal text-zinc-600'>(Google Meet, Zoom…)</span>
+          </label>
+          <input
+            name='meeting_url'
+            type='url'
+            placeholder='https://meet.google.com/xxx-xxxx-xxx'
+            disabled={pending}
+            className={inputClass}
+          />
+        </div>
+      )}
 
       {/* Notas */}
       <div className='flex flex-col gap-1.5'>

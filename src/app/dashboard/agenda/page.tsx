@@ -16,7 +16,8 @@ type Appointment = {
   type: 'presencial' | 'online';
   notes: string | null;
   status: 'scheduled' | 'completed' | 'cancelled';
-  patients: { name: string } | null;
+  meeting_url: string | null;
+  patients: { name: string; email: string | null } | null;
 };
 
 // ── Página ─────────────────────────────────────────────────────────────────────
@@ -61,7 +62,7 @@ export default async function AgendaPage({
   // Citas del mes
   const { data: citas } = (await (supabase as any)
     .from('appointments')
-    .select('*, patients(name)')
+    .select('*, patients(name, email)')
     .eq('nutritionist_id', user.id)
     .gte('date', primerDiaStr)
     .lte('date', ultimoDiaStr)
