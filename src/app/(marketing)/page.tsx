@@ -727,7 +727,7 @@ function SocialProofSection() {
               className='testi-card flex flex-col justify-between rounded-2xl border border-[#1a2e1a] bg-[#0a0f0a] p-6'
             >
               {/* Comilla decorativa */}
-              <div aria-hidden className='mb-4 text-3xl font-bold leading-none text-[#1a7a45]/40'>"</div>
+              <div aria-hidden className='mb-4 text-3xl font-bold leading-none text-[#1a7a45]/40'>&ldquo;</div>
               <blockquote className='flex-1 text-sm leading-relaxed text-zinc-300'>
                 {t.quote}
               </blockquote>
