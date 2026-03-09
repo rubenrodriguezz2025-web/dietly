@@ -3,7 +3,7 @@
 // Usar exclusivamente con renderToBuffer() en la API route.
 
 import type { Patient, PlanContent, Profile } from '@/types/dietly';
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 
@@ -83,6 +83,11 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: C.blanco,
   },
+  headerLogoImg: {
+    height: 28,
+    maxWidth: 100,
+    objectFit: 'contain',
+  },
 
   // ── Contenido interior ────────────────────────────────────────────────────
   cuerpo: {
@@ -103,6 +108,12 @@ const s = StyleSheet.create({
     color: C.blanco,
     letterSpacing: 2,
     marginBottom: 6,
+  },
+  portadaLogoImg: {
+    height: 56,
+    maxWidth: 180,
+    objectFit: 'contain',
+    marginBottom: 8,
   },
   portadaTagline: {
     fontSize: 12,
@@ -456,6 +467,10 @@ export type PropsPDF = {
   content: PlanContent;
   patient: Pick<Patient, 'name' | 'email'>;
   profile: Pick<Profile, 'full_name' | 'clinic_name'>;
+  /** Data URI (base64) del logo del nutricionista. Solo se muestra si is_pro=true. */
+  logo_uri: string | null;
+  /** true = Plan Pro → mostrar logo en header y portada */
+  is_pro: boolean;
 };
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -478,13 +493,28 @@ const COLOR_COMIDA: Record<string, string> = {
 
 // ── Subcomponentes ─────────────────────────────────────────────────────────────
 
-function HeaderPagina({ nombrePaciente }: { nombrePaciente: string }) {
+function HeaderPagina({
+  nombrePaciente,
+  logoUri,
+  isPro,
+}: {
+  nombrePaciente: string;
+  logoUri: string | null;
+  isPro: boolean;
+}) {
   return (
     <View style={s.headerBarra} fixed>
       <View style={s.headerIzquierda}>
-        <Text style={s.headerLogo}>Dietly</Text>
-        <Text style={s.headerSeparador}>·</Text>
-        <Text style={s.headerPlanLabel}>Plan Nutricional</Text>
+        {isPro && logoUri ? (
+          // eslint-disable-next-line jsx-a11y/alt-text -- componente PDF, no HTML
+          <Image src={logoUri} style={s.headerLogoImg} />
+        ) : (
+          <>
+            <Text style={s.headerLogo}>Dietly</Text>
+            <Text style={s.headerSeparador}>·</Text>
+            <Text style={s.headerPlanLabel}>Plan Nutricional</Text>
+          </>
+        )}
       </View>
       <Text style={s.headerPaciente}>{nombrePaciente}</Text>
     </View>
@@ -689,15 +719,19 @@ function construirListaCompra(content: PlanContent): ListaCompra {
 function ListaCompraPage({
   content,
   nombrePaciente,
+  logoUri,
+  isPro,
 }: {
   content: PlanContent;
   nombrePaciente: string;
+  logoUri: string | null;
+  isPro: boolean;
 }) {
   const lista = construirListaCompra(content);
 
   return (
     <Page size="A4" style={s.pagina}>
-      <HeaderPagina nombrePaciente={nombrePaciente} />
+      <HeaderPagina nombrePaciente={nombrePaciente} logoUri={logoUri} isPro={isPro} />
       <View style={s.cuerpo}>
         <Text style={s.tituloSeccion}>Lista de la compra</Text>
 
@@ -729,7 +763,7 @@ function ListaCompraPage({
 
 // ── Documento PDF principal ───────────────────────────────────────────────────
 
-export function NutritionPlanPDF({ plan, content, patient, profile }: PropsPDF) {
+export function NutritionPlanPDF({ plan, content, patient, profile, logo_uri, is_pro }: PropsPDF) {
   const fechaSemana = new Date(plan.week_start_date).toLocaleDateString('es-ES', {
     day: 'numeric',
     month: 'long',
@@ -747,9 +781,14 @@ export function NutritionPlanPDF({ plan, content, patient, profile }: PropsPDF) 
     >
       {/* ── Portada ── */}
       <Page size="A4" style={s.pagina}>
-        {/* Hero verde */}
+        {/* Hero verde — logo del nutricionista si es Pro, "Dietly" si es Básico */}
         <View style={s.portadaHero}>
-          <Text style={s.portadaLogoTexto}>Dietly</Text>
+          {is_pro && logo_uri ? (
+            // eslint-disable-next-line jsx-a11y/alt-text -- componente PDF, no HTML
+            <Image src={logo_uri} style={s.portadaLogoImg} />
+          ) : (
+            <Text style={s.portadaLogoTexto}>Dietly</Text>
+          )}
           <Text style={s.portadaTagline}>Plan Nutricional Personalizado</Text>
         </View>
 
@@ -806,7 +845,7 @@ export function NutritionPlanPDF({ plan, content, patient, profile }: PropsPDF) 
 
       {/* ── Resumen semanal + primeros 2 días ── */}
       <Page size="A4" style={s.pagina}>
-        <HeaderPagina nombrePaciente={patient.name} />
+        <HeaderPagina nombrePaciente={patient.name} logoUri={logo_uri} isPro={is_pro} />
         <View style={s.cuerpo}>
           <Text style={s.tituloSeccion}>Resumen semanal</Text>
           <View style={s.filaResumen}>
@@ -838,7 +877,7 @@ export function NutritionPlanPDF({ plan, content, patient, profile }: PropsPDF) 
       {/* ── Días restantes (de 3 en adelante, uno por página) ── */}
       {content.days.slice(2).map((day) => (
         <Page key={day.day_number} size="A4" style={s.pagina}>
-          <HeaderPagina nombrePaciente={patient.name} />
+          <HeaderPagina nombrePaciente={patient.name} logoUri={logo_uri} isPro={is_pro} />
           <View style={s.cuerpo}>
             <SeccionDia day={day} />
           </View>
@@ -847,7 +886,7 @@ export function NutritionPlanPDF({ plan, content, patient, profile }: PropsPDF) 
       ))}
 
       {/* ── Lista de la compra ── */}
-      <ListaCompraPage content={content} nombrePaciente={patient.name} />
+      <ListaCompraPage content={content} nombrePaciente={patient.name} logoUri={logo_uri} isPro={is_pro} />
     </Document>
   );
 }

@@ -65,7 +65,9 @@ export type Profile = {
   id: string;
   full_name: string;
   clinic_name: string | null;
+  logo_url: string | null;
   specialty: Specialty;
+  subscription_status: string | null;
   created_at: string;
   updated_at: string;
 };

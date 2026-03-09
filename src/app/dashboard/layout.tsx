@@ -22,6 +22,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
           <SidebarLink href='/dashboard'>Inicio</SidebarLink>
           <SidebarLink href='/dashboard/agenda'>Agenda</SidebarLink>
           <SidebarLink href='/dashboard/patients/new'>Nuevo paciente</SidebarLink>
+          <SidebarLink href='/dashboard/ajustes'>Ajustes</SidebarLink>
         </nav>
       </aside>
       <div className='min-w-0 flex-1'>{children}</div>

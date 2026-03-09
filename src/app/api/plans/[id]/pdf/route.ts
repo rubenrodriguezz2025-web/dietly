@@ -49,10 +49,10 @@ export async function GET(
     );
   }
 
-  // Obtener perfil del nutricionista
+  // Obtener perfil del nutricionista (incluye logo_url)
   const { data: profileData } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name')
+    .select('full_name, clinic_name, logo_url')
     .eq('id', user.id)
     .single();
 
@@ -60,6 +60,43 @@ export async function GET(
     full_name: '',
     clinic_name: null,
   };
+
+  // Verificar si el usuario tiene suscripción Pro activa
+  // Plan Pro = producto Stripe cuyo nombre contiene "pro" o "profesional"
+  // TODO: cuando haya price_id de Pro en variables de entorno, comparar directamente
+  const { data: subscription } = await (supabase as any)
+    .from('subscriptions')
+    .select('status, price_id, prices(unit_amount, products(name))')
+    .in('status', ['trialing', 'active'])
+    .maybeSingle();
+
+  const productName: string = subscription?.prices?.products?.name ?? '';
+  const is_pro =
+    subscription != null &&
+    (productName.toLowerCase().includes('pro') ||
+      productName.toLowerCase().includes('profesional') ||
+      // Fallback: si tiene suscripción activa pero no podemos leer el nombre, es Pro
+      productName === '');
+
+  // Construir data URI del logo si el usuario es Pro y tiene logo
+  let logo_uri: string | null = null;
+  if (is_pro && profileData?.logo_url) {
+    try {
+      const { data: logoBlob } = await supabase.storage
+        .from('nutritionist-logos')
+        .download(profileData.logo_url as string);
+
+      if (logoBlob) {
+        const arrayBuffer = await logoBlob.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = (logoBlob as Blob).type || 'image/png';
+        logo_uri = `data:${mimeType};base64,${base64}`;
+      }
+    } catch {
+      // Si falla la descarga del logo, continuar sin él
+      logo_uri = null;
+    }
+  }
 
   const patient = plan.patients as Pick<Patient, 'name' | 'email'>;
 
@@ -70,6 +107,8 @@ export async function GET(
       content,
       patient,
       profile,
+      logo_uri,
+      is_pro,
     });
 
     const buffer = await renderToBuffer(elemento as any);

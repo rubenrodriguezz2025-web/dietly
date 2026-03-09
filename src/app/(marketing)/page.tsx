@@ -501,6 +501,7 @@ const COMP_ROWS = [
     pdf: false,
     app: false,
     rgpd: true,
+    highlight: false,
   },
   {
     tool: 'IA generalista',
@@ -508,6 +509,7 @@ const COMP_ROWS = [
     pdf: false,
     app: false,
     rgpd: false,
+    highlight: false,
   },
   {
     tool: 'Software tradicional',
@@ -515,6 +517,7 @@ const COMP_ROWS = [
     pdf: true,
     app: true,
     rgpd: true,
+    highlight: false,
   },
   {
     tool: 'Dietly',
