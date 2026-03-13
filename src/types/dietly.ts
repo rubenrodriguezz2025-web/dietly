@@ -96,6 +96,20 @@ export type Patient = {
   updated_at: string;
 };
 
+export type PatientProgress = {
+  id: string;
+  patient_id: string;
+  nutritionist_id: string;
+  /** Formato 'YYYY-MM-DD' */
+  recorded_at: string;
+  weight_kg: number | null;
+  body_fat_pct: number | null;
+  muscle_mass_kg: number | null;
+  waist_cm: number | null;
+  notes: string | null;
+  created_at: string;
+};
+
 export type NutritionPlan = {
   id: string;
   nutritionist_id: string;

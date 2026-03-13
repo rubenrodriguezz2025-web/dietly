@@ -1,39 +1,11 @@
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
-import { Button } from '@/components/ui/button';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import {
-  ACTIVITY_LABELS,
-  GOAL_LABELS,
-  NutritionPlan,
-  Patient,
-  PLAN_STATUS_LABELS,
-  SEX_LABELS,
-} from '@/types/dietly';
+import { NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
 
-import { CopyButton } from './copy-button';
 import { GenerateButton } from './generate-button';
-
-// Etiquetas legibles para las claves del cuestionario intake
-const INTAKE_LABELS: Record<string, string> = {
-  comidas_al_dia:         'Comidas al día',
-  hora_desayuno:          'Hora desayuno',
-  hora_almuerzo:          'Hora almuerzo',
-  hora_merienda:          'Hora merienda',
-  hora_cena:              'Hora cena',
-  alergias_intolerancias: 'Alergias e intolerancias',
-  alimentos_no_gustados:  'Alimentos que no le gustan',
-  come_fuera:             '¿Come fuera de casa?',
-  frecuencia_fuera:       'Frecuencia comer fuera',
-  cocina_en_casa:         '¿Cocina en casa?',
-  actividad_fisica:       'Actividad física',
-  objetivo_personal:      'Objetivo personal',
-  dieta_especial:         'Dieta especial',
-  condicion_medica:       'Condición médica',
-  observaciones:          'Observaciones',
-};
+import { PatientTabs } from './patient-tabs';
 
 export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -53,22 +25,30 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
 
   if (!patient) notFound();
 
-  const { data: plans, error: plansError } = (await (supabase as any)
-    .from('nutrition_plans')
-    .select('id, status, week_start_date, created_at')
-    .eq('patient_id', id)
-    .order('created_at', { ascending: false })) as { data: NutritionPlan[] | null; error: { code: string; message: string; details: string } | null };
+  // Consultas en paralelo para minimizar latencia
+  const [plansResult, progressResult, patientExtraResult] = await Promise.all([
+    (supabase as any)
+      .from('nutrition_plans')
+      .select('id, status, week_start_date, created_at')
+      .eq('patient_id', id)
+      .order('created_at', { ascending: false }),
 
-  if (plansError) {
-    console.error('[PatientPage] nutrition_plans error:', plansError.message);
-  }
+    (supabase as any)
+      .from('patient_progress')
+      .select('*')
+      .eq('patient_id', id)
+      .order('recorded_at', { ascending: false }),
 
-  // Obtener intake_token y respuesta del cuestionario (admin client para leer el token)
-  const { data: patientExtra } = await (supabaseAdminClient as any)
-    .from('patients')
-    .select('intake_token')
-    .eq('id', id)
-    .single();
+    (supabaseAdminClient as any)
+      .from('patients')
+      .select('intake_token')
+      .eq('id', id)
+      .single(),
+  ]);
+
+  const plans = plansResult.data as NutritionPlan[] | null;
+  const progress = (progressResult.data ?? []) as PatientProgress[];
+  const intakeToken: string | null = patientExtraResult.data?.intake_token ?? null;
 
   const { data: intakeForm } = await (supabaseAdminClient as any)
     .from('intake_forms')
@@ -78,19 +58,12 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
     .limit(1)
     .maybeSingle();
 
-  const intakeToken: string | null = patientExtra?.intake_token ?? null;
   const intakeUrl = intakeToken
     ? `${process.env.NEXT_PUBLIC_APP_URL}/p/intake/${intakeToken}`
     : null;
 
-  const age = patient.date_of_birth
-    ? Math.floor(
-        (Date.now() - new Date(patient.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
-      )
-    : null;
-
   return (
-    <div className='flex flex-col gap-8'>
+    <div className='flex flex-col gap-6'>
       {/* Header */}
       <div className='flex items-start justify-between gap-4'>
         <div className='flex items-center gap-4'>
@@ -110,203 +83,14 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         <GenerateButton patientId={id} />
       </div>
 
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-        {/* Ficha del paciente */}
-        <div className='flex flex-col gap-6 lg:col-span-2'>
-          {/* Datos personales */}
-          <Section title='Datos personales'>
-            <div className='grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
-              <DataField label='Sexo' value={patient.sex ? SEX_LABELS[patient.sex] : null} />
-              <DataField label='Edad' value={age ? `${age} años` : null} />
-              <DataField
-                label='Fecha de nacimiento'
-                value={
-                  patient.date_of_birth
-                    ? new Date(patient.date_of_birth).toLocaleDateString('es-ES')
-                    : null
-                }
-              />
-              <DataField
-                label='Peso'
-                value={patient.weight_kg ? `${patient.weight_kg} kg` : null}
-              />
-              <DataField
-                label='Altura'
-                value={patient.height_cm ? `${patient.height_cm} cm` : null}
-              />
-              <DataField
-                label='IMC'
-                value={
-                  patient.weight_kg && patient.height_cm
-                    ? `${(patient.weight_kg / Math.pow(patient.height_cm / 100, 2)).toFixed(1)}`
-                    : null
-                }
-              />
-            </div>
-          </Section>
-
-          {/* Objetivos y actividad */}
-          <Section title='Objetivos y actividad'>
-            <div className='grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
-              <DataField
-                label='Objetivo'
-                value={patient.goal ? GOAL_LABELS[patient.goal] : null}
-              />
-              <DataField
-                label='Nivel de actividad'
-                value={patient.activity_level ? ACTIVITY_LABELS[patient.activity_level] : null}
-              />
-              <DataField label='TMB' value={patient.tmb ? `${patient.tmb} kcal` : null} />
-              <DataField label='TDEE' value={patient.tdee ? `${patient.tdee} kcal` : null} />
-            </div>
-          </Section>
-
-          {/* Restricciones y notas */}
-          {(patient.dietary_restrictions ||
-            patient.allergies ||
-            patient.intolerances ||
-            patient.preferences ||
-            patient.medical_notes) && (
-            <Section title='Notas clínicas'>
-              <div className='flex flex-col gap-4'>
-                {patient.dietary_restrictions && (
-                  <DataField label='Restricciones dietéticas' value={patient.dietary_restrictions} />
-                )}
-                {patient.allergies && (
-                  <DataField label='Alergias' value={patient.allergies} />
-                )}
-                {patient.intolerances && (
-                  <DataField label='Intolerancias' value={patient.intolerances} />
-                )}
-                {patient.preferences && (
-                  <DataField label='Preferencias' value={patient.preferences} />
-                )}
-                {patient.medical_notes && (
-                  <DataField label='Notas médicas' value={patient.medical_notes} />
-                )}
-              </div>
-            </Section>
-          )}
-        </div>
-
-        {/* Planes nutricionales */}
-        <div className='flex flex-col gap-4'>
-          <h2 className='text-sm font-semibold uppercase tracking-wider text-zinc-500'>
-            Planes nutricionales
-          </h2>
-          {!plans || plans.length === 0 ? (
-            <div className='flex flex-col items-center rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
-              <p className='text-sm text-zinc-500'>Sin planes todavía.</p>
-              <div className='mt-4'>
-                <GenerateButton patientId={id} />
-              </div>
-            </div>
-          ) : (
-            <div className='flex flex-col gap-2'>
-              {plans.map((plan) => (
-                <PlanRow key={plan.id} plan={plan} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Cuestionario de intake */}
-      <Section title='Cuestionario de salud (intake)'>
-        {intakeForm ? (
-          <div className='flex flex-col gap-4'>
-            <p className='text-sm text-zinc-400'>
-              Enviado el{' '}
-              {new Date(intakeForm.completed_at).toLocaleDateString('es-ES', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </p>
-            <div className='grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3'>
-              {Object.entries(intakeForm.answers as Record<string, string>).map(([key, value]) =>
-                value ? (
-                  <DataField
-                    key={key}
-                    label={INTAKE_LABELS[key] ?? key.replace(/_/g, ' ')}
-                    value={String(value)}
-                  />
-                ) : null
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className='flex flex-col gap-3'>
-            <p className='text-sm text-zinc-500'>
-              El paciente aún no ha rellenado el cuestionario.
-            </p>
-            {intakeUrl && (
-              <div className='flex flex-col gap-2'>
-                <p className='text-xs text-zinc-600'>Envía este enlace al paciente:</p>
-                <div className='flex items-center gap-2'>
-                  <code className='flex-1 truncate rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300'>
-                    {intakeUrl}
-                  </code>
-                  <CopyButton text={intakeUrl} />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </Section>
+      {/* Tabs: Ficha | Progreso | Cuestionario */}
+      <PatientTabs
+        patient={patient}
+        plans={plans}
+        progress={progress}
+        intakeForm={intakeForm}
+        intakeUrl={intakeUrl}
+      />
     </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
-      <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
-        {title}
-      </h2>
-      {children}
-    </div>
-  );
-}
-
-function DataField({ label, value }: { label: string; value: string | number | null }) {
-  return (
-    <div className='flex flex-col gap-0.5'>
-      <span className='text-xs text-zinc-600'>{label}</span>
-      <span className='text-sm text-zinc-200'>{value ?? <span className='text-zinc-700'>—</span>}</span>
-    </div>
-  );
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-amber-950 text-amber-400',
-  approved: 'bg-green-950 text-green-400',
-  sent: 'bg-blue-950 text-blue-400',
-};
-
-function PlanRow({ plan }: { plan: NutritionPlan }) {
-  return (
-    <Link
-      href={`/dashboard/plans/${plan.id}`}
-      className='flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-colors hover:border-zinc-600 hover:bg-zinc-900'
-    >
-      <div className='flex flex-col gap-1'>
-        <span className='text-sm font-medium text-zinc-200'>
-          Semana del{' '}
-          {new Date(plan.week_start_date).toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-          })}
-        </span>
-        <span className='text-xs text-zinc-600'>
-          {new Date(plan.created_at).toLocaleDateString('es-ES')}
-        </span>
-      </div>
-      <span
-        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[plan.status] ?? 'bg-zinc-800 text-zinc-400'}`}
-      >
-        {PLAN_STATUS_LABELS[plan.status]}
-      </span>
-    </Link>
   );
 }
