@@ -12,8 +12,6 @@ import {
   YAxis,
 } from 'recharts';
 
-import { cn } from '@/utils/cn';
-import type { PatientProgress } from '@/types/dietly';
 import {
   Sheet,
   SheetContent,
@@ -21,6 +19,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import type { PatientProgress } from '@/types/dietly';
+import { cn } from '@/utils/cn';
 
 import { addProgressEntry, deleteProgressEntry } from './progress-actions';
 

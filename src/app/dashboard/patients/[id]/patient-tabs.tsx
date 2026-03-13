@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 
-import { cn } from '@/utils/cn';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   ACTIVITY_LABELS,
@@ -13,6 +12,7 @@ import {
   PLAN_STATUS_LABELS,
   SEX_LABELS,
 } from '@/types/dietly';
+import { cn } from '@/utils/cn';
 
 import { CopyButton } from './copy-button';
 import { GenerateButton } from './generate-button';
