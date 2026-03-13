@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState,useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,8 +21,13 @@ export function OnboardingForm() {
     async (_prev: typeof initialState, formData: FormData) => {
       return (await saveProfile(formData)) ?? initialState;
     },
-    initialState
+    initialState,
   );
+
+  const [collegeNumber, setCollegeNumber] = useState('');
+  const [declared, setDeclared] = useState(false);
+
+  const canSubmit = collegeNumber.trim().length >= 4 && declared && !pending;
 
   return (
     <form action={action} className='flex flex-col gap-6'>
@@ -72,11 +77,43 @@ export function OnboardingForm() {
         </select>
       </div>
 
-      {state?.error && (
-        <p className='text-sm text-red-500'>{state.error}</p>
-      )}
+      <div className='flex flex-col gap-2'>
+        <label htmlFor='college_number' className='text-sm font-medium'>
+          Número de colegiado
+        </label>
+        <Input
+          id='college_number'
+          name='college_number'
+          placeholder='Ej: AND00123, MAD00456, CV-1234'
+          required
+          disabled={pending}
+          value={collegeNumber}
+          onChange={(e) => setCollegeNumber(e.target.value)}
+        />
+        <p className='text-xs text-muted-foreground'>
+          Puedes encontrar tu número en el carné de tu colegio profesional autonómico.
+        </p>
+      </div>
 
-      <Button type='submit' disabled={pending}>
+      <label className='flex cursor-pointer items-start gap-3'>
+        <input
+          type='checkbox'
+          name='declaration'
+          required
+          disabled={pending}
+          checked={declared}
+          onChange={(e) => setDeclared(e.target.checked)}
+          className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-zinc-600 accent-green-600'
+        />
+        <span className='text-sm leading-relaxed text-muted-foreground'>
+          Declaro ser dietista-nutricionista colegiado en España, habilitado legalmente
+          para prescribir planes nutricionales personalizados.
+        </span>
+      </label>
+
+      {state?.error && <p className='text-sm text-red-500'>{state.error}</p>}
+
+      <Button type='submit' disabled={!canSubmit}>
         {pending ? 'Guardando...' : 'Empezar a usar Dietly'}
       </Button>
     </form>

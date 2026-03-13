@@ -20,6 +20,26 @@ export function ProfileForm({
 
   return (
     <form action={action} className='flex flex-col gap-4'>
+      {!collegeNumber && (
+        <div className='flex items-start gap-2.5 rounded-lg border border-amber-800/40 bg-amber-950/20 px-4 py-3'>
+          <svg
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='1.5'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            className='mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400'
+            aria-hidden
+          >
+            <path d='M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z' />
+          </svg>
+          <p className='text-sm text-amber-300'>
+            Añade tu número de colegiado para completar tu perfil profesional.
+          </p>
+        </div>
+      )}
+
       <div className='flex flex-col gap-1.5'>
         <label htmlFor='full_name' className='text-sm font-medium text-zinc-300'>
           Nombre completo

@@ -70,6 +70,17 @@ export default function TerminosCondiciones() {
         </LegalSection>
 
         <LegalSection title='3. Responsabilidades del usuario'>
+          <div className='mb-4 rounded-lg border border-zinc-700/50 bg-zinc-900/50 p-4'>
+            <p>
+              El acceso a Dietly está reservado exclusivamente a{' '}
+              <strong className='text-zinc-200'>
+                dietistas-nutricionistas colegiados habilitados legalmente para ejercer en España
+              </strong>
+              . El usuario declara y garantiza tener la titulación y colegiación requeridas.
+              Dietly no asume responsabilidad por el uso del servicio por parte de personas
+              no habilitadas.
+            </p>
+          </div>
           <ul className='flex flex-col gap-2 pl-4'>
             <li className='list-disc'>
               Ser titular de la titulación profesional habilitante para ejercer la nutrición
