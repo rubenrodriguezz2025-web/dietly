@@ -12,9 +12,8 @@ import {
   PLAN_STATUS_LABELS,
   SEX_LABELS,
 } from '@/types/dietly';
-import { cn } from '@/utils/cn';
-
 import { calcTargets } from '@/utils/calc-targets';
+import { cn } from '@/utils/cn';
 
 import { CopyButton } from './copy-button';
 import { GenerateButton } from './generate-button';

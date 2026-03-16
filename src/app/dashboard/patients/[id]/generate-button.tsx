@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import type { CalcTargets, MacroOverrides } from '@/utils/calc-targets';
 import type { PatientGoal } from '@/types/dietly';
 import { GOAL_LABELS } from '@/types/dietly';
+import type { CalcTargets, MacroOverrides } from '@/utils/calc-targets';
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
