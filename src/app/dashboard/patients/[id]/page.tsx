@@ -29,7 +29,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const initialTargets = calcTargets(patient);
 
   // Consultas en paralelo para minimizar latencia
-  const [plansResult, progressResult, patientExtraResult] = await Promise.all([
+  const [plansResult, progressResult, patientExtraResult, followupFormsResult, nextReminderResult, overdueReminderResult] = await Promise.all([
     (supabase as any)
       .from('nutrition_plans')
       .select('id, status, week_start_date, created_at')
@@ -47,11 +47,46 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       .select('intake_token')
       .eq('id', id)
       .single(),
+
+    (supabase as any)
+      .from('followup_forms')
+      .select('id, created_at, completed_at, answers')
+      .eq('patient_id', id)
+      .eq('nutritionist_id', user.id)
+      .order('created_at', { ascending: false }),
+
+    (supabase as any)
+      .from('followup_reminders')
+      .select('id, remind_at, status')
+      .eq('patient_id', id)
+      .eq('nutritionist_id', user.id)
+      .in('status', ['pending'])
+      .order('remind_at', { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+
+    (supabase as any)
+      .from('followup_reminders')
+      .select('id, remind_at')
+      .eq('patient_id', id)
+      .eq('nutritionist_id', user.id)
+      .eq('status', 'sent')
+      .order('remind_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const plans = plansResult.data as NutritionPlan[] | null;
   const progress = (progressResult.data ?? []) as PatientProgress[];
   const intakeToken: string | null = patientExtraResult.data?.intake_token ?? null;
+  const followupForms = (followupFormsResult.data ?? []) as Array<{
+    id: string;
+    created_at: string;
+    completed_at: string | null;
+    answers: Record<string, string> | null;
+  }>;
+  const nextReminder = nextReminderResult.data as { id: string; remind_at: string; status: string } | null;
+  const overdueReminder = overdueReminderResult.data as { id: string; remind_at: string } | null;
 
   const { data: intakeForm } = await (supabaseAdminClient as any)
     .from('intake_forms')
@@ -79,7 +114,23 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
               .toUpperCase()}
           </div>
           <div>
-            <h1 className='text-2xl font-bold text-zinc-100'>{patient.name}</h1>
+            <div className='flex flex-wrap items-center gap-2'>
+              <h1 className='text-2xl font-bold text-zinc-100'>{patient.name}</h1>
+              {overdueReminder && (
+                <span className='rounded-full bg-red-950 px-2.5 py-0.5 text-xs font-medium text-red-400'>
+                  Revisión vencida
+                </span>
+              )}
+              {!overdueReminder && nextReminder && (
+                <span className='rounded-full bg-amber-950 px-2.5 py-0.5 text-xs font-medium text-amber-400'>
+                  Próxima revisión:{' '}
+                  {new Date(nextReminder.remind_at).toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short',
+                  })}
+                </span>
+              )}
+            </div>
             {patient.email && <p className='mt-0.5 text-sm text-zinc-500'>{patient.email}</p>}
           </div>
         </div>
@@ -112,6 +163,9 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         progress={progress}
         intakeForm={intakeForm}
         intakeUrl={intakeUrl}
+        followupForms={followupForms}
+        nextReminder={nextReminder}
+        overdueReminder={overdueReminder}
       />
     </div>
   );

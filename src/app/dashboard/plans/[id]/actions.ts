@@ -74,7 +74,7 @@ export async function approvePlan(
   if (error) return { error: 'Error al aprobar el plan. Inténtalo de nuevo.' };
 
   revalidatePath(`/dashboard/plans/${planId}`);
-  return {};
+  redirect(`/dashboard/plans/${planId}?approved=1`);
 }
 
 // ── Regenerate day ────────────────────────────────────────────────────────────

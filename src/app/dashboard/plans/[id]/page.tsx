@@ -6,9 +6,17 @@ import type { NutritionPlan, PlanContent } from '@/types/dietly';
 import { GOAL_LABELS, PLAN_STATUS_LABELS } from '@/types/dietly';
 
 import { PlanEditor } from './plan-editor';
+import { ReminderModal } from './reminder-modal';
 
-export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PlanPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ approved?: string }>;
+}) {
   const { id } = await params;
+  const { approved } = await searchParams;
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -29,9 +37,18 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
   const content = plan.content as PlanContent | null;
   const isGenerating = plan.status === 'generating';
   const hasError = plan.status === 'error';
+  const showReminderModal = approved === '1' && plan.status === 'approved' && !!plan.patients;
 
   return (
     <div className='flex flex-col gap-8'>
+      {/* Modal de recordatorio post-aprobación */}
+      {showReminderModal && plan.patients && (
+        <ReminderModal
+          patientId={plan.patients.id}
+          nutritionistId={user.id}
+          patientName={plan.patients.name}
+        />
+      )}
       {/* Header */}
       <div className='flex flex-wrap items-start justify-between gap-4'>
         <div>

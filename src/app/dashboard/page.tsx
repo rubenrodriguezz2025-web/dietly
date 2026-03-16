@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { GOAL_LABELS, NutritionPlan, Patient, PLAN_STATUS_LABELS } from '@/types/dietly';
 
+import { DueRemindersBanner } from './due-reminders-banner';
 import { OnboardingChecklist } from './onboarding-checklist';
 
 export default async function DashboardPage() {
@@ -49,6 +50,24 @@ export default async function DashboardPage() {
     .select('id', { count: 'exact', head: true })
     .eq('nutritionist_id', user.id) as { count: number | null };
 
+  // Recordatorios pendientes (remind_at <= hoy, status = 'pending')
+  const today = new Date().toISOString().split('T')[0];
+  const { data: dueReminders } = await (supabase as any)
+    .from('followup_reminders')
+    .select('id, remind_at, patients(id, name)')
+    .eq('nutritionist_id', user.id)
+    .eq('status', 'pending')
+    .lte('remind_at', today)
+    .order('remind_at', { ascending: true });
+
+  // Marcar los recordatorios vencidos como 'sent' (se mostraron en el banner)
+  if (dueReminders && dueReminders.length > 0) {
+    await (supabase as any)
+      .from('followup_reminders')
+      .update({ status: 'sent' })
+      .in('id', (dueReminders as Array<{ id: string }>).map((r) => r.id));
+  }
+
   // Borradores pendientes de aprobar del nutricionista autenticado
   const { data: draftPlans } = (await (supabase as any)
     .from('nutrition_plans')
@@ -78,6 +97,11 @@ export default async function DashboardPage() {
           <Link href='/dashboard/patients/new'>+ Nuevo paciente</Link>
         </Button>
       </div>
+
+      {/* Banner de recordatorios vencidos */}
+      {dueReminders && dueReminders.length > 0 && (
+        <DueRemindersBanner reminders={dueReminders as Array<{ id: string; remind_at: string; patients: { id: string; name: string } | null }>} />
+      )}
 
       {/* Checklist de onboarding — desaparece cuando se completan los 4 pasos */}
       {!profile.onboarding_completed_at && (
