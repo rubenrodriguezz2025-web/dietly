@@ -254,20 +254,50 @@ export function PatientTabs({ patient, plans, progress, intakeForm, intakeUrl }:
               </div>
             </div>
           ) : (
-            <div className='flex flex-col gap-3'>
+            <div className='flex flex-col gap-4'>
               <p className='text-sm text-zinc-500'>
                 El paciente aún no ha rellenado el cuestionario.
               </p>
               {intakeUrl && (
-                <div className='flex flex-col gap-2'>
-                  <p className='text-xs text-zinc-600'>Envía este enlace al paciente:</p>
-                  <div className='flex items-center gap-2'>
-                    <code className='flex-1 truncate rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300'>
-                      {intakeUrl}
-                    </code>
-                    <CopyButton text={intakeUrl} />
+                <>
+                  {/* Callout informativo */}
+                  <div className='flex gap-3 rounded-xl border border-[#1a7a45]/40 bg-[#0a1f12] p-4'>
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      width='16'
+                      height='16'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      className='mt-0.5 flex-shrink-0 text-[#1a7a45]'
+                      aria-hidden='true'
+                    >
+                      <circle cx='12' cy='12' r='10' />
+                      <line x1='12' y1='16' x2='12' y2='12' />
+                      <line x1='12' y1='8' x2='12.01' y2='8' />
+                    </svg>
+                    <p className='text-[13px] leading-relaxed text-zinc-400'>
+                      <span className='font-medium text-zinc-300'>
+                        ¿Paciente online o que aún no ha venido a consulta?
+                      </span>{' '}
+                      Envíale este cuestionario para que rellene sus datos desde casa. El plan se
+                      generará con toda esa información.
+                    </p>
                   </div>
-                </div>
+                  {/* Enlace a copiar */}
+                  <div className='flex flex-col gap-2'>
+                    <p className='text-xs text-zinc-600'>Envía este enlace al paciente:</p>
+                    <div className='flex items-center gap-2'>
+                      <code className='flex-1 truncate rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300'>
+                        {intakeUrl}
+                      </code>
+                      <CopyButton text={intakeUrl} />
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
