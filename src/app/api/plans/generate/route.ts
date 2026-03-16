@@ -124,11 +124,73 @@ const SHOPPING_LIST_TOOL: Anthropic.Tool = {
   },
 };
 
+// Mapeos legibles para los valores de select del intake
+const COME_FUERA_LABELS: Record<string, string> = {
+  no: 'no, casi siempre en casa',
+  si_poco: 'sí, 1-2 veces por semana',
+  si_bastante: 'sí, 3-4 veces por semana',
+  si_mucho: 'sí, casi todos los días',
+};
+
+const COCINA_EN_CASA_LABELS: Record<string, string> = {
+  si_siempre: 'sí, casi siempre',
+  si_a_veces: 'sí, a veces',
+  poco: 'poco, cosas sencillas',
+  no: 'no cocina',
+};
+
+export type IntakeAnswers = {
+  comidas_al_dia?: string;
+  hora_desayuno?: string;
+  hora_almuerzo?: string;
+  hora_merienda?: string;
+  hora_cena?: string;
+  alergias_intolerancias?: string;
+  alimentos_no_gustados?: string;
+  come_fuera?: string;
+  cocina_en_casa?: string;
+  actividad_fisica?: string;
+  objetivo_personal?: string;
+  dieta_especial?: string;
+  condicion_medica?: string;
+  observaciones?: string;
+};
+
+function buildIntakeSection(answers: IntakeAnswers): string {
+  const lines: string[] = [];
+
+  // Horarios
+  const horarios: string[] = [];
+  if (answers.hora_desayuno) horarios.push(`desayuno ${answers.hora_desayuno}`);
+  if (answers.hora_merienda) horarios.push(`media mañana ${answers.hora_merienda}`);
+  if (answers.hora_almuerzo) horarios.push(`almuerzo ${answers.hora_almuerzo}`);
+  if (answers.hora_cena) horarios.push(`cena ${answers.hora_cena}`);
+  if (horarios.length > 0) lines.push(`- Horarios habituales: ${horarios.join(', ')}`);
+
+  if (answers.comidas_al_dia) lines.push(`- Número de comidas preferidas al día: ${answers.comidas_al_dia}`);
+  if (answers.alimentos_no_gustados?.trim()) lines.push(`- Alimentos que no le gustan o evita: ${answers.alimentos_no_gustados.trim()}`);
+  if (answers.alergias_intolerancias?.trim()) lines.push(`- Alergias/intolerancias declaradas por el paciente: ${answers.alergias_intolerancias.trim()}`);
+
+  const comeFuera = answers.come_fuera ? COME_FUERA_LABELS[answers.come_fuera] : null;
+  if (comeFuera) lines.push(`- Come fuera de casa: ${comeFuera}`);
+
+  const cocinaEnCasa = answers.cocina_en_casa ? COCINA_EN_CASA_LABELS[answers.cocina_en_casa] : null;
+  if (cocinaEnCasa) lines.push(`- Cocina en casa: ${cocinaEnCasa}`);
+
+  if (answers.dieta_especial?.trim()) lines.push(`- Dieta especial que sigue actualmente: ${answers.dieta_especial.trim()}`);
+  if (answers.condicion_medica?.trim()) lines.push(`- Condición médica declarada: ${answers.condicion_medica.trim()}`);
+  if (answers.observaciones?.trim()) lines.push(`- Observaciones del paciente: ${answers.observaciones.trim()}`);
+
+  if (lines.length === 0) return '';
+  return `\nCUESTIONARIO DEL PACIENTE (respondido por el propio paciente):\n${lines.join('\n')}`;
+}
+
 function buildDayPrompt(
   patient: Patient,
   dayNum: number,
   targets: ReturnType<typeof calcTargets>,
-  previousDays: PlanDay[]
+  previousDays: PlanDay[],
+  intakeAnswers?: IntakeAnswers
 ): string {
   const restrictions = [
     patient.dietary_restrictions,
@@ -145,8 +207,16 @@ function buildDayPrompt(
           .join('\n')}`
       : '';
 
+  const intakeSection = intakeAnswers ? buildIntakeSection(intakeAnswers) : '';
+
   const carbsPctDisplay = Math.round(targets.carbs_pct * 100);
   const fatPctDisplay = Math.round(targets.fat_pct * 100);
+
+  // Horarios por defecto desde el intake (si existen)
+  const horarioDesayuno = intakeAnswers?.hora_desayuno ?? '08:00';
+  const horarioAlmuerzo = intakeAnswers?.hora_almuerzo ?? '14:00';
+  const horarioCena = intakeAnswers?.hora_cena ?? '21:00';
+  const horarioMerienda = intakeAnswers?.hora_merienda ?? '17:00';
 
   return `Eres un dietista-nutricionista experto. Genera el plan nutricional del ${DAY_NAMES[dayNum - 1]} (día ${dayNum}/7).
 
@@ -155,7 +225,7 @@ PERFIL DEL PACIENTE:
 - Calorías diarias objetivo: ${targets.calories} kcal
 - Proteína objetivo: ${targets.protein_g}g (${targets.protein_per_kg}g/kg peso corporal)
 - Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
-- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${variety}
+- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${variety}
 
 REQUISITOS OBLIGATORIOS:
 - 4-5 comidas (desayuno, media mañana opcional, almuerzo, merienda, cena)
@@ -163,6 +233,7 @@ REQUISITOS OBLIGATORIOS:
 - Los macros de las comidas deben sumar aproximadamente el total diario
 - Usa alimentos típicos españoles y mediterráneos variados
 - Las instrucciones de preparación deben ser prácticas y concretas
+- Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}
 
 Usa la herramienta generate_day para devolver el plan estructurado.`;
 }
@@ -233,6 +304,17 @@ export async function POST(req: NextRequest) {
   if (!patient) {
     return Response.json({ error: 'Paciente no encontrado' }, { status: 404 });
   }
+
+  // Obtener el cuestionario de intake más reciente del paciente (si existe)
+  const { data: intakeFormData } = await (supabaseAdminClient as any)
+    .from('intake_forms')
+    .select('answers')
+    .eq('patient_id', patient_id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle() as { data: { answers: IntakeAnswers } | null };
+
+  const intakeAnswers: IntakeAnswers | undefined = intakeFormData?.answers ?? undefined;
 
   const targets = calcTargets(patient, macro_overrides);
 
@@ -316,7 +398,7 @@ export async function POST(req: NextRequest) {
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
                 messages: [
-                  { role: 'user', content: buildDayPrompt(patient, dayNum, targets, days) },
+                  { role: 'user', content: buildDayPrompt(patient, dayNum, targets, days, intakeAnswers) },
                 ],
               });
 

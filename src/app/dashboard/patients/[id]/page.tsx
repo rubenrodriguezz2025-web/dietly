@@ -83,12 +83,25 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             {patient.email && <p className='mt-0.5 text-sm text-zinc-500'>{patient.email}</p>}
           </div>
         </div>
-        <GenerateButton
-          patientId={id}
-          initialTargets={initialTargets}
-          patientWeight={patient.weight_kg ?? 70}
-          patientGoal={patient.goal ?? 'health'}
-        />
+        <div className='flex flex-col items-end gap-2'>
+          {intakeForm ? (
+            <span className='inline-flex items-center gap-1.5 rounded-full bg-emerald-950 px-2.5 py-1 text-xs font-medium text-emerald-400'>
+              <span className='h-1.5 w-1.5 rounded-full bg-emerald-400' />
+              Cuestionario completado
+            </span>
+          ) : (
+            <span className='inline-flex items-center gap-1.5 rounded-full bg-amber-950 px-2.5 py-1 text-xs font-medium text-amber-400'>
+              <span className='h-1.5 w-1.5 rounded-full bg-amber-400' />
+              Sin cuestionario — se usarán solo los datos básicos
+            </span>
+          )}
+          <GenerateButton
+            patientId={id}
+            initialTargets={initialTargets}
+            patientWeight={patient.weight_kg ?? 70}
+            patientGoal={patient.goal ?? 'health'}
+          />
+        </div>
       </div>
 
       {/* Tabs: Ficha | Progreso | Cuestionario */}
