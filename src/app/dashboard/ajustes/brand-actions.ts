@@ -169,6 +169,22 @@ export async function uploadProfilePhoto(
   return { success: true };
 }
 
+// ── Marcar primera visita a Mi marca ─────────────────────────────────────────
+
+export async function markBrandSettingsVisited(): Promise<void> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return;
+
+  await (supabase as any)
+    .from('profiles')
+    .update({ brand_settings_visited_at: new Date().toISOString() })
+    .eq('id', user.id)
+    .is('brand_settings_visited_at', null); // solo si aún no está registrado
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/ajustes');
+}
+
 // ── Eliminar foto de perfil ───────────────────────────────────────────────────
 
 export async function deleteProfilePhoto(

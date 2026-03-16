@@ -20,7 +20,7 @@ export default async function AjustesPage() {
   const { data: profile } = await (supabase as any)
     .from('profiles')
     .select(
-      'full_name, clinic_name, logo_url, college_number, signature_url, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url'
+      'full_name, clinic_name, logo_url, college_number, signature_url, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url, brand_settings_visited_at'
     )
     .eq('id', user.id)
     .single();
@@ -135,7 +135,7 @@ export default async function AjustesPage() {
       </section>
 
       {/* ── Mi marca ── */}
-      <div>
+      <div id='mi-marca'>
         <h2 className='mb-1 text-xl font-bold text-zinc-100'>Mi marca</h2>
         <p className='mb-6 text-sm text-zinc-500'>
           Personaliza el aspecto y contenido de todos tus planes nutricionales en PDF.
@@ -147,6 +147,7 @@ export default async function AjustesPage() {
           welcomeMessage={profile?.welcome_message ?? null}
           fontPreference={profile?.font_preference ?? 'clasica'}
           profilePhotoUrl={profilePhotoPreviewUrl}
+          brandSettingsVisitedAt={profile?.brand_settings_visited_at ?? null}
         />
       </div>
     </div>

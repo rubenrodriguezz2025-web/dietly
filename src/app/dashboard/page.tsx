@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   // Verificar onboarding
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name, logo_url, onboarding_completed_at')
+    .select('full_name, clinic_name, logo_url, onboarding_completed_at, brand_settings_visited_at')
     .eq('id', user.id)
     .single();
 
@@ -107,6 +107,7 @@ export default async function DashboardPage() {
       {!profile.onboarding_completed_at && (
         <OnboardingChecklist
           logoUploaded={!!profile.logo_url}
+          brandVisited={!!profile.brand_settings_visited_at}
           hasPatient={(patients?.length ?? 0) > 0}
           hasPlan={(totalPlans ?? 0) > 0}
           firstPatientId={patients?.[0]?.id}
