@@ -133,7 +133,7 @@ const NAV_ITEMS: NavItem[] = [
 
 // ── Desktop sidebar ────────────────────────────────────────────────────────────
 
-export function SidebarNav() {
+export function SidebarNav({ isAdmin }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -158,13 +158,48 @@ export function SidebarNav() {
           </Link>
         );
       })}
+
+      {isAdmin && (
+        <>
+          <div className='mx-3 my-2 border-t border-zinc-800/60' />
+          <Link
+            href='/dashboard/admin/beta'
+            className={cn(
+              'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150',
+              pathname.startsWith('/dashboard/admin')
+                ? 'bg-amber-950/40 font-medium text-amber-400'
+                : 'text-zinc-600 hover:bg-zinc-900/70 hover:text-zinc-400',
+            )}
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='16'
+              height='16'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              className={cn(
+                'flex-shrink-0 transition-colors duration-150',
+                pathname.startsWith('/dashboard/admin') ? 'text-amber-400' : 'text-zinc-700',
+              )}
+              aria-hidden='true'
+            >
+              <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
+            </svg>
+            Beta
+          </Link>
+        </>
+      )}
     </nav>
   );
 }
 
 // ── Mobile horizontal nav ──────────────────────────────────────────────────────
 
-export function MobileDashboardNav() {
+export function MobileDashboardNav({ isAdmin }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -191,6 +226,35 @@ export function MobileDashboardNav() {
           </Link>
         );
       })}
+
+      {isAdmin && (
+        <Link
+          href='/dashboard/admin/beta'
+          className={cn(
+            'flex flex-shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm transition-colors duration-150 whitespace-nowrap',
+            pathname.startsWith('/dashboard/admin')
+              ? 'bg-amber-950/40 font-medium text-amber-400'
+              : 'bg-zinc-900 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400',
+          )}
+        >
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            width='14'
+            height='14'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            className='w-3.5 h-3.5 flex-shrink-0'
+            aria-hidden='true'
+          >
+            <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
+          </svg>
+          Beta
+        </Link>
+      )}
     </nav>
   );
 }
