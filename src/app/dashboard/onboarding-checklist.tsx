@@ -6,14 +6,13 @@ import Link from 'next/link';
 import { markOnboardingComplete } from './actions';
 
 type Props = {
-  logoUploaded: boolean;
   brandVisited: boolean;
   hasPatient: boolean;
   hasPlan: boolean;
   firstPatientId?: string;
 };
 
-export function OnboardingChecklist({ logoUploaded, brandVisited, hasPatient, hasPlan, firstPatientId }: Props) {
+export function OnboardingChecklist({ brandVisited, hasPatient, hasPlan, firstPatientId }: Props) {
   const [phase, setPhase] = useState<'checklist' | 'celebration' | 'done'>('checklist');
 
   const steps: {
@@ -30,17 +29,10 @@ export function OnboardingChecklist({ logoUploaded, brandVisited, hasPatient, ha
       href: null,
     },
     {
-      label: 'Sube tu logo',
-      optional: true,
-      complete: logoUploaded,
-      cta: 'Subir logo →',
-      href: '/dashboard/ajustes#mi-marca',
-    },
-    {
       label: 'Personaliza tu marca',
       optional: true,
       complete: brandVisited,
-      cta: 'Ir a Mi marca →',
+      cta: 'Personalizar marca →',
       href: '/dashboard/ajustes#mi-marca',
     },
     {
@@ -89,10 +81,10 @@ export function OnboardingChecklist({ logoUploaded, brandVisited, hasPatient, ha
       {/* Cabecera */}
       <div className='mb-4 flex items-start justify-between gap-4'>
         <div>
-          <p className='text-sm font-semibold text-zinc-100'>Empieza en 5 pasos</p>
+          <p className='text-sm font-semibold text-zinc-100'>Empieza en 4 pasos</p>
           <p className='mt-0.5 text-xs text-zinc-500'>Tu primer plan en menos de 15 minutos</p>
         </div>
-        <span className='flex-shrink-0 text-xs font-medium text-[#22c55e]'>{completedCount}/5</span>
+        <span className='flex-shrink-0 text-xs font-medium text-[#22c55e]'>{completedCount}/4</span>
       </div>
 
       {/* Barra de progreso */}

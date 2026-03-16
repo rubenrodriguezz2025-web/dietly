@@ -1,11 +1,10 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
+import { useActionState, useRef, useState, useTransition } from 'react';
 import Image from 'next/image';
 
 import {
   deleteProfilePhoto,
-  markBrandSettingsVisited,
   updateFontPreference,
   updatePrimaryColor,
   updateShowMacros,
@@ -29,7 +28,6 @@ export type BrandSettingsProps = {
   welcomeMessage: string | null;
   fontPreference: FontPref;
   profilePhotoUrl: string | null;
-  brandSettingsVisitedAt: string | null;
 };
 
 // ── Toggle accesible ──────────────────────────────────────────────────────────
@@ -70,16 +68,7 @@ export function BrandSettings({
   welcomeMessage: initialWelcomeMessage,
   fontPreference: initialFont,
   profilePhotoUrl,
-  brandSettingsVisitedAt,
 }: BrandSettingsProps) {
-  // Registrar primera visita a Mi marca
-  useEffect(() => {
-    if (!brandSettingsVisitedAt) {
-      markBrandSettingsVisited();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Estado local
   const [color, setColor] = useState(initialColor || '#1a7a45');
   const [colorInput, setColorInput] = useState(initialColor || '#1a7a45');

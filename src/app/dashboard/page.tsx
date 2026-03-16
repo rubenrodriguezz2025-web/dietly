@@ -106,7 +106,6 @@ export default async function DashboardPage() {
       {/* Checklist de onboarding — desaparece cuando se completan los 4 pasos */}
       {!profile.onboarding_completed_at && (
         <OnboardingChecklist
-          logoUploaded={!!profile.logo_url}
           brandVisited={!!profile.brand_settings_visited_at}
           hasPatient={(patients?.length ?? 0) > 0}
           hasPlan={(totalPlans ?? 0) > 0}

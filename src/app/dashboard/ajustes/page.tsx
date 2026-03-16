@@ -4,6 +4,7 @@ import { getSubscription } from '@/features/account/controllers/get-subscription
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 import { BrandSettings } from './brand-settings';
+import { BrandVisitTracker } from './brand-visit-tracker';
 import { LogoForm } from './logo-form';
 import { ProfileForm } from './profile-form';
 import { SignatureForm } from './signature-form';
@@ -136,6 +137,9 @@ export default async function AjustesPage() {
 
       {/* ── Mi marca ── */}
       <div id='mi-marca'>
+        {/* Registra la primera visita a esta sección (solo se renderiza una vez) */}
+        {!profile?.brand_settings_visited_at && <BrandVisitTracker />}
+
         <h2 className='mb-1 text-xl font-bold text-zinc-100'>Mi marca</h2>
         <p className='mb-6 text-sm text-zinc-500'>
           Personaliza el aspecto y contenido de todos tus planes nutricionales en PDF.
@@ -147,7 +151,6 @@ export default async function AjustesPage() {
           welcomeMessage={profile?.welcome_message ?? null}
           fontPreference={profile?.font_preference ?? 'clasica'}
           profilePhotoUrl={profilePhotoPreviewUrl}
-          brandSettingsVisitedAt={profile?.brand_settings_visited_at ?? null}
         />
       </div>
     </div>
