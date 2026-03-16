@@ -76,13 +76,17 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
         }),
       });
       if (!res.ok || !res.body) {
-        let detail = `HTTP ${res.status}`;
+        let msg = `Error HTTP ${res.status}. Inténtalo de nuevo.`;
         try {
           const b = await res.clone().json();
-          detail = b.detail ?? b.error ?? detail;
+          if (b.beta_limit_reached) {
+            msg = b.error as string;
+          } else if (b.error || b.detail) {
+            msg = `Error (${b.detail ?? b.error}). Inténtalo de nuevo.`;
+          }
         } catch { /* ignore */ }
         setState('error');
-        setErrorMsg(`Error (${detail}). Inténtalo de nuevo.`);
+        setErrorMsg(msg);
         return;
       }
       const reader = res.body.getReader();

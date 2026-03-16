@@ -269,6 +269,18 @@ function validateDay(day: PlanDay): number[] {
     .filter((i) => i >= 0);
 }
 
+// ── Constantes beta ───────────────────────────────────────────────────────────
+
+const BETA_PLAN_LIMIT = 10;
+
+// Precios claude-sonnet-4-5 (USD por token)
+const COST_PER_INPUT_TOKEN = 0.000003;
+const COST_PER_OUTPUT_TOKEN = 0.000015;
+
+function calcCost(inputTokens: number, outputTokens: number): number {
+  return Math.round((inputTokens * COST_PER_INPUT_TOKEN + outputTokens * COST_PER_OUTPUT_TOKEN) * 1_000_000) / 1_000_000;
+}
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -292,6 +304,22 @@ export async function POST(req: NextRequest) {
     }
   } catch {
     return Response.json({ error: 'patient_id requerido' }, { status: 400 });
+  }
+
+  // Límite beta: verificar número de planes del nutricionista
+  const { count: planCount } = await (supabaseAdminClient as any)
+    .from('nutrition_plans')
+    .select('id', { count: 'exact', head: true })
+    .eq('nutritionist_id', user.id);
+
+  if ((planCount ?? 0) >= BETA_PLAN_LIMIT) {
+    return Response.json(
+      {
+        error: 'Has alcanzado el límite de 10 planes durante la beta. Escríbenos a hola@dietly.es para ampliar tu acceso.',
+        beta_limit_reached: true,
+      },
+      { status: 403 },
+    );
   }
 
   const { data: patient } = (await (supabase as any)
@@ -378,6 +406,8 @@ export async function POST(req: NextRequest) {
       }
 
       const days: PlanDay[] = [];
+      let totalTokensInput = 0;
+      let totalTokensOutput = 0;
 
       try {
         send({ type: 'start', plan_id: planId });
@@ -400,6 +430,20 @@ export async function POST(req: NextRequest) {
                 messages: [
                   { role: 'user', content: buildDayPrompt(patient, dayNum, targets, days, intakeAnswers) },
                 ],
+              });
+
+              // Registrar tokens y coste en plan_generations
+              const inputTok = response.usage.input_tokens;
+              const outputTok = response.usage.output_tokens;
+              totalTokensInput += inputTok;
+              totalTokensOutput += outputTok;
+              void (supabaseAdminClient as any).from('plan_generations').insert({
+                plan_id: planId,
+                nutritionist_id: user.id,
+                day_generated: dayNum,
+                tokens_input: inputTok,
+                tokens_output: outputTok,
+                cost_usd: calcCost(inputTok, outputTok),
               });
 
               const toolUse = response.content.find((b) => b.type === 'tool_use');
@@ -439,6 +483,21 @@ export async function POST(req: NextRequest) {
             tool_choice: { type: 'tool', name: 'generate_shopping_list' },
             messages: [{ role: 'user', content: buildShoppingListPrompt(days) }],
           });
+
+          // Registrar tokens de la lista de la compra como día 8
+          const slInput = shoppingResponse.usage.input_tokens;
+          const slOutput = shoppingResponse.usage.output_tokens;
+          totalTokensInput += slInput;
+          totalTokensOutput += slOutput;
+          void (supabaseAdminClient as any).from('plan_generations').insert({
+            plan_id: planId,
+            nutritionist_id: user.id,
+            day_generated: 8, // convenio: 8 = lista de la compra
+            tokens_input: slInput,
+            tokens_output: slOutput,
+            cost_usd: calcCost(slInput, slOutput),
+          });
+
           const shoppingToolUse = shoppingResponse.content.find((b) => b.type === 'tool_use');
           if (shoppingToolUse?.type === 'tool_use') {
             shoppingList = shoppingToolUse.input as ShoppingList;
@@ -475,7 +534,11 @@ export async function POST(req: NextRequest) {
 
         await (supabaseAdminClient as any)
           .from('nutrition_plans')
-          .update({ status: 'draft', content })
+          .update({
+            status: 'draft',
+            content,
+            claude_tokens_used: totalTokensInput + totalTokensOutput,
+          })
           .eq('id', planId);
 
         send({ type: 'done', plan_id: planId });

@@ -107,6 +107,9 @@ export default async function DashboardPage() {
         />
       </div>
 
+      {/* Contador beta — límite de 10 planes */}
+      <BetaMeter used={totalPlans ?? 0} />
+
       {/* Borradores pendientes de aprobar */}
       {draftCount > 0 && (
         <div id='borradores'>
@@ -141,6 +144,74 @@ export default async function DashboardPage() {
 }
 
 // ── Componentes ────────────────────────────────────────────────────────────────
+
+const BETA_LIMIT = 10;
+
+function BetaMeter({ used }: { used: number }) {
+  const pct = Math.min(100, (used / BETA_LIMIT) * 100);
+  const isWarning = used >= 8 && used < BETA_LIMIT;
+  const isFull = used >= BETA_LIMIT;
+
+  const barColor = isFull ? '#dc2626' : isWarning ? '#d97706' : '#1a7a45';
+  const borderColor = isFull
+    ? 'border-red-900/50'
+    : isWarning
+      ? 'border-amber-900/50'
+      : 'border-zinc-800';
+  const labelColor = isFull ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-zinc-500';
+
+  return (
+    <div className={`rounded-xl border ${borderColor} bg-zinc-950 px-5 py-4`}>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <div className='flex flex-col gap-0.5'>
+          <p className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+            Acceso beta
+          </p>
+          <p className='text-sm text-zinc-400'>
+            <span className={`text-lg font-bold ${isFull ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-zinc-100'}`}>
+              {used}
+            </span>
+            <span className='text-zinc-600'> / {BETA_LIMIT} planes utilizados</span>
+          </p>
+        </div>
+        {isFull ? (
+          <a
+            href='mailto:hola@dietly.es'
+            className='rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:border-red-700/60 hover:text-red-300'
+          >
+            Ampliar acceso →
+          </a>
+        ) : isWarning ? (
+          <a
+            href='mailto:hola@dietly.es'
+            className='text-xs text-amber-600 transition-colors hover:text-amber-400'
+          >
+            Solicitar más planes →
+          </a>
+        ) : null}
+      </div>
+
+      {/* Barra de progreso */}
+      <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-800'>
+        <div
+          className='h-full rounded-full transition-all duration-500'
+          style={{ width: `${pct}%`, backgroundColor: barColor }}
+          role='progressbar'
+          aria-valuenow={used}
+          aria-valuemin={0}
+          aria-valuemax={BETA_LIMIT}
+          aria-label={`${used} de ${BETA_LIMIT} planes beta utilizados`}
+        />
+      </div>
+
+      {isFull && (
+        <p className={`mt-2 text-xs ${labelColor}`}>
+          Has alcanzado el límite de planes beta. Escríbenos para ampliar tu acceso.
+        </p>
+      )}
+    </div>
+  );
+}
 
 function MetricCard({
   label,
