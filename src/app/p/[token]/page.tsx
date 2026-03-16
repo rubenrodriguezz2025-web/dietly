@@ -268,12 +268,12 @@ export default async function PaginaPaciente({
             </section>
           )}
 
-          {/* Pie */}
-          <p className='mt-10 text-center text-[11px] font-medium text-zinc-400'>
-            Preparado por tu nutricionista con Dietly
+          {/* Pie — disclaimer de transparencia IA */}
+          <p className='mt-10 text-center text-[11px] leading-relaxed text-zinc-400'>
+            Plan nutricional elaborado con asistencia de inteligencia artificial y supervisado por tu nutricionista.
             <br />
             <span className='font-normal text-zinc-300'>
-              Revisado y aprobado antes de enviarte este plan
+              Los valores nutricionales son estimaciones de referencia.
             </span>
           </p>
         </main>

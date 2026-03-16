@@ -491,6 +491,22 @@ const s = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 2,
   },
+
+  // Disclaimer de transparencia IA — última página
+  disclaimerContenedor: {
+    marginTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: C.borde,
+    borderTopStyle: 'solid',
+    paddingTop: 10,
+  },
+  disclaimerTexto: {
+    fontSize: 7,
+    color: C.apagadoClaro,
+    fontStyle: 'italic',
+    lineHeight: 1.6,
+    textAlign: 'center',
+  },
 });
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -839,6 +855,13 @@ function ListaCompraPage({
             </View>
           </View>
         ))}
+
+        {/* Disclaimer de transparencia IA */}
+        <View style={s.disclaimerContenedor}>
+          <Text style={s.disclaimerTexto}>
+            {`Los valores nutricionales son estimaciones calculadas mediante inteligencia artificial basadas en tablas de composición de alimentos de referencia. Este plan ha sido revisado y aprobado por ${nombreNutricionista}${collegeNumber ? `, colegiado nº ${collegeNumber}` : ''}. El profesional asume la responsabilidad clínica del plan entregado.`}
+          </Text>
+        </View>
       </View>
       <Footer
         nombreNutricionista={nombreNutricionista}
