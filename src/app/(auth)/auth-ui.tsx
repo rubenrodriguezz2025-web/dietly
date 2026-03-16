@@ -130,13 +130,32 @@ export function AuthUI({
         <Button
           type='submit'
           disabled={pending}
-          className='mt-1 w-full bg-[#1a7a45] font-semibold text-white hover:bg-[#22c55e] hover:text-black disabled:opacity-50'
+          className='mt-1 w-full bg-[#1a7a45] font-semibold text-white hover:bg-[#22c55e] hover:text-black disabled:cursor-not-allowed disabled:opacity-50'
         >
-          {pending
-            ? 'Cargando...'
-            : mode === 'login'
-              ? 'Iniciar sesión'
-              : 'Crear cuenta gratis'}
+          {pending ? (
+            <span className='flex items-center justify-center gap-2'>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='14'
+                height='14'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2.5'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                className='animate-spin'
+                aria-hidden='true'
+              >
+                <path d='M21 12a9 9 0 1 1-6.219-8.56' />
+              </svg>
+              {mode === 'login' ? 'Iniciando sesión...' : 'Creando cuenta...'}
+            </span>
+          ) : mode === 'login' ? (
+            'Iniciar sesión'
+          ) : (
+            'Crear cuenta gratis'
+          )}
         </Button>
       </form>
 

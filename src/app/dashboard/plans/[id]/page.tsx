@@ -66,7 +66,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
             </p>
           )}
           {plan.status === 'approved' && (
-            <p className='mt-1 text-xs text-green-700'>
+            <p className='mt-1 text-xs text-emerald-500/70'>
               Plan aprobado por el nutricionista · Listo para enviar al paciente
             </p>
           )}

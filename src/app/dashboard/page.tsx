@@ -256,9 +256,21 @@ function PatientRow({ patient }: { patient: Patient }) {
           {GOAL_LABELS[patient.goal]}
         </div>
       )}
-      <div className='text-xs text-zinc-600'>
-        {new Date(patient.created_at).toLocaleDateString('es-ES')}
-      </div>
+      <svg
+        xmlns='http://www.w3.org/2000/svg'
+        width='14'
+        height='14'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        strokeWidth='2'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+        className='flex-shrink-0 text-zinc-700'
+        aria-hidden='true'
+      >
+        <polyline points='9 18 15 12 9 6' />
+      </svg>
     </Link>
   );
 }
@@ -266,9 +278,29 @@ function PatientRow({ patient }: { patient: Patient }) {
 function EmptyPatients() {
   return (
     <div className='flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-800 py-16 text-center'>
-      <p className='text-zinc-400'>Todavía no tienes pacientes.</p>
+      <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900'>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='22'
+          height='22'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+          className='text-zinc-600'
+          aria-hidden='true'
+        >
+          <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
+          <circle cx='9' cy='7' r='4' />
+          <path d='M23 21v-2a4 4 0 0 0-3-3.87' />
+          <path d='M16 3.13a4 4 0 0 1 0 7.75' />
+        </svg>
+      </div>
+      <p className='font-medium text-zinc-300'>Añade tu primer paciente</p>
       <p className='mt-1 text-sm text-zinc-600'>
-        Crea el primero pulsando &quot;Nuevo paciente&quot;.
+        Crea su ficha y genera un plan nutricional en 2 minutos.
       </p>
       <Button asChild className='mt-6'>
         <Link href='/dashboard/patients/new'>+ Nuevo paciente</Link>
