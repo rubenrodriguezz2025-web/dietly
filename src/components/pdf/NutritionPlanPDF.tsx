@@ -6,6 +6,7 @@
 //   - Un elemento por línea, sin overlaps
 //   - Macros: todos el mismo color de marca
 
+import React from 'react';
 import path from 'path';
 
 import type { PlanContent, Profile } from '@/types/dietly';
@@ -18,9 +19,9 @@ const fontsDir = path.join(process.cwd(), 'public', 'fonts');
 Font.register({
   family: 'Inter',
   fonts: [
-    { src: path.join(fontsDir, 'Inter-Regular.ttf'), fontWeight: 400 },
-    { src: path.join(fontsDir, 'Inter-Medium.ttf'), fontWeight: 500 },
-    { src: path.join(fontsDir, 'Inter-Bold.ttf'), fontWeight: 700 },
+    { src: path.join(fontsDir, 'Inter-Regular.woff'), fontWeight: 400 },
+    { src: path.join(fontsDir, 'Inter-Medium.woff'), fontWeight: 500 },
+    { src: path.join(fontsDir, 'Inter-Bold.woff'), fontWeight: 700 },
   ],
 });
 
