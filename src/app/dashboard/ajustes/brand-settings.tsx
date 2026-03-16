@@ -59,6 +59,86 @@ function Toggle({
   );
 }
 
+// ── Botón de preview PDF ──────────────────────────────────────────────────────
+
+function PreviewButton() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleClick() {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/pdf/preview', { method: 'POST' });
+      if (!res.ok) {
+        setError('Error al generar el PDF. Inténtalo de nuevo.');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setError('Error de red. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className='flex flex-col gap-1.5'>
+      <button
+        type='button'
+        onClick={handleClick}
+        disabled={loading}
+        className='inline-flex w-fit items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50'
+      >
+        {loading ? (
+          <>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='14'
+              height='14'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2.5'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              className='animate-spin'
+              aria-hidden='true'
+            >
+              <path d='M21 12a9 9 0 1 1-6.219-8.56' />
+            </svg>
+            Generando PDF...
+          </>
+        ) : (
+          <>
+            <svg
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              className='h-4 w-4'
+              aria-hidden='true'
+            >
+              <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' />
+              <polyline points='14 2 14 8 20 8' />
+              <line x1='16' y1='13' x2='8' y2='13' />
+              <line x1='16' y1='17' x2='8' y2='17' />
+              <polyline points='10 9 9 9 8 9' />
+            </svg>
+            Ver cómo queda mi PDF →
+          </>
+        )}
+      </button>
+      {error && <p className='text-xs text-red-400'>{error}</p>}
+    </div>
+  );
+}
+
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export function BrandSettings({
@@ -443,29 +523,7 @@ export function BrandSettings({
         <p className='mb-4 text-sm text-zinc-400'>
           Genera un PDF de ejemplo con tus ajustes actuales de marca.
         </p>
-        <a
-          href='/api/pdf/preview'
-          target='_blank'
-          rel='noopener noreferrer'
-          className='inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700'
-        >
-          <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='h-4 w-4'
-          >
-            <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' />
-            <polyline points='14 2 14 8 20 8' />
-            <line x1='16' y1='13' x2='8' y2='13' />
-            <line x1='16' y1='17' x2='8' y2='17' />
-            <polyline points='10 9 9 9 8 9' />
-          </svg>
-          Ver cómo queda mi PDF
-        </a>
+        <PreviewButton />
         <p className='mt-2 text-xs text-zinc-600'>
           Este es el aspecto que tendrán todos tus planes nutricionales.
         </p>
