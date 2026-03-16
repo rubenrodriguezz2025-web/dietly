@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { getSubscription } from '@/features/account/controllers/get-subscription';
@@ -96,14 +95,6 @@ export default async function AjustesPage() {
           Si no tienes logo, puedes usar tu nombre o el de tu clínica — el PDF quedará
           igualmente profesional.
         </p>
-        {!isPro && (
-          <Link
-            href='/pricing'
-            className='mb-4 inline-flex items-center gap-1.5 rounded-lg border border-[#1a7a45]/40 bg-[#0a1f12] px-3 py-2 text-xs font-medium text-emerald-400 transition-colors hover:border-[#1a7a45] hover:bg-[#0d2518]'
-          >
-            Actualizar a Plan Pro para desbloquear →
-          </Link>
-        )}
         <LogoForm currentLogoUrl={logoPreviewUrl} isPro={isPro} />
       </section>
 
@@ -128,14 +119,6 @@ export default async function AjustesPage() {
           Usa PNG o WebP con fondo transparente para mejor resultado.{' '}
           {!isPro && 'Disponible en el Plan Profesional.'}
         </p>
-        {!isPro && (
-          <Link
-            href='/pricing'
-            className='mb-4 inline-flex items-center gap-1.5 rounded-lg border border-[#1a7a45]/40 bg-[#0a1f12] px-3 py-2 text-xs font-medium text-emerald-400 transition-colors hover:border-[#1a7a45] hover:bg-[#0d2518]'
-          >
-            Actualizar a Plan Pro para desbloquear →
-          </Link>
-        )}
         <SignatureForm currentSignatureUrl={signaturePreviewUrl} isPro={isPro} />
       </section>
     </div>

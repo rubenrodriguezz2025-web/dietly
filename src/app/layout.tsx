@@ -72,7 +72,6 @@ function Footer() {
             <div className='flex flex-col gap-2 lg:gap-6'>
               <div className='font-semibold text-neutral-100'>Producto</div>
               <nav className='flex flex-col gap-2 lg:gap-6'>
-                <Link href='/pricing'>Precios</Link>
                 <Link href='/signup'>Registrarse</Link>
               </nav>
             </div>

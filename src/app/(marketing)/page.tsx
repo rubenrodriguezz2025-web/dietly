@@ -348,8 +348,8 @@ function HeroSection() {
 
         {/* CTA */}
         <div className='fu3 mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center'>
-          <CtaButton href='/signup'>
-            Pruébalo gratis 14 días — sin tarjeta
+          <CtaButton href='mailto:hola@dietly.es'>
+            Solicitar acceso anticipado →
           </CtaButton>
           <a
             href='#como-funciona'
@@ -358,11 +358,6 @@ function HeroSection() {
             Ver cómo funciona →
           </a>
         </div>
-
-        {/* Trust micro-copy */}
-        <p className='fu3 mt-4 text-xs text-zinc-600'>
-          Sin tarjeta · Sin permanencia · Cancela cuando quieras
-        </p>
 
         {/* Métricas */}
         <div className='fu4 mx-auto mt-10 grid max-w-lg grid-cols-3 overflow-hidden rounded-2xl border border-[#1a2e1a]'>
@@ -812,111 +807,7 @@ function SocialProofSection() {
   );
 }
 
-// 8. Precios
-
-function PricingSection() {
-  const plans = [
-    {
-      name: 'Plan Básico',
-      price: '46',
-      desc: 'Para nutricionistas que están empezando o con consulta pequeña.',
-      limit: 'Hasta 30 pacientes activos',
-      features: [
-        'Generación de planes con IA',
-        'Editor de planes con revisión profesional',
-        'PDF con tu nombre y logo',
-        'App móvil para el paciente',
-        'Agenda integrada',
-        'Cumplimiento LOPDGDD',
-      ],
-      cta: 'Empezar gratis 14 días',
-      highlight: false,
-    },
-    {
-      name: 'Plan Pro',
-      price: '89',
-      desc: 'Para nutricionistas con consulta consolidada o que quieren escalar.',
-      limit: 'Pacientes ilimitados',
-      features: [
-        'Todo lo del Plan Básico',
-        'Pacientes ilimitados',
-        'Branding PDF personalizado completo',
-        'Soporte prioritario',
-        'Acceso a nuevas funcionalidades antes',
-      ],
-      cta: 'Empezar gratis 14 días',
-      highlight: true,
-    },
-  ] as const;
-
-  return (
-    <section id='precios' className='sect-div py-16 lg:py-24'>
-      <div className='mx-auto max-w-6xl px-5'>
-        <div className='text-center'>
-          <SectionLabel>Precios</SectionLabel>
-          <H2>Sin sorpresas. Sin permanencia.</H2>
-          <p className='mx-auto mt-3 max-w-lg text-sm text-zinc-500'>
-            14 días gratis sin tarjeta. Cancela cuando quieras desde tu panel.
-          </p>
-        </div>
-
-        <div className='mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:max-w-2xl sm:mx-auto lg:max-w-none'>
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative flex flex-col rounded-2xl border p-7 ${
-                plan.highlight
-                  ? 'border-[#1a7a45]/60 bg-[#0d1f12]'
-                  : 'border-[#1a2e1a] bg-[#0a0f0a]'
-              }`}
-            >
-              {plan.highlight && (
-                <div className='absolute -top-3 left-1/2 -translate-x-1/2'>
-                  <span className='rounded-full bg-[#1a7a45] px-3 py-0.5 text-xs font-semibold text-white'>
-                    Recomendado
-                  </span>
-                </div>
-              )}
-
-              <p className='text-sm font-semibold text-zinc-400'>{plan.name}</p>
-              <div className='mt-3 flex items-end gap-1'>
-                <span className='text-4xl font-bold text-zinc-100'>{plan.price}€</span>
-                <span className='mb-1 text-sm text-zinc-500'>/mes</span>
-              </div>
-              <p className='mt-1 text-xs text-zinc-600'>{plan.limit}</p>
-              <p className='mt-3 text-sm text-zinc-400'>{plan.desc}</p>
-
-              <ul className='mt-6 flex flex-col gap-2.5' role='list'>
-                {plan.features.map((f) => (
-                  <li key={f} className='flex items-start gap-2.5 text-xs text-zinc-400'>
-                    <IconCheck className='check-green mt-0.5 h-4 w-4 flex-shrink-0' />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              <div className='mt-8'>
-                <Link
-                  href='/signup'
-                  className={`block w-full cursor-pointer rounded-xl py-3 text-center text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22c55e] ${
-                    plan.highlight
-                      ? 'bg-[#1a7a45] text-white hover:bg-[#22c55e] hover:text-black'
-                      : 'border border-[#1a2e1a] text-zinc-300 hover:border-[#1a7a45]/50 hover:text-white'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
-                <p className='mt-2 text-center text-xs text-zinc-600'>Sin tarjeta · Sin permanencia</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// 9. CTA Final
+// 8. CTA Final
 
 function FinalCtaSection() {
   return (
@@ -932,12 +823,11 @@ function FinalCtaSection() {
           Empieza hoy. Tu próximo plan en 2 minutos.
         </h2>
         <p className='mx-auto mt-4 max-w-md text-sm leading-relaxed text-zinc-400'>
-          14 días gratis sin tarjeta. Sin permanencia. Cancela cuando quieras
-          desde tu panel.
+          Escríbenos y te damos acceso. Estamos incorporando nutricionistas de forma individual.
         </p>
         <div className='mt-8'>
-          <CtaButton href='/signup'>
-            Pruébalo gratis 14 días — sin tarjeta
+          <CtaButton href='mailto:hola@dietly.es'>
+            Solicitar acceso anticipado →
           </CtaButton>
         </div>
         <p className='mt-5 text-xs text-zinc-700'>
@@ -980,7 +870,6 @@ export default function HomePage() {
         <ComparisonSection />
         <FeaturesSection />
         <SocialProofSection />
-        <PricingSection />
         <FinalCtaSection />
       </div>
     </>
