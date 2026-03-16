@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${siteUrl}/login`);
     }
 
+    const next = requestUrl.searchParams.get('next');
+    if (next && next.startsWith('/')) {
+      return NextResponse.redirect(`${siteUrl}${next}`);
+    }
+
     return NextResponse.redirect(`${siteUrl}/dashboard`);
   }
 

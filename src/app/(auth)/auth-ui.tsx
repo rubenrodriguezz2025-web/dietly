@@ -107,7 +107,14 @@ export function AuthUI({
         </div>
 
         <div className='flex flex-col gap-1'>
-          <label htmlFor='password' className='text-xs text-zinc-500'>Contraseña</label>
+          <div className='flex items-center justify-between'>
+            <label htmlFor='password' className='text-xs text-zinc-500'>Contraseña</label>
+            {mode === 'login' && (
+              <Link href='/forgot-password' className='text-xs text-zinc-600 transition-colors hover:text-[#1a7a45]'>
+                ¿Olvidaste tu contraseña?
+              </Link>
+            )}
+          </div>
           <Input
             id='password'
             type='password'

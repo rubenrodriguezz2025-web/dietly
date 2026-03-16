@@ -71,6 +71,34 @@ export async function signUpWithEmail(email: string, password: string): Promise<
   return { data: null, error: null };
 }
 
+export async function requestPasswordReset(email: string): Promise<ActionResponse> {
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: getURL('/auth/callback?next=/reset-password'),
+  });
+
+  if (error) {
+    console.error('[requestPasswordReset] error:', error.message);
+    return { data: null, error: error };
+  }
+
+  return { data: null, error: null };
+}
+
+export async function updatePassword(password: string): Promise<ActionResponse> {
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    console.error('[updatePassword] error:', error.message);
+    return { data: null, error: error };
+  }
+
+  return { data: null, error: null };
+}
+
 export async function signOut(): Promise<ActionResponse> {
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signOut();
