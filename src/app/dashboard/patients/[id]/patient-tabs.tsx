@@ -14,6 +14,8 @@ import {
 } from '@/types/dietly';
 import { cn } from '@/utils/cn';
 
+import { calcTargets } from '@/utils/calc-targets';
+
 import { CopyButton } from './copy-button';
 import { GenerateButton } from './generate-button';
 import { ProgressTab } from './progress-tab';
@@ -199,7 +201,12 @@ export function PatientTabs({ patient, plans, progress, intakeForm, intakeUrl }:
               <div className='flex flex-col items-center rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
                 <p className='text-sm text-zinc-500'>Sin planes todavía.</p>
                 <div className='mt-4'>
-                  <GenerateButton patientId={patient.id} />
+                  <GenerateButton
+                    patientId={patient.id}
+                    initialTargets={calcTargets(patient)}
+                    patientWeight={patient.weight_kg ?? 70}
+                    patientGoal={patient.goal ?? 'health'}
+                  />
                 </div>
               </div>
             ) : (

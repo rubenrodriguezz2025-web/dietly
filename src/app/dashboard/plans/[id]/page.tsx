@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { NutritionPlan, PlanContent } from '@/types/dietly';
-import { PLAN_STATUS_LABELS } from '@/types/dietly';
+import { GOAL_LABELS, PLAN_STATUS_LABELS } from '@/types/dietly';
 
 import { PlanEditor } from './plan-editor';
 
@@ -140,6 +140,27 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
       {/* Weekly summary */}
       {content?.week_summary && !isGenerating && (
         <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+          {/* Card de criterios del plan */}
+          {content.week_summary.protein_per_kg && (
+            <div className='mb-4 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5'>
+              <p className='text-xs text-zinc-400'>
+                <span className='font-medium text-zinc-300'>Plan generado con: </span>
+                {content.week_summary.target_daily_calories} kcal/día
+                {' · '}
+                {content.week_summary.target_macros.protein_g}g proteína ({content.week_summary.protein_per_kg}g/kg)
+                {' · '}
+                {Math.round((content.week_summary.carbs_pct ?? 0.55) * 100)}% carbohidratos
+                {' · '}
+                {Math.round((content.week_summary.fat_pct ?? 0.45) * 100)}% grasa
+                {content.week_summary.goal && (
+                  <>
+                    {' · '}Objetivo: {GOAL_LABELS[content.week_summary.goal as keyof typeof GOAL_LABELS] ?? content.week_summary.goal}
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
           <h2 className='mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
             Resumen semanal
           </h2>
@@ -150,7 +171,11 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
             />
             <MacroStat
               label='Proteína objetivo'
-              value={`${content.week_summary.target_macros.protein_g}g`}
+              value={
+                content.week_summary.protein_per_kg
+                  ? `${content.week_summary.target_macros.protein_g}g (${content.week_summary.protein_per_kg}g/kg)`
+                  : `${content.week_summary.target_macros.protein_g}g`
+              }
             />
             <MacroStat
               label='Carbohidratos objetivo'

@@ -56,6 +56,11 @@ export type PlanContent = {
     target_daily_calories: number;
     target_macros: { protein_g: number; carbs_g: number; fat_g: number };
     weekly_averages: { calories: number; protein_g: number; carbs_g: number; fat_g: number };
+    // Criterios usados para validación por el nutricionista
+    protein_per_kg?: number;
+    carbs_pct?: number;
+    fat_pct?: number;
+    goal?: string;
   };
   days: PlanDay[];
   shopping_list: ShoppingList;

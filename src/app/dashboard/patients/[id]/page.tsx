@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
+import { calcTargets } from '@/utils/calc-targets';
 
 import { GenerateButton } from './generate-button';
 import { PatientTabs } from './patient-tabs';
@@ -24,6 +25,8 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
     .single()) as { data: Patient | null };
 
   if (!patient) notFound();
+
+  const initialTargets = calcTargets(patient);
 
   // Consultas en paralelo para minimizar latencia
   const [plansResult, progressResult, patientExtraResult] = await Promise.all([
@@ -80,7 +83,12 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             {patient.email && <p className='mt-0.5 text-sm text-zinc-500'>{patient.email}</p>}
           </div>
         </div>
-        <GenerateButton patientId={id} />
+        <GenerateButton
+          patientId={id}
+          initialTargets={initialTargets}
+          patientWeight={patient.weight_kg ?? 70}
+          patientGoal={patient.goal ?? 'health'}
+        />
       </div>
 
       {/* Tabs: Ficha | Progreso | Cuestionario */}

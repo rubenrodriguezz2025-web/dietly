@@ -2,61 +2,16 @@ import type { NextRequest } from 'next/server';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import type { ActivityLevel, Patient, PatientGoal, PlanContent, PlanDay } from '@/types/dietly';
+import type { Patient, PlanContent, PlanDay, ShoppingList } from '@/types/dietly';
+import { GOAL_LABELS } from '@/types/dietly';
+import { calcTargets, type MacroOverrides } from '@/utils/calc-targets';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
 
-// Vercel: allow up to 5 minutes for 7 sequential Claude calls
+// Vercel: allow up to 5 minutes for 7 sequential Claude calls + shopping list
 export const maxDuration = 300;
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
-const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
-  sedentary: 1.2,
-  lightly_active: 1.375,
-  moderately_active: 1.55,
-  very_active: 1.725,
-  extra_active: 1.9,
-};
-
-const GOAL_CALORIE_ADJ: Record<PatientGoal, number> = {
-  weight_loss: -400,
-  weight_gain: 300,
-  maintenance: 0,
-  muscle_gain: 300,
-  health: 0,
-};
-
-const MACRO_DIST: Record<PatientGoal, { protein: number; carbs: number; fat: number }> = {
-  weight_loss: { protein: 0.3, carbs: 0.4, fat: 0.3 },
-  weight_gain: { protein: 0.25, carbs: 0.5, fat: 0.25 },
-  maintenance: { protein: 0.25, carbs: 0.5, fat: 0.25 },
-  muscle_gain: { protein: 0.3, carbs: 0.45, fat: 0.25 },
-  health: { protein: 0.25, carbs: 0.5, fat: 0.25 },
-};
-
-function calcTargets(patient: Patient) {
-  let tdee = patient.tdee;
-  if (!tdee && patient.weight_kg && patient.height_cm && patient.date_of_birth && patient.sex && patient.sex !== 'other') {
-    const age = Math.floor(
-      (Date.now() - new Date(patient.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
-    );
-    const base = 10 * patient.weight_kg + 6.25 * patient.height_cm - 5 * age;
-    const tmb = patient.sex === 'male' ? base + 5 : base - 161;
-    const factor = patient.activity_level ? ACTIVITY_FACTORS[patient.activity_level] : 1.375;
-    tdee = Math.round(tmb * factor);
-  }
-  const baseTdee = tdee ?? 2000;
-  const adj = patient.goal ? GOAL_CALORIE_ADJ[patient.goal] : 0;
-  const calories = baseTdee + adj;
-  const dist = patient.goal ? MACRO_DIST[patient.goal] : MACRO_DIST.health;
-  return {
-    calories,
-    protein_g: Math.round((calories * dist.protein) / 4),
-    carbs_g: Math.round((calories * dist.carbs) / 4),
-    fat_g: Math.round((calories * dist.fat) / 9),
-  };
-}
 
 const DAY_TOOL: Anthropic.Tool = {
   name: 'generate_day',
@@ -133,7 +88,43 @@ const DAY_TOOL: Anthropic.Tool = {
   },
 };
 
-function buildPrompt(
+const SHOPPING_LIST_TOOL: Anthropic.Tool = {
+  name: 'generate_shopping_list',
+  description: 'Genera la lista de la compra consolidada y categorizada para el plan semanal completo',
+  input_schema: {
+    type: 'object',
+    properties: {
+      produce: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Frutas y verduras ÚNICAMENTE (no incluir carnes, embutidos ni lácteos)',
+      },
+      protein: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Carnes, pescados, huevos, legumbres, embutidos y derivados cárnicos',
+      },
+      dairy: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Leche, yogur, queso, bebidas vegetales',
+      },
+      grains: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Pan, arroz, pasta, cereales, avena, harinas',
+      },
+      pantry: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Aceites, condimentos, especias, conservas, frutos secos, salsas',
+      },
+    },
+    required: ['produce', 'protein', 'dairy', 'grains', 'pantry'],
+  },
+};
+
+function buildDayPrompt(
   patient: Patient,
   dayNum: number,
   targets: ReturnType<typeof calcTargets>,
@@ -154,12 +145,17 @@ function buildPrompt(
           .join('\n')}`
       : '';
 
+  const carbsPctDisplay = Math.round(targets.carbs_pct * 100);
+  const fatPctDisplay = Math.round(targets.fat_pct * 100);
+
   return `Eres un dietista-nutricionista experto. Genera el plan nutricional del ${DAY_NAMES[dayNum - 1]} (día ${dayNum}/7).
 
 PERFIL DEL PACIENTE:
-- Objetivo: ${patient.goal ?? 'mejorar salud general'}
+- Objetivo: ${patient.goal ? (GOAL_LABELS[patient.goal] ?? patient.goal) : 'mejorar salud general'}
 - Calorías diarias objetivo: ${targets.calories} kcal
-- Macros objetivo: ${targets.protein_g}g proteína · ${targets.carbs_g}g carbohidratos · ${targets.fat_g}g grasa${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${variety}
+- Proteína objetivo: ${targets.protein_g}g (${targets.protein_per_kg}g/kg peso corporal)
+- Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
+- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${variety}
 
 REQUISITOS OBLIGATORIOS:
 - 4-5 comidas (desayuno, media mañana opcional, almuerzo, merienda, cena)
@@ -169,6 +165,31 @@ REQUISITOS OBLIGATORIOS:
 - Las instrucciones de preparación deben ser prácticas y concretas
 
 Usa la herramienta generate_day para devolver el plan estructurado.`;
+}
+
+function buildShoppingListPrompt(days: PlanDay[]): string {
+  const allIngredients = days
+    .flatMap((d) => d.meals)
+    .flatMap((m) => m.ingredients)
+    .map((i) => `${i.name} (${i.quantity} ${i.unit})`)
+    .join('\n');
+
+  return `Eres un dietista-nutricionista experto. A partir de los ingredientes del plan semanal, genera una lista de la compra consolidada y categorizada.
+
+INGREDIENTES DEL PLAN:
+${allIngredients}
+
+REGLAS DE CATEGORIZACIÓN ESTRICTAS:
+- "produce": frutas y verduras ÚNICAMENTE (no incluir carnes, embutidos ni lácteos)
+- "protein": carnes, pescados, huevos, legumbres, embutidos y derivados cárnicos
+- "dairy": leche, yogur, queso, bebidas vegetales
+- "grains": pan, arroz, pasta, cereales, avena, harinas
+- "pantry": aceites, condimentos, especias, conservas, frutos secos, salsas
+
+Si tienes dudas sobre un alimento, prioriza la categoría "protein" para cualquier alimento de origen animal.
+
+Agrupa los ingredientes similares y suma cantidades cuando aparezcan varias veces (ej: "Pechuga de pollo 800g").
+Usa la herramienta generate_shopping_list para devolver la lista estructurada.`;
 }
 
 function validateDay(day: PlanDay): number[] {
@@ -190,10 +211,14 @@ export async function POST(req: NextRequest) {
   }
 
   let patient_id: string;
+  let macro_overrides: MacroOverrides | undefined;
   try {
     const body = await req.json();
     patient_id = body.patient_id;
     if (!patient_id) throw new Error('missing patient_id');
+    if (body.macro_overrides && typeof body.macro_overrides === 'object') {
+      macro_overrides = body.macro_overrides as MacroOverrides;
+    }
   } catch {
     return Response.json({ error: 'patient_id requerido' }, { status: 400 });
   }
@@ -209,7 +234,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Paciente no encontrado' }, { status: 404 });
   }
 
-  const targets = calcTargets(patient);
+  const targets = calcTargets(patient, macro_overrides);
 
   // Next Monday as week_start_date
   const now = new Date();
@@ -227,6 +252,10 @@ export async function POST(req: NextRequest) {
         fat_g: targets.fat_g,
       },
       weekly_averages: { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 },
+      protein_per_kg: targets.protein_per_kg,
+      carbs_pct: targets.carbs_pct,
+      fat_pct: targets.fat_pct,
+      goal: patient.goal ?? 'health',
     },
     days: [],
     shopping_list: { produce: [], protein: [], dairy: [], grains: [], pantry: [] },
@@ -271,6 +300,7 @@ export async function POST(req: NextRequest) {
       try {
         send({ type: 'start', plan_id: planId });
 
+        // Generar los 7 días
         for (let dayNum = 1; dayNum <= 7; dayNum++) {
           send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1] });
 
@@ -286,7 +316,7 @@ export async function POST(req: NextRequest) {
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
                 messages: [
-                  { role: 'user', content: buildPrompt(patient, dayNum, targets, days) },
+                  { role: 'user', content: buildDayPrompt(patient, dayNum, targets, days) },
                 ],
               });
 
@@ -297,7 +327,6 @@ export async function POST(req: NextRequest) {
                 if (invalidMeals.length === 0 || attempts >= 2) {
                   dayData = candidate;
                 }
-                // else: retry with a nudge (second attempt)
               }
             } catch (err) {
               if (attempts >= 2) throw err;
@@ -317,7 +346,27 @@ export async function POST(req: NextRequest) {
           days.push(dayData);
         }
 
-        // Weekly averages
+        // Generar lista de la compra
+        send({ type: 'progress', day: 8, day_name: 'Lista de la compra' });
+        let shoppingList: ShoppingList = { produce: [], protein: [], dairy: [], grains: [], pantry: [] };
+        try {
+          const shoppingResponse = await anthropic.messages.create({
+            model: 'claude-sonnet-4-5',
+            max_tokens: 2048,
+            tools: [SHOPPING_LIST_TOOL],
+            tool_choice: { type: 'tool', name: 'generate_shopping_list' },
+            messages: [{ role: 'user', content: buildShoppingListPrompt(days) }],
+          });
+          const shoppingToolUse = shoppingResponse.content.find((b) => b.type === 'tool_use');
+          if (shoppingToolUse?.type === 'tool_use') {
+            shoppingList = shoppingToolUse.input as ShoppingList;
+          }
+        } catch (err) {
+          // La lista de la compra no es crítica — continuamos con lista vacía
+          console.error('[plans/generate] shopping list error:', err);
+        }
+
+        // Promedios semanales
         const avg = (arr: number[]) => Math.round(arr.reduce((s, v) => s + v, 0) / arr.length);
         const content: PlanContent = {
           week_summary: {
@@ -333,9 +382,13 @@ export async function POST(req: NextRequest) {
               carbs_g: avg(days.map((d) => d.total_macros.carbs_g)),
               fat_g: avg(days.map((d) => d.total_macros.fat_g)),
             },
+            protein_per_kg: targets.protein_per_kg,
+            carbs_pct: targets.carbs_pct,
+            fat_pct: targets.fat_pct,
+            goal: patient.goal ?? 'health',
           },
           days,
-          shopping_list: { produce: [], protein: [], dairy: [], grains: [], pantry: [] },
+          shopping_list: shoppingList,
         };
 
         await (supabaseAdminClient as any)
