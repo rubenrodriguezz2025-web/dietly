@@ -43,7 +43,7 @@ export default async function PaginaPaciente({
 
   const { data: plan } = await (supabaseAdminClient as any)
     .from('nutrition_plans')
-    .select('*, patients(name)')
+    .select('*, patients(name, nutritionist_id)')
     .eq('patient_token', token)
     .eq('status', 'approved')
     .single();
@@ -53,6 +53,20 @@ export default async function PaginaPaciente({
   const content = plan.content as PlanContent | null;
   if (!content?.days?.length) notFound();
 
+  const pacienteData = plan.patients as { name: string; nutritionist_id: string } | null;
+  const nombrePaciente = pacienteData?.name ?? 'Paciente';
+
+  // Obtener ajustes de marca del nutricionista para show_macros
+  let showMacros = true;
+  if (pacienteData?.nutritionist_id) {
+    const { data: profileBrand } = await (supabaseAdminClient as any)
+      .from('profiles')
+      .select('show_macros')
+      .eq('id', pacienteData.nutritionist_id)
+      .single();
+    if (profileBrand?.show_macros === false) showMacros = false;
+  }
+
   const diaActual = Math.min(
     Math.max(parseInt(dia ?? '1', 10) || 1, 1),
     content.days.length
@@ -60,8 +74,6 @@ export default async function PaginaPaciente({
 
   const diaSeleccionado =
     content.days.find((d) => d.day_number === diaActual) ?? content.days[0];
-  const nombrePaciente =
-    (plan.patients as { name: string } | null)?.name ?? 'Paciente';
 
   const fechaSemana = new Date(plan.week_start_date).toLocaleDateString('es-ES', {
     day: 'numeric',
@@ -141,33 +153,35 @@ export default async function PaginaPaciente({
             Plan nutricional · semana del {fechaSemana}
           </p>
 
-          {/* Objetivos diarios — píldoras de color */}
-          <div className='anim-summary mt-5 flex gap-2.5 overflow-x-auto pb-0.5'>
-            <PildoraMacro
-              valor={sm.target_daily_calories}
-              unidad='kcal'
-              color='rgba(74,222,128,0.18)'
-              colorTexto='#4ade80'
-            />
-            <PildoraMacro
-              valor={`${sm.target_macros.protein_g}g`}
-              unidad='proteína'
-              color='rgba(147,197,253,0.18)'
-              colorTexto='#93c5fd'
-            />
-            <PildoraMacro
-              valor={`${sm.target_macros.carbs_g}g`}
-              unidad='carbos'
-              color='rgba(252,211,77,0.18)'
-              colorTexto='#fcd34d'
-            />
-            <PildoraMacro
-              valor={`${sm.target_macros.fat_g}g`}
-              unidad='grasa'
-              color='rgba(249,168,212,0.18)'
-              colorTexto='#f9a8d4'
-            />
-          </div>
+          {/* Objetivos diarios — píldoras de color (solo si show_macros) */}
+          {showMacros && (
+            <div className='anim-summary mt-5 flex gap-2.5 overflow-x-auto pb-0.5'>
+              <PildoraMacro
+                valor={sm.target_daily_calories}
+                unidad='kcal'
+                color='rgba(74,222,128,0.18)'
+                colorTexto='#4ade80'
+              />
+              <PildoraMacro
+                valor={`${sm.target_macros.protein_g}g`}
+                unidad='proteína'
+                color='rgba(147,197,253,0.18)'
+                colorTexto='#93c5fd'
+              />
+              <PildoraMacro
+                valor={`${sm.target_macros.carbs_g}g`}
+                unidad='carbos'
+                color='rgba(252,211,77,0.18)'
+                colorTexto='#fcd34d'
+              />
+              <PildoraMacro
+                valor={`${sm.target_macros.fat_g}g`}
+                unidad='grasa'
+                color='rgba(249,168,212,0.18)'
+                colorTexto='#f9a8d4'
+              />
+            </div>
+          )}
         </header>
 
         {/* ── CONTENIDO ──────────────────────────────────────────────────────── */}
@@ -189,18 +203,20 @@ export default async function PaginaPaciente({
             <h2 className='text-xl font-extrabold text-zinc-900'>
               {diaSeleccionado.day_name}
             </h2>
-            <div className='flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 ring-1 ring-emerald-200'>
-              <span className='text-sm font-bold text-emerald-700'>
-                {diaSeleccionado.total_calories}
-              </span>
-              <span className='text-xs font-medium text-emerald-600'>kcal</span>
-              <span className='mx-0.5 text-emerald-300'>·</span>
-              <span className='text-xs text-emerald-600'>
-                {diaSeleccionado.total_macros.protein_g}P{' '}
-                {diaSeleccionado.total_macros.carbs_g}C{' '}
-                {diaSeleccionado.total_macros.fat_g}G
-              </span>
-            </div>
+            {showMacros && (
+              <div className='flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 ring-1 ring-emerald-200'>
+                <span className='text-sm font-bold text-emerald-700'>
+                  {diaSeleccionado.total_calories}
+                </span>
+                <span className='text-xs font-medium text-emerald-600'>kcal</span>
+                <span className='mx-0.5 text-emerald-300'>·</span>
+                <span className='text-xs text-emerald-600'>
+                  {diaSeleccionado.total_macros.protein_g}P{' '}
+                  {diaSeleccionado.total_macros.carbs_g}C{' '}
+                  {diaSeleccionado.total_macros.fat_g}G
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Tarjetas de comida */}
@@ -210,6 +226,7 @@ export default async function PaginaPaciente({
                 key={i}
                 comida={comida}
                 animClass={`anim-comida-${Math.min(i, 4)}`}
+                showMacros={showMacros}
               />
             ))}
           </div>
@@ -342,9 +359,11 @@ type Comida = PlanContent['days'][0]['meals'][0];
 function TarjetaComida({
   comida,
   animClass,
+  showMacros,
 }: {
   comida: Comida;
   animClass: string;
+  showMacros: boolean;
 }) {
   const acento = ACENTO_TIPO[comida.meal_type] ?? { borde: '#16a34a', etiqueta: '#15803d' };
 
@@ -374,23 +393,27 @@ function TarjetaComida({
           </h3>
         </div>
 
-        {/* Kcal — siempre visible (F-02) */}
-        <div className='flex-shrink-0 rounded-xl px-3 py-2 text-center' style={{ background: '#f0fdf4' }}>
-          <p className='text-base font-extrabold leading-none tabular-nums text-emerald-700'>
-            {comida.calories}
-          </p>
-          <p className='mt-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-500'>
-            kcal
-          </p>
-        </div>
+        {/* Kcal — visible solo si showMacros */}
+        {showMacros && (
+          <div className='flex-shrink-0 rounded-xl px-3 py-2 text-center' style={{ background: '#f0fdf4' }}>
+            <p className='text-base font-extrabold leading-none tabular-nums text-emerald-700'>
+              {comida.calories}
+            </p>
+            <p className='mt-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-500'>
+              kcal
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Macros en píldoras de color — siempre visibles (F-02) */}
-      <div className='flex gap-1.5 px-4 pb-3'>
-        <MacroChip valor={comida.macros.protein_g} etiqueta='P' bg='#eff6ff' color='#1d4ed8' />
-        <MacroChip valor={comida.macros.carbs_g}   etiqueta='C' bg='#fffbeb' color='#b45309' />
-        <MacroChip valor={comida.macros.fat_g}     etiqueta='G' bg='#fdf2f8' color='#9d174d' />
-      </div>
+      {/* Macros en píldoras de color — visibles solo si showMacros */}
+      {showMacros && (
+        <div className='flex gap-1.5 px-4 pb-3'>
+          <MacroChip valor={comida.macros.protein_g} etiqueta='P' bg='#eff6ff' color='#1d4ed8' />
+          <MacroChip valor={comida.macros.carbs_g}   etiqueta='C' bg='#fffbeb' color='#b45309' />
+          <MacroChip valor={comida.macros.fat_g}     etiqueta='G' bg='#fdf2f8' color='#9d174d' />
+        </div>
+      )}
 
       {/* Ingredientes — siempre visibles (F-03) */}
       {comida.ingredients.length > 0 && (

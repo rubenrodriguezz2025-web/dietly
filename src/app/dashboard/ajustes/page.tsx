@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSubscription } from '@/features/account/controllers/get-subscription';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
+import { BrandSettings } from './brand-settings';
 import { LogoForm } from './logo-form';
 import { ProfileForm } from './profile-form';
 import { SignatureForm } from './signature-form';
@@ -15,10 +16,12 @@ export default async function AjustesPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  // Perfil del nutricionista
+  // Perfil del nutricionista (incluye nuevas columnas de marca)
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name, logo_url, college_number, signature_url')
+    .select(
+      'full_name, clinic_name, logo_url, college_number, signature_url, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url'
+    )
     .eq('id', user.id)
     .single();
 
@@ -47,6 +50,15 @@ export default async function AjustesPage() {
       .from('nutritionist-signatures')
       .createSignedUrl(profile.signature_url as string, 3600);
     signaturePreviewUrl = signed?.signedUrl ?? null;
+  }
+
+  // URL firmada de la foto de perfil para previsualización (1 hora de validez)
+  let profilePhotoPreviewUrl: string | null = null;
+  if (profile?.profile_photo_url) {
+    const { data: signed } = await supabase.storage
+      .from('nutritionist-photos')
+      .createSignedUrl(profile.profile_photo_url as string, 3600);
+    profilePhotoPreviewUrl = signed?.signedUrl ?? null;
   }
 
   return (
@@ -121,6 +133,22 @@ export default async function AjustesPage() {
         </p>
         <SignatureForm currentSignatureUrl={signaturePreviewUrl} isPro={isPro} />
       </section>
+
+      {/* ── Mi marca ── */}
+      <div>
+        <h2 className='mb-1 text-xl font-bold text-zinc-100'>Mi marca</h2>
+        <p className='mb-6 text-sm text-zinc-500'>
+          Personaliza el aspecto y contenido de todos tus planes nutricionales en PDF.
+        </p>
+        <BrandSettings
+          primaryColor={profile?.primary_color ?? '#1a7a45'}
+          showMacros={profile?.show_macros ?? true}
+          showShoppingList={profile?.show_shopping_list ?? true}
+          welcomeMessage={profile?.welcome_message ?? null}
+          fontPreference={profile?.font_preference ?? 'clasica'}
+          profilePhotoUrl={profilePhotoPreviewUrl}
+        />
+      </div>
     </div>
   );
 }

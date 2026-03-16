@@ -49,14 +49,21 @@ export async function GET(
     );
   }
 
-  // Obtener perfil del nutricionista (logo, firma, número de colegiado)
+  // Obtener perfil del nutricionista (logo, firma, número de colegiado y ajustes de marca)
   const { data: profileData } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name, logo_url, signature_url, college_number')
+    .select('full_name, clinic_name, logo_url, signature_url, college_number, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url')
     .eq('id', user.id)
     .single();
 
-  const profile: Pick<Profile, 'full_name' | 'clinic_name' | 'college_number'> = profileData ?? {
+  const profile: Pick<Profile, 'full_name' | 'clinic_name' | 'college_number'> & {
+    primary_color?: string | null;
+    show_macros?: boolean | null;
+    show_shopping_list?: boolean | null;
+    welcome_message?: string | null;
+    font_preference?: string | null;
+    profile_photo_url?: string | null;
+  } = profileData ?? {
     full_name: '',
     clinic_name: null,
     college_number: null,
@@ -92,9 +99,10 @@ export async function GET(
     }
   }
 
-  // Construir data URIs de logo y firma (solo para Plan Pro)
+  // Construir data URIs de logo, firma y foto de perfil (logo/firma solo Plan Pro)
   let logo_uri: string | null = null;
   let signature_uri: string | null = null;
+  let profile_photo_uri: string | null = null;
 
   if (is_pro) {
     if (profileData?.logo_url) {
@@ -103,6 +111,11 @@ export async function GET(
     if (profileData?.signature_url) {
       signature_uri = await downloadAsDataUri('nutritionist-signatures', profileData.signature_url as string);
     }
+  }
+
+  // Foto de perfil disponible para todos los planes
+  if (profileData?.profile_photo_url) {
+    profile_photo_uri = await downloadAsDataUri('nutritionist-photos', profileData.profile_photo_url as string);
   }
 
   // Fecha de aprobación formateada
@@ -125,6 +138,7 @@ export async function GET(
       profile,
       logo_uri,
       signature_uri,
+      profile_photo_uri,
       is_pro,
       approved_at,
     });
