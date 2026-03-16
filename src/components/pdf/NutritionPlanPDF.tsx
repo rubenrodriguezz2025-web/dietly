@@ -12,7 +12,7 @@ import path from 'path';
 import type { PlanContent, Profile } from '@/types/dietly';
 import { Document, Font, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
-// ── Fuentes locales (TTF, sin CDN) ────────────────────────────────────────────
+// ── Fuentes locales (WOFF, sin CDN) ───────────────────────────────────────────
 
 const fontsDir = path.join(process.cwd(), 'public', 'fonts');
 
@@ -50,6 +50,26 @@ export type PropsPDF = {
   approved_at?: string;
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Color de marca al 15% de opacidad sobre blanco (hex) */
+function brandBg15(color: string): string {
+  return color + '26'; // 26 hex ≈ 15%
+}
+
+/** Color de marca al 10% de opacidad sobre blanco (hex) */
+function brandBg10(color: string): string {
+  return color + '1A'; // 1A hex ≈ 10%
+}
+
+function weekLabel(isoDate: string): string {
+  const d = new Date(isoDate);
+  const end = new Date(d);
+  end.setDate(d.getDate() + 6);
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
+  return `Semana del ${d.toLocaleDateString('es-ES', opts)} al ${end.toLocaleDateString('es-ES', { ...opts, year: 'numeric' })}`;
+}
+
 // ── Estilos base ──────────────────────────────────────────────────────────────
 
 const S = StyleSheet.create({
@@ -59,30 +79,6 @@ const S = StyleSheet.create({
     color: '#1a1a1a',
     backgroundColor: '#ffffff',
     flexDirection: 'column',
-  },
-
-  // Header de página (color de marca)
-  pageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 28,
-    paddingVertical: 10,
-    height: 40,
-  },
-  pageHeaderText: {
-    fontFamily: 'Inter',
-    fontWeight: 500,
-    fontSize: 9,
-    color: '#ffffff',
-    flex: 1,
-  },
-
-  // Cuerpo de la página
-  body: {
-    flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 16,
-    paddingBottom: 8,
   },
 
   // Footer de página
@@ -99,77 +95,61 @@ const S = StyleSheet.create({
     fontFamily: 'Inter',
     fontWeight: 400,
     fontSize: 7,
-    color: '#999999',
+    color: '#aaaaaa',
   },
 
-  // Sección de comida
-  mealBlock: {
-    marginBottom: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+  // Cuerpo de la página
+  body: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
-  mealHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-    gap: 8,
+
+  // Píldoras de macros — pequeñas (para comidas)
+  pillSmall: {
+    borderRadius: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderWidth: 1,
   },
-  mealTime: {
+  pillSmallText: {
     fontFamily: 'Inter',
-    fontWeight: 400,
-    fontSize: 8,
-    color: '#888888',
+    fontWeight: 700,
+    fontSize: 7.5,
   },
-  mealName: {
+
+  // Píldoras de macros — grandes (para portada)
+  pillLarge: {
+    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: 1,
+  },
+  pillLargeText: {
     fontFamily: 'Inter',
     fontWeight: 700,
     fontSize: 11,
-    color: '#1a1a1a',
-    flex: 1,
-  },
-
-  // Píldoras de macros
-  pillsRow: {
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: 6,
-    flexWrap: 'wrap',
-  },
-  pill: {
-    borderRadius: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  pillText: {
-    fontFamily: 'Inter',
-    fontWeight: 500,
-    fontSize: 8,
   },
 
   // Ingredientes
-  ingredientsGrid: {
+  ingredientRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 5,
-  },
-  ingredientItem: {
-    width: '50%',
-    flexDirection: 'row',
-    gap: 3,
-    marginBottom: 2,
+    alignItems: 'center',
+    paddingVertical: 3,
+    paddingHorizontal: 6,
   },
   ingredientQty: {
     fontFamily: 'Inter',
     fontWeight: 500,
-    fontSize: 9,
+    fontSize: 8.5,
     color: '#444444',
-    width: 50,
+    width: 56,
   },
   ingredientName: {
     fontFamily: 'Inter',
     fontWeight: 400,
-    fontSize: 9,
+    fontSize: 8.5,
     color: '#444444',
     flex: 1,
   },
@@ -178,67 +158,51 @@ const S = StyleSheet.create({
   prepLabel: {
     fontFamily: 'Inter',
     fontWeight: 500,
-    fontSize: 8,
-    color: '#888888',
+    fontSize: 7.5,
+    color: '#999999',
     marginBottom: 2,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   prepText: {
     fontFamily: 'Inter',
     fontWeight: 400,
-    fontSize: 9,
+    fontSize: 8.5,
     color: '#555555',
-    lineHeight: 1.5,
+    lineHeight: 1.55,
   },
 });
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Componente: píldora de macro (pequeña, para comidas) ──────────────────────
 
-function brandBg(color: string): string {
-  // Fondo suave al 15% de opacidad sobre blanco — aproximado con hex
-  return color + '26'; // 26 hex = ~15% opacidad
-}
-
-function weekLabel(isoDate: string): string {
-  const d = new Date(isoDate);
-  const end = new Date(d);
-  end.setDate(d.getDate() + 6);
-  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
-  return `Semana del ${d.toLocaleDateString('es-ES', opts)} al ${end.toLocaleDateString('es-ES', { ...opts, year: 'numeric' })}`;
-}
-
-// ── Componente: píldora de macro ──────────────────────────────────────────────
-
-function MacroPill({ label, value, color }: { label: string; value: string; color: string }) {
+function MacroPillSmall({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <View style={[S.pill, { backgroundColor: brandBg(color) }]}>
-      <Text style={[S.pillText, { color }]}>{value} {label}</Text>
+    <View style={[S.pillSmall, { backgroundColor: brandBg15(color), borderColor: color }]}>
+      <Text style={[S.pillSmallText, { color }]}>{value} {label}</Text>
+    </View>
+  );
+}
+
+// ── Componente: píldora de macro (grande, para portada) ───────────────────────
+
+function MacroPillLarge({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <View style={[S.pillLarge, { backgroundColor: brandBg15(color), borderColor: color }]}>
+      <Text style={[S.pillLargeText, { color }]}>{value} {label}</Text>
     </View>
   );
 }
 
 // ── Componente: footer de página ──────────────────────────────────────────────
 
-function PageFooter({
-  nutritionistName,
-  pageNumber,
-  totalPages,
-}: {
-  nutritionistName: string;
-  pageNumber?: number;
-  totalPages?: number;
-}) {
+function PageFooter({ nutritionistName }: { nutritionistName: string }) {
   return (
     <View style={S.footer} fixed>
       <Text style={S.footerText}>Dietly · {nutritionistName}</Text>
-      {pageNumber !== undefined && totalPages !== undefined ? (
-        <Text style={S.footerText}>Pág {pageNumber} de {totalPages}</Text>
-      ) : (
-        <Text
-          style={S.footerText}
-          render={({ pageNumber: pn, totalPages: tp }) => `Pág ${pn} de ${tp}`}
-        />
-      )}
+      <Text
+        style={S.footerText}
+        render={({ pageNumber, totalPages }) => `Pág ${pageNumber} de ${totalPages}`}
+      />
     </View>
   );
 }
@@ -258,15 +222,25 @@ function DayPageHeader({
   brandColor: string;
   showMacros: boolean;
 }) {
-  const macroText = showMacros
-    ? ` · ${totalCalories} kcal · ${macros.protein_g}g P · ${macros.carbs_g}g C · ${macros.fat_g}g G`
-    : '';
-
   return (
-    <View style={[S.pageHeader, { backgroundColor: brandColor }]}>
-      <Text style={S.pageHeaderText}>
-        {dayName}{macroText}
+    <View
+      style={{
+        backgroundColor: brandColor,
+        height: 36,
+        paddingHorizontal: 28,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
+      <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 11, color: '#ffffff' }}>
+        {dayName}
       </Text>
+      {showMacros && (
+        <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8.5, color: 'rgba(255,255,255,0.85)' }}>
+          {totalCalories} kcal · {macros.protein_g}g P · {macros.carbs_g}g C · {macros.fat_g}g G
+        </Text>
+      )}
     </View>
   );
 }
@@ -286,33 +260,48 @@ function MealBlock({
 }) {
   return (
     <View
-      style={[S.mealBlock, isLast ? { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 } : {}]}
+      style={{
+        marginBottom: isLast ? 0 : 12,
+        paddingBottom: isLast ? 0 : 12,
+        borderBottomWidth: isLast ? 0 : 1,
+        borderBottomColor: '#e5e5e5',
+      }}
       minPresenceAhead={60}
       wrap={false}
     >
       {/* Hora + nombre */}
-      <View style={S.mealHeader}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5, gap: 8 }}>
         {meal.time_suggestion ? (
-          <Text style={S.mealTime}>{meal.time_suggestion}</Text>
+          <Text style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 8, color: brandColor }}>
+            {meal.time_suggestion}
+          </Text>
         ) : null}
-        <Text style={S.mealName}>{meal.meal_name}</Text>
+        <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 11, color: '#1a1a1a', flex: 1 }}>
+          {meal.meal_name}
+        </Text>
       </View>
 
       {/* Píldoras de macros */}
       {showMacros && (
-        <View style={S.pillsRow}>
-          <MacroPill label="kcal" value={String(meal.calories)} color={brandColor} />
-          <MacroPill label="P" value={`${meal.macros.protein_g}g`} color={brandColor} />
-          <MacroPill label="C" value={`${meal.macros.carbs_g}g`} color={brandColor} />
-          <MacroPill label="G" value={`${meal.macros.fat_g}g`} color={brandColor} />
+        <View style={{ flexDirection: 'row', gap: 4, marginBottom: 7, flexWrap: 'wrap' }}>
+          <MacroPillSmall label="kcal" value={String(meal.calories)} color={brandColor} />
+          <MacroPillSmall label="P" value={`${meal.macros.protein_g}g`} color={brandColor} />
+          <MacroPillSmall label="C" value={`${meal.macros.carbs_g}g`} color={brandColor} />
+          <MacroPillSmall label="G" value={`${meal.macros.fat_g}g`} color={brandColor} />
         </View>
       )}
 
-      {/* Ingredientes */}
+      {/* Ingredientes con filas alternas */}
       {meal.ingredients && meal.ingredients.length > 0 && (
-        <View style={S.ingredientsGrid}>
+        <View style={{ marginBottom: 7, borderRadius: 3, overflow: 'hidden' }}>
           {meal.ingredients.map((ing, idx) => (
-            <View key={idx} style={S.ingredientItem}>
+            <View
+              key={idx}
+              style={[
+                S.ingredientRow,
+                { backgroundColor: idx % 2 === 0 ? '#f8f8f8' : '#ffffff' },
+              ]}
+            >
               <Text style={S.ingredientQty}>{ing.quantity} {ing.unit}</Text>
               <Text style={S.ingredientName}>{ing.name}</Text>
             </View>
@@ -355,50 +344,67 @@ export function NutritionPlanPDF({
   // ── PORTADA ─────────────────────────────────────────────────────────────────
   const CoverPage = (
     <Page size="A4" style={S.page}>
-      {/* Header band */}
-      <View style={{ backgroundColor: brandColor, height: 80, paddingHorizontal: 28, flexDirection: 'row', alignItems: 'center' }}>
+      {/* Header band 120px — logo o nombre centrados */}
+      <View
+        style={{
+          backgroundColor: brandColor,
+          height: 120,
+          paddingHorizontal: 40,
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         {is_pro && logo_uri ? (
-          <Image src={logo_uri} style={{ height: 48, maxWidth: 160, objectFit: 'contain' }} />
+          <Image src={logo_uri} style={{ height: 56, maxWidth: 200, objectFit: 'contain' }} />
         ) : (
-          <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 20, color: '#ffffff' }}>
-            {profile.clinic_name || nutritionistName}
-          </Text>
+          <>
+            <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 22, color: '#ffffff' }}>
+              {profile.clinic_name || nutritionistName}
+            </Text>
+            {profile.clinic_name && (
+              <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>
+                {nutritionistName}
+              </Text>
+            )}
+          </>
         )}
       </View>
 
       {/* Contenido principal */}
-      <View style={{ flex: 1, paddingHorizontal: 40, paddingTop: 40, flexDirection: 'column', gap: 8 }}>
+      <View style={{ flex: 1, paddingHorizontal: 40, paddingTop: 44 }}>
         {/* Nombre del paciente */}
-        <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 28, color: '#1a1a1a' }}>
+        <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 30, color: '#1a1a1a' }}>
           {patient.name}
         </Text>
 
         {/* Semana */}
-        <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 13, color: '#666666', marginBottom: 8 }}>
+        <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 13, color: '#888888', marginTop: 6, marginBottom: 28 }}>
           {weekLabel(plan.week_start_date)}
         </Text>
 
         {/* Píldoras de macros objetivo */}
         {showMacros && (
-          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-            <View style={[S.pill, { backgroundColor: brandBg(brandColor), paddingHorizontal: 12, paddingVertical: 6 }]}>
-              <Text style={[S.pillText, { color: brandColor, fontSize: 11 }]}>{targetCals} kcal/día</Text>
-            </View>
-            <View style={[S.pill, { backgroundColor: brandBg(brandColor), paddingHorizontal: 12, paddingVertical: 6 }]}>
-              <Text style={[S.pillText, { color: brandColor, fontSize: 11 }]}>{targets.protein_g}g Proteína</Text>
-            </View>
-            <View style={[S.pill, { backgroundColor: brandBg(brandColor), paddingHorizontal: 12, paddingVertical: 6 }]}>
-              <Text style={[S.pillText, { color: brandColor, fontSize: 11 }]}>{targets.carbs_g}g Carbohidratos</Text>
-            </View>
-            <View style={[S.pill, { backgroundColor: brandBg(brandColor), paddingHorizontal: 12, paddingVertical: 6 }]}>
-              <Text style={[S.pillText, { color: brandColor, fontSize: 11 }]}>{targets.fat_g}g Grasas</Text>
-            </View>
+          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+            <MacroPillLarge label="kcal / día" value={String(targetCals)} color={brandColor} />
+            <MacroPillLarge label="Proteína" value={`${targets.protein_g}g`} color={brandColor} />
+            <MacroPillLarge label="Carbohidratos" value={`${targets.carbs_g}g`} color={brandColor} />
+            <MacroPillLarge label="Grasas" value={`${targets.fat_g}g`} color={brandColor} />
           </View>
         )}
 
         {/* Mensaje de bienvenida */}
         {profile.welcome_message && (
-          <View style={{ marginTop: 20, padding: 14, backgroundColor: '#f9f9f9', borderRadius: 4 }}>
+          <View
+            style={{
+              marginTop: 28,
+              padding: 16,
+              backgroundColor: '#f9f9f9',
+              borderRadius: 4,
+              borderLeftWidth: 3,
+              borderLeftColor: brandColor,
+            }}
+          >
             <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 10, color: '#555555', lineHeight: 1.6 }} wrap={true}>
               {profile.welcome_message}
             </Text>
@@ -407,7 +413,7 @@ export function NutritionPlanPDF({
       </View>
 
       {/* Footer de portada */}
-      <View style={[S.footer]}>
+      <View style={S.footer}>
         <Text style={S.footerText}>
           Elaborado por {nutritionistName}
           {profile.college_number ? ` · Nº colegiado ${profile.college_number}` : ''}
@@ -419,63 +425,88 @@ export function NutritionPlanPDF({
   );
 
   // ── PÁGINAS DE DÍAS ──────────────────────────────────────────────────────────
-  const DayPages = content.days.map((day) => {
-    const dayMacros = day.total_macros;
+  const DayPages = content.days.map((day) => (
+    <Page key={day.day_number} size="A4" style={S.page}>
+      <DayPageHeader
+        dayName={day.day_name}
+        totalCalories={day.total_calories}
+        macros={day.total_macros}
+        brandColor={brandColor}
+        showMacros={showMacros}
+      />
 
-    return (
-      <Page key={day.day_number} size="A4" style={S.page}>
-        <DayPageHeader
-          dayName={day.day_name}
-          totalCalories={day.total_calories}
-          macros={dayMacros}
-          brandColor={brandColor}
-          showMacros={showMacros}
-        />
+      <View style={S.body}>
+        {day.meals.map((meal, idx) => (
+          <MealBlock
+            key={idx}
+            meal={meal}
+            brandColor={brandColor}
+            showMacros={showMacros}
+            isLast={idx === day.meals.length - 1}
+          />
+        ))}
+      </View>
 
-        <View style={S.body}>
-          {day.meals.map((meal, idx) => (
-            <MealBlock
-              key={idx}
-              meal={meal}
-              brandColor={brandColor}
-              showMacros={showMacros}
-              isLast={idx === day.meals.length - 1}
-            />
-          ))}
-        </View>
-
-        <PageFooter nutritionistName={nutritionistName} />
-      </Page>
-    );
-  });
+      <PageFooter nutritionistName={nutritionistName} />
+    </Page>
+  ));
 
   // ── LISTA DE LA COMPRA ───────────────────────────────────────────────────────
   const shoppingList = content.shopping_list;
+  const categoryLabels: Record<string, string> = {
+    produce: 'Verduras y fruta',
+    protein: 'Proteína',
+    dairy: 'Lácteos',
+    grains: 'Cereales y pan',
+    pantry: 'Despensa',
+  };
+
   const ShoppingPage = showShoppingList && shoppingList ? (
     <Page size="A4" style={S.page}>
-      <View style={[S.pageHeader, { backgroundColor: brandColor }]}>
-        <Text style={S.pageHeaderText}>Lista de la compra</Text>
+      {/* Header band */}
+      <View style={{ backgroundColor: brandColor, height: 36, paddingHorizontal: 28, flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 11, color: '#ffffff' }}>
+          Lista de la compra
+        </Text>
       </View>
 
       <View style={S.body}>
         {Object.entries(shoppingList).map(([category, items]) => {
           if (!items || (items as string[]).length === 0) return null;
-          const labels: Record<string, string> = {
-            produce: 'Verduras y fruta',
-            protein: 'Proteína',
-            dairy: 'Lácteos',
-            grains: 'Cereales y pan',
-            pantry: 'Despensa',
-          };
           return (
-            <View key={category} style={{ marginBottom: 14 }} wrap={false}>
-              <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 10, color: brandColor, marginBottom: 5, textTransform: 'uppercase' }}>
-                {labels[category] ?? category}
-              </Text>
+            <View key={category} style={{ marginBottom: 16 }} wrap={false}>
+              {/* Cabecera de categoría con fondo tenue */}
+              <View
+                style={{
+                  backgroundColor: brandBg10(brandColor),
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 3,
+                  marginBottom: 6,
+                }}
+              >
+                <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 9, color: brandColor, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {categoryLabels[category] ?? category}
+                </Text>
+              </View>
+
+              {/* Items */}
               {(items as string[]).map((item, idx) => (
-                <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 3 }}>
-                  <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 9, color: brandColor, marginRight: 6 }}>·</Text>
-                  <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 9, color: '#333333', flex: 1 }} wrap={true}>{item}</Text>
+                <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4, paddingHorizontal: 4 }}>
+                  <View
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: 2.5,
+                      backgroundColor: brandColor,
+                      marginTop: 2.5,
+                      marginRight: 8,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 9, color: '#333333', flex: 1 }} wrap={true}>
+                    {item}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -490,46 +521,66 @@ export function NutritionPlanPDF({
   // ── PÁGINA FINAL ─────────────────────────────────────────────────────────────
   const FinalPage = (
     <Page size="A4" style={S.page}>
-      <View style={[S.pageHeader, { backgroundColor: brandColor }]}>
-        <Text style={S.pageHeaderText}>Información profesional</Text>
+      {/* Header band */}
+      <View style={{ backgroundColor: brandColor, height: 36, paddingHorizontal: 28, flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 11, color: '#ffffff' }}>
+          Información profesional
+        </Text>
       </View>
 
-      <View style={[S.body, { gap: 12 }]}>
-        {/* Foto + datos del nutricionista */}
-        {is_pro && signature_uri ? (
-          <View style={{ marginBottom: 12 }}>
-            <Image src={signature_uri} style={{ height: 40, maxWidth: 160, objectFit: 'contain' }} />
+      <View style={[S.body, { justifyContent: 'space-between' }]}>
+        {/* Bloque superior: firma + datos */}
+        <View style={{ gap: 10 }}>
+          {/* Firma digital */}
+          {is_pro && signature_uri && (
+            <View style={{ marginBottom: 8 }}>
+              <Image src={signature_uri} style={{ height: 44, maxWidth: 180, objectFit: 'contain' }} />
+            </View>
+          )}
+
+          {/* Nombre del nutricionista */}
+          <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 15, color: '#1a1a1a' }}>
+            {nutritionistName}
+          </Text>
+
+          {/* Clínica */}
+          {profile.clinic_name ? (
+            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 10, color: '#666666', marginTop: -4 }}>
+              {profile.clinic_name}
+            </Text>
+          ) : null}
+
+          {/* Nº colegiado */}
+          {profile.college_number ? (
+            <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 10, color: '#333333' }}>
+              Nº Colegiado: {profile.college_number}
+            </Text>
+          ) : null}
+
+          {/* Fecha de aprobación */}
+          {approved_at ? (
+            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 9, color: '#888888' }}>
+              Plan aprobado el {approved_at}
+            </Text>
+          ) : null}
+
+          {/* Separador */}
+          <View style={{ borderTopWidth: 1, borderTopColor: '#e5e5e5', marginTop: 16, paddingTop: 14 }}>
+            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8, color: '#aaaaaa', lineHeight: 1.7 }} wrap={true}>
+              Este plan nutricional ha sido elaborado y revisado por un profesional de la nutrición
+              titulado. Está diseñado exclusivamente para el paciente indicado y no debe compartirse
+              ni utilizarse como guía general. Ante cualquier duda, consulte a su nutricionista.
+            </Text>
           </View>
-        ) : null}
+        </View>
 
-        <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>
-          {nutritionistName}
-        </Text>
-
-        {profile.clinic_name ? (
-          <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 10, color: '#666666' }}>
-            {profile.clinic_name}
+        {/* Bloque inferior: marca Dietly */}
+        <View style={{ alignItems: 'center', paddingBottom: 8 }}>
+          <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 9, color: '#cccccc', letterSpacing: 1 }}>
+            DIETLY
           </Text>
-        ) : null}
-
-        {profile.college_number ? (
-          <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 10, color: '#666666' }}>
-            Nº Colegiado: {profile.college_number}
-          </Text>
-        ) : null}
-
-        {approved_at ? (
-          <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 10, color: '#666666' }}>
-            Fecha de aprobación: {approved_at}
-          </Text>
-        ) : null}
-
-        {/* Separador */}
-        <View style={{ borderTopWidth: 1, borderTopColor: '#e5e5e5', marginTop: 8, paddingTop: 16 }}>
-          <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8, color: '#999999', lineHeight: 1.6 }} wrap={true}>
-            Este plan nutricional ha sido elaborado y revisado por un profesional de la nutrición titulado.
-            Está diseñado exclusivamente para el paciente indicado y no debe compartirse ni utilizarse como
-            guía general. Ante cualquier duda, consulte a su nutricionista.
+          <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 7, color: '#dddddd', marginTop: 2 }}>
+            dietly.es
           </Text>
         </View>
       </View>

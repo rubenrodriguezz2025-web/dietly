@@ -91,6 +91,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
       }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let doneReceived = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -99,10 +100,15 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
           try {
             const data = JSON.parse(line.slice(6));
             if (data.type === 'progress') setCurrentDay(data.day as number);
-            else if (data.type === 'done') router.push(`/dashboard/plans/${data.plan_id}`);
-            else if (data.type === 'error') { setState('error'); setErrorMsg(data.message as string); }
+            else if (data.type === 'done') { doneReceived = true; router.push(`/dashboard/plans/${data.plan_id}`); }
+            else if (data.type === 'error') { setState('error'); setErrorMsg(data.message as string); return; }
           } catch { /* ignore malformed */ }
         }
+      }
+      // Stream cerrado sin recibir 'done' — el servidor ha tardado demasiado o se ha cortado la conexión
+      if (!doneReceived) {
+        setState('error');
+        setErrorMsg('La generación tardó demasiado o se cortó la conexión. Revisa la sección de planes — puede que se haya guardado. Si no, inténtalo de nuevo.');
       }
     } catch {
       setState('error');

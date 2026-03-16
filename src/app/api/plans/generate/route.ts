@@ -10,6 +10,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 // Vercel: allow up to 5 minutes for 7 sequential Claude calls + shopping list
 export const maxDuration = 300;
+export const runtime = 'nodejs';
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -395,6 +396,9 @@ export async function POST(req: NextRequest) {
   const planId = planRecord.id as string;
   const anthropic = new Anthropic({
     apiKey: getEnvVar(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC_API_KEY'),
+    // Timeout por llamada: 45 s. Sin esto el SDK espera 600 s por defecto,
+    // lo que bloquea el stream cuando Claude tarda o hay error de red.
+    timeout: 45_000,
   });
 
   const encoder = new TextEncoder();
@@ -404,6 +408,12 @@ export async function POST(req: NextRequest) {
       function send(data: object) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       }
+
+      // Keepalive: envía un comentario SSE cada 15 s para que el proxy/navegador
+      // no cierre la conexión mientras Claude procesa (puede tardar >30 s por día).
+      const keepalive = setInterval(() => {
+        try { controller.enqueue(encoder.encode(': keepalive\n\n')); } catch { /* controller ya cerrado */ }
+      }, 15_000);
 
       const days: PlanDay[] = [];
       let totalTokensInput = 0;
@@ -550,6 +560,7 @@ export async function POST(req: NextRequest) {
           .eq('id', planId);
         send({ type: 'error', message: 'Error inesperado. Inténtalo de nuevo.' });
       } finally {
+        clearInterval(keepalive);
         controller.close();
       }
     },
