@@ -100,6 +100,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             initialTargets={initialTargets}
             patientWeight={patient.weight_kg ?? 70}
             patientGoal={patient.goal ?? 'health'}
+            hasIntake={!!intakeForm}
           />
         </div>
       </div>

@@ -332,6 +332,8 @@ export function PatientTabs({ patient, plans, progress, intakeForm, intakeUrl }:
                       initialTargets={calcTargets(patient)}
                       patientWeight={patient.weight_kg ?? 70}
                       patientGoal={patient.goal ?? 'health'}
+                      hasIntake={!!intakeForm}
+                      onGoToIntake={intakeUrl ? () => setActiveTab('cuestionario') : undefined}
                     />
                   </div>
                 </div>

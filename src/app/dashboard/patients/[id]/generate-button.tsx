@@ -17,9 +17,11 @@ interface Props {
   initialTargets: CalcTargets;
   patientWeight: number;
   patientGoal: PatientGoal;
+  hasIntake?: boolean;
+  onGoToIntake?: () => void;
 }
 
-export function GenerateButton({ patientId, initialTargets, patientWeight, patientGoal }: Props) {
+export function GenerateButton({ patientId, initialTargets, patientWeight, patientGoal, hasIntake, onGoToIntake }: Props) {
   const router = useRouter();
   const [state, setState] = useState<State>('idle');
   const [currentDay, setCurrentDay] = useState(0);
@@ -180,6 +182,67 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
         </div>
 
         <div className='px-4 pt-3 pb-4'>
+          {/* Banner estado del cuestionario */}
+          {hasIntake ? (
+            <div className='mb-3 flex items-center gap-2 rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-3 py-2'>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='12'
+                height='12'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2.5'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                className='flex-shrink-0 text-emerald-500'
+                aria-hidden='true'
+              >
+                <polyline points='20 6 9 17 4 12' />
+              </svg>
+              <p className='text-[11px] leading-snug text-emerald-400'>
+                Cuestionario completado — el plan incluirá las preferencias y hábitos del paciente
+              </p>
+            </div>
+          ) : (
+            <div className='mb-3 rounded-lg border border-amber-600/40 bg-[#1a0a00] px-3 py-2.5'>
+              <div className='flex gap-2'>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  width='14'
+                  height='14'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  className='mt-px flex-shrink-0 text-amber-500'
+                  aria-hidden='true'
+                >
+                  <path d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z' />
+                  <line x1='12' y1='9' x2='12' y2='13' />
+                  <line x1='12' y1='17' x2='12.01' y2='17' />
+                </svg>
+                <div className='flex flex-col gap-1.5'>
+                  <p className='text-[11px] leading-snug text-amber-200/80'>
+                    Este paciente no ha completado el cuestionario. El plan se generará solo con los
+                    datos básicos — sin horarios, preferencias ni hábitos del paciente.
+                  </p>
+                  {onGoToIntake && (
+                    <button
+                      type='button'
+                      onClick={() => { handleCancel(); onGoToIntake(); }}
+                      className='w-fit text-[11px] text-amber-500 transition-colors hover:text-amber-300 focus-visible:outline-none focus-visible:underline'
+                    >
+                      Enviar cuestionario primero →
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Objetivo */}
           <p className='mb-2 text-[11px] font-medium text-zinc-500'>
             {GOAL_LABELS[patientGoal]}
