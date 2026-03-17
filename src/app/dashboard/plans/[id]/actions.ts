@@ -216,7 +216,7 @@ Usa la herramienta generate_day para devolver el plan.`;
     });
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       tools: [dayTool],
       tool_choice: { type: 'tool', name: 'generate_day' },

@@ -394,12 +394,6 @@ export async function POST(req: NextRequest) {
   }
 
   const planId = planRecord.id as string;
-  const anthropic = new Anthropic({
-    apiKey: getEnvVar(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC_API_KEY'),
-    // Timeout por llamada: 45 s. Sin esto el SDK espera 600 s por defecto,
-    // lo que bloquea el stream cuando Claude tarda o hay error de red.
-    timeout: 45_000,
-  });
 
   const encoder = new TextEncoder();
 
@@ -420,6 +414,16 @@ export async function POST(req: NextRequest) {
       let totalTokensOutput = 0;
 
       try {
+        // Inicializar cliente Anthropic dentro del try para que cualquier error
+        // (API key ausente, red, etc.) se capture y llegue al cliente vía SSE
+        // en lugar de dejar el plan en estado 'generating' para siempre.
+        const anthropic = new Anthropic({
+          apiKey: getEnvVar(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC_API_KEY'),
+          // Timeout por llamada: 45 s. Sin esto el SDK espera 600 s por defecto,
+          // lo que bloquea el stream cuando Claude tarda o hay error de red.
+          timeout: 45_000,
+        });
+
         send({ type: 'start', plan_id: planId });
 
         // Generar los 7 días
@@ -433,7 +437,7 @@ export async function POST(req: NextRequest) {
             attempts++;
             try {
               const response = await anthropic.messages.create({
-                model: 'claude-sonnet-4-5',
+                model: 'claude-sonnet-4-5-20250929',
                 max_tokens: 4096,
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
@@ -487,7 +491,7 @@ export async function POST(req: NextRequest) {
         let shoppingList: ShoppingList = { produce: [], protein: [], dairy: [], grains: [], pantry: [] };
         try {
           const shoppingResponse = await anthropic.messages.create({
-            model: 'claude-sonnet-4-5',
+            model: 'claude-sonnet-4-5-20250929',
             max_tokens: 2048,
             tools: [SHOPPING_LIST_TOOL],
             tool_choice: { type: 'tool', name: 'generate_shopping_list' },
