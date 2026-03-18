@@ -335,6 +335,7 @@ export async function POST(req: NextRequest) {
           controller.close();
           return;
         }
+        send({ type: 'progress', step: 'auth_ok' });
 
         // ── Límite beta ───────────────────────────────────────────────────────
         const { count: planCount } = await (supabaseAdminClient as any)
@@ -351,6 +352,7 @@ export async function POST(req: NextRequest) {
           controller.close();
           return;
         }
+        send({ type: 'progress', step: 'beta_ok' });
 
         // ── Paciente ──────────────────────────────────────────────────────────
         const { data: patient } = (await (supabase as any)
@@ -365,6 +367,7 @@ export async function POST(req: NextRequest) {
           controller.close();
           return;
         }
+        send({ type: 'progress', step: 'patient_ok' });
 
         // ── Intake form ───────────────────────────────────────────────────────
         const { data: intakeFormData } = await (supabaseAdminClient as any)
@@ -376,6 +379,7 @@ export async function POST(req: NextRequest) {
           .maybeSingle() as { data: { answers: IntakeAnswers } | null };
 
         const intakeAnswers: IntakeAnswers | undefined = intakeFormData?.answers ?? undefined;
+        send({ type: 'progress', step: 'intake_ok' });
 
         const targets = calcTargets(patient, macro_overrides);
 
@@ -425,6 +429,7 @@ export async function POST(req: NextRequest) {
         }
 
         planId = planRecord.id as string;
+        send({ type: 'progress', step: 'plan_created' });
 
         // Inicializar cliente Anthropic dentro del try para que cualquier error
         // (API key ausente, red, etc.) se capture y llegue al cliente vía SSE
@@ -437,6 +442,7 @@ export async function POST(req: NextRequest) {
         });
 
         send({ type: 'start', plan_id: planId });
+        send({ type: 'progress', step: 'starting_claude' });
 
         // Generar los 7 días
         for (let dayNum = 1; dayNum <= 7; dayNum++) {
