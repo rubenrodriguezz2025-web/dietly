@@ -285,15 +285,8 @@ function calcCost(inputTokens: number, outputTokens: number): number {
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: 'No autorizado' }, { status: 401 });
-  }
-
+  // Leer el body antes de abrir el stream (el Request body solo se puede
+  // leer una vez y no es accesible dentro del ReadableStream callback).
   let patient_id: string;
   let macro_overrides: MacroOverrides | undefined;
   try {
@@ -307,101 +300,20 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'patient_id requerido' }, { status: 400 });
   }
 
-  // Límite beta: verificar número de planes del nutricionista
-  const { count: planCount } = await (supabaseAdminClient as any)
-    .from('nutrition_plans')
-    .select('id', { count: 'exact', head: true })
-    .eq('nutritionist_id', user.id);
-
-  if ((planCount ?? 0) >= BETA_PLAN_LIMIT) {
-    return Response.json(
-      {
-        error: 'Has alcanzado el límite de 10 planes durante la beta. Escríbenos a hola@dietly.es para ampliar tu acceso.',
-        beta_limit_reached: true,
-      },
-      { status: 403 },
-    );
-  }
-
-  const { data: patient } = (await (supabase as any)
-    .from('patients')
-    .select('*')
-    .eq('id', patient_id)
-    .eq('nutritionist_id', user.id)
-    .single()) as { data: Patient | null };
-
-  if (!patient) {
-    return Response.json({ error: 'Paciente no encontrado' }, { status: 404 });
-  }
-
-  // Obtener el cuestionario de intake más reciente del paciente (si existe)
-  const { data: intakeFormData } = await (supabaseAdminClient as any)
-    .from('intake_forms')
-    .select('answers')
-    .eq('patient_id', patient_id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle() as { data: { answers: IntakeAnswers } | null };
-
-  const intakeAnswers: IntakeAnswers | undefined = intakeFormData?.answers ?? undefined;
-
-  const targets = calcTargets(patient, macro_overrides);
-
-  // Next Monday as week_start_date
-  const now = new Date();
-  const daysUntilMonday = ((8 - now.getDay()) % 7) || 7;
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() + daysUntilMonday);
-  weekStart.setHours(0, 0, 0, 0);
-
-  const emptyContent: PlanContent = {
-    week_summary: {
-      target_daily_calories: targets.calories,
-      target_macros: {
-        protein_g: targets.protein_g,
-        carbs_g: targets.carbs_g,
-        fat_g: targets.fat_g,
-      },
-      weekly_averages: { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 },
-      protein_per_kg: targets.protein_per_kg,
-      carbs_pct: targets.carbs_pct,
-      fat_pct: targets.fat_pct,
-      goal: patient.goal ?? 'health',
-    },
-    days: [],
-    shopping_list: { produce: [], protein: [], dairy: [], grains: [], pantry: [] },
-  };
-
-  const { data: planRecord, error: createError } = await (supabaseAdminClient as any)
-    .from('nutrition_plans')
-    .insert({
-      patient_id,
-      nutritionist_id: user.id,
-      status: 'generating',
-      week_start_date: weekStart.toISOString().split('T')[0],
-      content: emptyContent,
-      patient_token: crypto.randomUUID(),
-    })
-    .select('id')
-    .single();
-
-  if (createError || !planRecord) {
-    console.error('[plans/generate] createError status:', createError?.code);
-    console.error('[plans/generate] createError message:', createError?.message);
-    console.error('[plans/generate] createError details:', createError?.details);
-    console.error('[plans/generate] createError hint:', createError?.hint);
-    return Response.json({ error: 'Error creando el plan', detail: createError?.message }, { status: 500 });
-  }
-
-  const planId = planRecord.id as string;
-
   const encoder = new TextEncoder();
 
+  // IMPORTANTE: abrimos el stream INMEDIATAMENTE antes de cualquier query a DB.
+  // Así el Response llega al cliente de golpe y el primer evento SSE confirma
+  // que el stream funciona. Toda la lógica de auth/DB/Claude va dentro del start().
   const stream = new ReadableStream({
     async start(controller) {
       function send(data: object) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       }
+
+      // Primer evento inmediato — confirma que el stream SSE está abierto
+      // antes de cualquier query a DB o llamada a Claude.
+      send({ type: 'progress', day: 0, message: 'Iniciando generación...' });
 
       // Keepalive: envía un comentario SSE cada 15 s para que el proxy/navegador
       // no cierre la conexión mientras Claude procesa (puede tardar >30 s por día).
@@ -412,8 +324,108 @@ export async function POST(req: NextRequest) {
       const days: PlanDay[] = [];
       let totalTokensInput = 0;
       let totalTokensOutput = 0;
+      let planId: string | undefined;
 
       try {
+        // ── Auth ──────────────────────────────────────────────────────────────
+        const supabase = await createSupabaseServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          send({ type: 'error', message: 'No autorizado' });
+          controller.close();
+          return;
+        }
+
+        // ── Límite beta ───────────────────────────────────────────────────────
+        const { count: planCount } = await (supabaseAdminClient as any)
+          .from('nutrition_plans')
+          .select('id', { count: 'exact', head: true })
+          .eq('nutritionist_id', user.id);
+
+        if ((planCount ?? 0) >= BETA_PLAN_LIMIT) {
+          send({
+            type: 'error',
+            message: 'Has alcanzado el límite de 10 planes durante la beta. Escríbenos a hola@dietly.es para ampliar tu acceso.',
+            beta_limit_reached: true,
+          });
+          controller.close();
+          return;
+        }
+
+        // ── Paciente ──────────────────────────────────────────────────────────
+        const { data: patient } = (await (supabase as any)
+          .from('patients')
+          .select('*')
+          .eq('id', patient_id)
+          .eq('nutritionist_id', user.id)
+          .single()) as { data: Patient | null };
+
+        if (!patient) {
+          send({ type: 'error', message: 'Paciente no encontrado' });
+          controller.close();
+          return;
+        }
+
+        // ── Intake form ───────────────────────────────────────────────────────
+        const { data: intakeFormData } = await (supabaseAdminClient as any)
+          .from('intake_forms')
+          .select('answers')
+          .eq('patient_id', patient_id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle() as { data: { answers: IntakeAnswers } | null };
+
+        const intakeAnswers: IntakeAnswers | undefined = intakeFormData?.answers ?? undefined;
+
+        const targets = calcTargets(patient, macro_overrides);
+
+        // ── Crear registro del plan ───────────────────────────────────────────
+        const now = new Date();
+        const daysUntilMonday = ((8 - now.getDay()) % 7) || 7;
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() + daysUntilMonday);
+        weekStart.setHours(0, 0, 0, 0);
+
+        const emptyContent: PlanContent = {
+          week_summary: {
+            target_daily_calories: targets.calories,
+            target_macros: {
+              protein_g: targets.protein_g,
+              carbs_g: targets.carbs_g,
+              fat_g: targets.fat_g,
+            },
+            weekly_averages: { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 },
+            protein_per_kg: targets.protein_per_kg,
+            carbs_pct: targets.carbs_pct,
+            fat_pct: targets.fat_pct,
+            goal: patient.goal ?? 'health',
+          },
+          days: [],
+          shopping_list: { produce: [], protein: [], dairy: [], grains: [], pantry: [] },
+        };
+
+        const { data: planRecord, error: createError } = await (supabaseAdminClient as any)
+          .from('nutrition_plans')
+          .insert({
+            patient_id,
+            nutritionist_id: user.id,
+            status: 'generating',
+            week_start_date: weekStart.toISOString().split('T')[0],
+            content: emptyContent,
+            patient_token: crypto.randomUUID(),
+          })
+          .select('id')
+          .single();
+
+        if (createError || !planRecord) {
+          console.error('[plans/generate] createError:', createError?.message);
+          send({ type: 'error', message: `Error creando el plan: ${createError?.message ?? 'unknown'}` });
+          controller.close();
+          return;
+        }
+
+        planId = planRecord.id as string;
+
         // Inicializar cliente Anthropic dentro del try para que cualquier error
         // (API key ausente, red, etc.) se capture y llegue al cliente vía SSE
         // en lugar de dejar el plan en estado 'generating' para siempre.
@@ -558,10 +570,12 @@ export async function POST(req: NextRequest) {
         send({ type: 'done', plan_id: planId });
       } catch (err) {
         console.error('[plans/generate] error:', err);
-        await (supabaseAdminClient as any)
-          .from('nutrition_plans')
-          .update({ status: 'error' })
-          .eq('id', planId);
+        if (planId) {
+          await (supabaseAdminClient as any)
+            .from('nutrition_plans')
+            .update({ status: 'error' })
+            .eq('id', planId);
+        }
         send({ type: 'error', message: 'Error inesperado. Inténtalo de nuevo.' });
       } finally {
         clearInterval(keepalive);
