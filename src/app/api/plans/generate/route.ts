@@ -338,15 +338,19 @@ export async function POST(req: NextRequest) {
         send({ type: 'progress', step: 'auth_ok' });
 
         // ── Límite beta ───────────────────────────────────────────────────────
-        const { data: whitelistEntry } = await (supabaseAdminClient as any)
+        const { data: whitelistEntry, error: whitelistError } = await (supabaseAdminClient as any)
           .from('beta_whitelist')
           .select('plan_limit')
           .eq('email', user.email)
-          .maybeSingle() as { data: { plan_limit: number | null } | null };
+          .maybeSingle() as { data: { plan_limit: number | null } | null; error: { message: string } | null };
+
+        console.log('[plans/generate] beta check — email:', user.email, '| whitelistEntry:', JSON.stringify(whitelistEntry), '| error:', whitelistError?.message ?? null);
 
         const effectiveLimit = whitelistEntry?.plan_limit === -1
           ? -1
           : (whitelistEntry?.plan_limit ?? BETA_PLAN_LIMIT);
+
+        console.log('[plans/generate] effectiveLimit:', effectiveLimit);
 
         if (effectiveLimit !== -1) {
           const { count: planCount } = await (supabaseAdminClient as any)
