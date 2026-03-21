@@ -2,6 +2,11 @@ import type { NextRequest } from 'next/server';
 
 import { logAIRequest } from '@/libs/ai/logger';
 import { type PseudonymizedPatient,pseudonymizePatient } from '@/libs/ai/pseudonymize';
+import {
+  AnthropicResilienceError,
+  callAnthropicWithResilience,
+  checkAndAlertErrorRate,
+} from '@/libs/ai/resilience';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Patient, PlanContent, PlanDay, ShoppingList } from '@/types/dietly';
@@ -471,74 +476,123 @@ export async function POST(req: NextRequest) {
           console.log(`[plans/generate] plan=${planId} — iniciando día ${dayNum}`);
 
           let dayData: PlanDay | null = null;
-          let attempts = 0;
 
-          while (attempts < 2 && !dayData) {
-            attempts++;
-            if (attempts > 1) send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1], retry: true });
-            try {
-              const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers);
-              const response = await anthropic.messages.create({
+          // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
+          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers);
+          try {
+            const response = await callAnthropicWithResilience(
+              () => anthropic.messages.create({
                 model: 'claude-sonnet-4-6',
                 max_tokens: 4096,
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
                 messages: [{ role: 'user', content: dayPrompt }],
-              });
+              }),
+              `day_${dayNum}`,
+            );
 
-              const inputTok = response.usage.input_tokens;
-              const outputTok = response.usage.output_tokens;
-              totalTokensInput += inputTok;
-              totalTokensOutput += outputTok;
-              console.log(`[plans/generate] plan=${planId} día=${dayNum} — Claude OK (in=${inputTok} out=${outputTok} stop=${response.stop_reason})`);
+            const inputTok = response.usage.input_tokens;
+            const outputTok = response.usage.output_tokens;
+            totalTokensInput += inputTok;
+            totalTokensOutput += outputTok;
+            console.log(`[plans/generate] plan=${planId} día=${dayNum} — Claude OK (in=${inputTok} out=${outputTok} stop=${response.stop_reason})`);
 
-              void (supabaseAdminClient as any).from('plan_generations').insert({
-                plan_id: planId,
-                nutritionist_id: user.id,
-                day_generated: dayNum,
-                tokens_input: inputTok,
-                tokens_output: outputTok,
-                cost_usd: calcCost(inputTok, outputTok),
-              });
+            void (supabaseAdminClient as any).from('plan_generations').insert({
+              plan_id: planId,
+              nutritionist_id: user.id,
+              day_generated: dayNum,
+              tokens_input: inputTok,
+              tokens_output: outputTok,
+              cost_usd: calcCost(inputTok, outputTok),
+            });
 
-              const toolUse = response.content.find((b) => b.type === 'tool_use');
-              if (toolUse?.type === 'tool_use') {
-                const candidate = toolUse.input as PlanDay;
-                const invalidMeals = validateDay(candidate);
-                console.log(`[plans/generate] plan=${planId} día=${dayNum} — meals=${candidate.meals?.length ?? 0} invalidMeals=${invalidMeals.length}`);
-                if (invalidMeals.length === 0 || attempts >= 2) {
-                  dayData = candidate;
-                  // Log de auditoría: prompt pseudonimizado + respuesta de la IA
-                  void logAIRequest({
-                    nutritionistId: user.id,
-                    sessionPatientId: sessionId,
-                    planId: planId!,
-                    modelVersion: 'claude-sonnet-4-6',
-                    requestType: 'generate_day',
-                    dayNumber: dayNum,
-                    prompt: dayPrompt,
-                    responseSummary: JSON.stringify(toolUse.input),
-                    tokensInput: inputTok,
-                    tokensOutput: outputTok,
-                    costUsd: calcCost(inputTok, outputTok),
-                  });
-                }
+            const toolUse = response.content.find((b) => b.type === 'tool_use');
+            if (toolUse?.type === 'tool_use') {
+              const candidate = toolUse.input as PlanDay;
+              const invalidMeals = validateDay(candidate);
+              console.log(`[plans/generate] plan=${planId} día=${dayNum} — meals=${candidate.meals?.length ?? 0} invalidMeals=${invalidMeals.length}`);
+
+              // Si pasa validación, lo aceptamos directamente
+              if (invalidMeals.length === 0) {
+                dayData = candidate;
               } else {
-                console.warn(`[plans/generate] plan=${planId} día=${dayNum} — sin tool_use en respuesta. stop_reason=${response.stop_reason}`);
+                // Reintento de validación (sin consumir presupuesto de resilience)
+                send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1], retry: true });
+                console.warn(`[plans/generate] plan=${planId} día=${dayNum} — validación fallida (${invalidMeals.length} comidas inválidas), reintentando`);
+                const retryResponse = await callAnthropicWithResilience(
+                  () => anthropic.messages.create({
+                    model: 'claude-sonnet-4-6',
+                    max_tokens: 4096,
+                    tools: [DAY_TOOL],
+                    tool_choice: { type: 'tool', name: 'generate_day' },
+                    messages: [{ role: 'user', content: dayPrompt }],
+                  }),
+                  `day_${dayNum}_retry`,
+                );
+                const retryToolUse = retryResponse.content.find((b) => b.type === 'tool_use');
+                // Aceptar el reintento aunque falle la validación (mejor que nada)
+                if (retryToolUse?.type === 'tool_use') {
+                  dayData = retryToolUse.input as PlanDay;
+                } else {
+                  dayData = candidate; // fallback al primer intento
+                }
               }
-            } catch (err) {
-              console.error(`[plans/generate] plan=${planId} día=${dayNum} attempt=${attempts} error:`, err instanceof Error ? err.message : err);
-              if (attempts >= 2) throw err;
-            }
-          }
 
-          if (!dayData) {
-            const { error: errUpd } = await (supabaseAdminClient as any)
+              if (dayData) {
+                void logAIRequest({
+                  nutritionistId: user.id,
+                  sessionPatientId: sessionId,
+                  planId: planId!,
+                  modelVersion: 'claude-sonnet-4-6',
+                  requestType: 'generate_day',
+                  dayNumber: dayNum,
+                  prompt: dayPrompt,
+                  responseSummary: JSON.stringify(dayData),
+                  tokensInput: inputTok,
+                  tokensOutput: outputTok,
+                  costUsd: calcCost(inputTok, outputTok),
+                });
+              }
+            } else {
+              console.warn(`[plans/generate] plan=${planId} día=${dayNum} — sin tool_use en respuesta. stop_reason=${response.stop_reason}`);
+            }
+          } catch (err) {
+            // Determinar si el error viene del circuit breaker o es recuperable
+            const isServiceUnavailable =
+              err instanceof AnthropicResilienceError && err.code === 'service_unavailable';
+
+            await (supabaseAdminClient as any)
               .from('nutrition_plans')
               .update({ status: 'error' })
               .eq('id', planId);
-            if (errUpd) console.error(`[plans/generate] plan=${planId} — error marcando plan como error:`, errUpd.message);
-            send({ type: 'error', message: `Error generando el día ${dayNum}. Inténtalo de nuevo.` });
+
+            // Notificar tasa de error (fire-and-forget)
+            void checkAndAlertErrorRate();
+
+            if (isServiceUnavailable) {
+              send({
+                type:       'error',
+                message:    'El servicio de generación está temporalmente no disponible. Inténtelo en unos minutos.',
+                error_code: 'service_unavailable',
+              });
+            } else {
+              send({
+                type:       'error',
+                message:    `Error generando el día ${dayNum}. Inténtalo de nuevo.`,
+                error_code: err instanceof AnthropicResilienceError ? err.code : 'unknown',
+              });
+            }
+            controller.close();
+            return;
+          }
+
+          if (!dayData) {
+            await (supabaseAdminClient as any)
+              .from('nutrition_plans')
+              .update({ status: 'error' })
+              .eq('id', planId);
+            void checkAndAlertErrorRate();
+            send({ type: 'error', message: `Error generando el día ${dayNum}. Inténtalo de nuevo.`, error_code: 'unknown' });
             controller.close();
             return;
           }
@@ -552,13 +606,16 @@ export async function POST(req: NextRequest) {
         console.log(`[plans/generate] plan=${planId} — generando lista de la compra`);
         let shoppingList: ShoppingList = { produce: [], protein: [], dairy: [], grains: [], pantry: [] };
         try {
-          const shoppingResponse = await anthropic.messages.create({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 2048,
-            tools: [SHOPPING_LIST_TOOL],
-            tool_choice: { type: 'tool', name: 'generate_shopping_list' },
-            messages: [{ role: 'user', content: buildShoppingListPrompt(days) }],
-          });
+          const shoppingResponse = await callAnthropicWithResilience(
+            () => anthropic.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 2048,
+              tools: [SHOPPING_LIST_TOOL],
+              tool_choice: { type: 'tool', name: 'generate_shopping_list' },
+              messages: [{ role: 'user', content: buildShoppingListPrompt(days) }],
+            }),
+            'shopping_list',
+          );
 
           const slInput = shoppingResponse.usage.input_tokens;
           const slOutput = shoppingResponse.usage.output_tokens;
@@ -646,8 +703,17 @@ export async function POST(req: NextRequest) {
             .from('nutrition_plans')
             .update({ status: 'error' })
             .eq('id', planId);
+          void checkAndAlertErrorRate();
         }
-        send({ type: 'error', message: 'Error inesperado. Inténtalo de nuevo.' });
+        const isServiceUnavailable =
+          err instanceof AnthropicResilienceError && err.code === 'service_unavailable';
+        send({
+          type:       'error',
+          message:    isServiceUnavailable
+            ? 'El servicio de generación está temporalmente no disponible. Inténtelo en unos minutos.'
+            : 'Error inesperado. Inténtalo de nuevo.',
+          error_code: err instanceof AnthropicResilienceError ? err.code : 'unknown',
+        });
       } finally {
         clearInterval(keepalive);
         controller.close();

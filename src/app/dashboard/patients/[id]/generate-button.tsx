@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import type { AnthropicErrorCode } from '@/libs/ai/resilience';
 import type { PatientGoal } from '@/types/dietly';
 import { GOAL_LABELS } from '@/types/dietly';
 import type { CalcTargets } from '@/utils/calc-targets';
 
-const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+import { PlanGenerationStatus } from './plan-generation-status';
+
 
 type State = 'idle' | 'confirm' | 'generating' | 'error';
 
@@ -27,15 +29,23 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   const [state, setState] = useState<State>('idle');
   const [currentDay, setCurrentDay] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+  const [errorCode, setErrorCode] = useState<AnthropicErrorCode | string | undefined>();
 
   function handleCancel() {
     setState('idle');
+  }
+
+  function handleRetry() {
+    setState('idle');
+    setErrorMsg('');
+    setErrorCode(undefined);
   }
 
   async function handleGenerate() {
     setState('generating');
     setCurrentDay(0);
     setErrorMsg('');
+    setErrorCode(undefined);
     try {
       const res = await fetch('/api/plans/generate', {
         method: 'POST',
@@ -68,7 +78,12 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
             const data = JSON.parse(line.slice(6));
             if (data.type === 'progress') setCurrentDay(data.day as number);
             else if (data.type === 'done') { doneReceived = true; router.push(`/dashboard/plans/${data.plan_id}`); }
-            else if (data.type === 'error') { setState('error'); setErrorMsg(data.message as string); return; }
+            else if (data.type === 'error') {
+              setState('error');
+              setErrorMsg(data.message as string);
+              setErrorCode(data.error_code as AnthropicErrorCode | undefined);
+              return;
+            }
           } catch { /* ignore malformed */ }
         }
       }
@@ -86,41 +101,18 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   // ── Error ────────────────────────────────────────────────────────────────────
   if (state === 'error') {
     return (
-      <div className='flex flex-col items-end gap-2'>
-        <p className='text-xs text-red-400'>{errorMsg}</p>
-        <Button variant='outline' size='sm' onClick={() => setState('idle')}>
-          Reintentar
-        </Button>
-      </div>
+      <PlanGenerationStatus
+        variant='error'
+        message={errorMsg}
+        errorCode={errorCode}
+        onRetry={handleRetry}
+      />
     );
   }
 
   // ── Generando ────────────────────────────────────────────────────────────────
   if (state === 'generating') {
-    return (
-      <div className='flex flex-col items-end gap-2'>
-        <div className='flex items-center gap-2'>
-          <div className='h-3 w-3 animate-spin rounded-full border border-zinc-400 border-t-transparent' />
-          <span className='text-sm text-zinc-400'>
-            {currentDay > 0
-              ? currentDay <= 7
-                ? `Generando ${DAY_NAMES[currentDay - 1]}... (${currentDay}/7)`
-                : 'Generando lista de la compra...'
-              : 'Iniciando...'}
-          </span>
-        </div>
-        <div className='flex gap-1'>
-          {Array.from({ length: 7 }, (_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 w-5 rounded-full transition-colors duration-300 ${
-                i < currentDay ? 'bg-emerald-500' : 'bg-zinc-700'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-    );
+    return <PlanGenerationStatus variant='generating' currentDay={currentDay} />;
   }
 
   // ── Confirmación de generación ────────────────────────────────────────────────
