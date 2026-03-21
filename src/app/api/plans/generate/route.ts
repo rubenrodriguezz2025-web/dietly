@@ -1,5 +1,7 @@
 import type { NextRequest } from 'next/server';
 
+import { logAIRequest } from '@/libs/ai/logger';
+import { type PseudonymizedPatient,pseudonymizePatient } from '@/libs/ai/pseudonymize';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Patient, PlanContent, PlanDay, ShoppingList } from '@/types/dietly';
@@ -187,7 +189,7 @@ function buildIntakeSection(answers: IntakeAnswers): string {
 }
 
 function buildDayPrompt(
-  patient: Patient,
+  patient: PseudonymizedPatient,
   dayNum: number,
   targets: ReturnType<typeof calcTargets>,
   previousDays: PlanDay[],
@@ -384,6 +386,10 @@ export async function POST(req: NextRequest) {
         }
         send({ type: 'progress', step: 'patient_ok' });
 
+        // Pseudonimizar el paciente ANTES de que sus datos salgan del servidor.
+        // A partir de aquí, todos los prompts y logs usan pseudoPatient + sessionId.
+        const { pseudoPatient, sessionId } = pseudonymizePatient(patient);
+
         // ── Intake form ───────────────────────────────────────────────────────
         const { data: intakeFormData } = await (supabaseAdminClient as any)
           .from('intake_forms')
@@ -471,14 +477,13 @@ export async function POST(req: NextRequest) {
             attempts++;
             if (attempts > 1) send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1], retry: true });
             try {
+              const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers);
               const response = await anthropic.messages.create({
                 model: 'claude-sonnet-4-6',
                 max_tokens: 4096,
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
-                messages: [
-                  { role: 'user', content: buildDayPrompt(patient, dayNum, targets, days, intakeAnswers) },
-                ],
+                messages: [{ role: 'user', content: dayPrompt }],
               });
 
               const inputTok = response.usage.input_tokens;
@@ -503,6 +508,20 @@ export async function POST(req: NextRequest) {
                 console.log(`[plans/generate] plan=${planId} día=${dayNum} — meals=${candidate.meals?.length ?? 0} invalidMeals=${invalidMeals.length}`);
                 if (invalidMeals.length === 0 || attempts >= 2) {
                   dayData = candidate;
+                  // Log de auditoría: prompt pseudonimizado + respuesta de la IA
+                  void logAIRequest({
+                    nutritionistId: user.id,
+                    sessionPatientId: sessionId,
+                    planId: planId!,
+                    modelVersion: 'claude-sonnet-4-6',
+                    requestType: 'generate_day',
+                    dayNumber: dayNum,
+                    prompt: dayPrompt,
+                    responseSummary: JSON.stringify(toolUse.input),
+                    tokensInput: inputTok,
+                    tokensOutput: outputTok,
+                    costUsd: calcCost(inputTok, outputTok),
+                  });
                 }
               } else {
                 console.warn(`[plans/generate] plan=${planId} día=${dayNum} — sin tool_use en respuesta. stop_reason=${response.stop_reason}`);
@@ -559,6 +578,18 @@ export async function POST(req: NextRequest) {
           const shoppingToolUse = shoppingResponse.content.find((b) => b.type === 'tool_use');
           if (shoppingToolUse?.type === 'tool_use') {
             shoppingList = shoppingToolUse.input as ShoppingList;
+            void logAIRequest({
+              nutritionistId: user.id,
+              sessionPatientId: sessionId,
+              planId: planId!,
+              modelVersion: 'claude-sonnet-4-6',
+              requestType: 'shopping_list',
+              prompt: buildShoppingListPrompt(days),
+              responseSummary: JSON.stringify(shoppingToolUse.input),
+              tokensInput: slInput,
+              tokensOutput: slOutput,
+              costUsd: calcCost(slInput, slOutput),
+            });
           }
         } catch (err) {
           console.error(`[plans/generate] plan=${planId} — shopping list error:`, err instanceof Error ? err.message : err);

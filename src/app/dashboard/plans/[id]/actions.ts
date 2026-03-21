@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+import { logAIRequest } from '@/libs/ai/logger';
+import { pseudonymizePatient } from '@/libs/ai/pseudonymize';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Meal, Patient, PlanContent, PlanDay } from '@/types/dietly';
@@ -59,23 +61,35 @@ export async function recalculateMealMacros(
       apiKey: getEnvVar(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC_API_KEY'),
     });
 
+    const calcPrompt = `Calcula los macronutrientes y calorías totales de esta comida basándote en sus ingredientes:\n\nComida: ${meal.meal_name}\nIngredientes:\n${ingredientsList}\n\nUsa la herramienta calculate_macros para devolver el resultado.`;
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 256,
       tools: [calcTool],
       tool_choice: { type: 'tool', name: 'calculate_macros' },
-      messages: [
-        {
-          role: 'user',
-          content: `Calcula los macronutrientes y calorías totales de esta comida basándote en sus ingredientes:\n\nComida: ${meal.meal_name}\nIngredientes:\n${ingredientsList}\n\nUsa la herramienta calculate_macros para devolver el resultado.`,
-        },
-      ],
+      messages: [{ role: 'user', content: calcPrompt }],
     });
 
     const toolUse = response.content.find((b) => b.type === 'tool_use');
     if (!toolUse || toolUse.type !== 'tool_use') {
       return { error: 'No se pudo recalcular. Inténtalo de nuevo.' };
     }
+
+    void logAIRequest({
+      nutritionistId: user.id,
+      // No hay paciente en esta petición — se genera un UUID de sesión ad-hoc
+      sessionPatientId: crypto.randomUUID(),
+      planId,
+      modelVersion: 'claude-sonnet-4-6',
+      requestType: 'recalculate_macros',
+      prompt: calcPrompt,
+      responseSummary: JSON.stringify(toolUse.input),
+      tokensInput: response.usage.input_tokens,
+      tokensOutput: response.usage.output_tokens,
+      costUsd: Math.round(
+        (response.usage.input_tokens * 0.000003 + response.usage.output_tokens * 0.000015) * 1_000_000
+      ) / 1_000_000,
+    });
 
     const result = toolUse.input as { calories: number; protein_g: number; carbs_g: number; fat_g: number };
     return {
@@ -188,6 +202,9 @@ export async function regenerateDay(
   const patient = plan.patients as Patient;
   const content = plan.content as PlanContent;
 
+  // Pseudonimizar antes de construir el prompt
+  const { pseudoPatient, sessionId } = pseudonymizePatient(patient);
+
   // Build target calories from existing week_summary
   const targets = content.week_summary.target_macros
     ? {
@@ -202,9 +219,9 @@ export async function regenerateDay(
   const otherDays = content.days.filter((d) => d.day_number !== dayNumber);
 
   const restrictions = [
-    patient.dietary_restrictions,
-    patient.allergies ? `Alergias: ${patient.allergies}` : null,
-    patient.intolerances ? `Intolerancias: ${patient.intolerances}` : null,
+    pseudoPatient.dietary_restrictions,
+    pseudoPatient.allergies ? `Alergias: ${pseudoPatient.allergies}` : null,
+    pseudoPatient.intolerances ? `Intolerancias: ${pseudoPatient.intolerances}` : null,
   ]
     .filter(Boolean)
     .join('. ');
@@ -219,9 +236,9 @@ export async function regenerateDay(
   const prompt = `Eres un dietista-nutricionista experto. Regenera el plan del ${DAY_NAMES[dayNumber - 1]} (día ${dayNumber}/7) porque algunas comidas tenían errores.
 
 PERFIL DEL PACIENTE:
-- Objetivo: ${patient.goal ?? 'mejorar salud general'}
+- Objetivo: ${pseudoPatient.goal ?? 'mejorar salud general'}
 - Calorías diarias objetivo: ${targets.calories} kcal
-- Macros objetivo: ${targets.protein_g}g proteína · ${targets.carbs_g}g carbohidratos · ${targets.fat_g}g grasa${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${variety}
+- Macros objetivo: ${targets.protein_g}g proteína · ${targets.carbs_g}g carbohidratos · ${targets.fat_g}g grasa${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${pseudoPatient.preferences ? `\n- Preferencias: ${pseudoPatient.preferences}` : ''}${variety}
 
 REQUISITOS OBLIGATORIOS:
 - 4-5 comidas (desayuno, media mañana opcional, almuerzo, merienda, cena)
@@ -309,6 +326,22 @@ Usa la herramienta generate_day para devolver el plan.`;
     if (!toolUse || toolUse.type !== 'tool_use') {
       return { error: 'No se pudo generar el día. Inténtalo de nuevo.' };
     }
+
+    void logAIRequest({
+      nutritionistId: user.id,
+      sessionPatientId: sessionId,
+      planId,
+      modelVersion: 'claude-sonnet-4-6',
+      requestType: 'regenerate_day',
+      dayNumber,
+      prompt,
+      responseSummary: JSON.stringify(toolUse.input),
+      tokensInput: response.usage.input_tokens,
+      tokensOutput: response.usage.output_tokens,
+      costUsd: Math.round(
+        (response.usage.input_tokens * 0.000003 + response.usage.output_tokens * 0.000015) * 1_000_000
+      ) / 1_000_000,
+    });
 
     const newDay = toolUse.input as PlanDay;
 
