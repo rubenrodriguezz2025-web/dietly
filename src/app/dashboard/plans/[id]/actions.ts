@@ -5,9 +5,91 @@ import { redirect } from 'next/navigation';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import type { Patient, PlanContent, PlanDay } from '@/types/dietly';
+import type { Meal, Patient, PlanContent, PlanDay } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
+
+// ── Recalculate meal macros ───────────────────────────────────────────────────
+
+export async function recalculateMealMacros(
+  planId: string,
+  meal: Meal
+): Promise<{
+  calories?: number;
+  macros?: { protein_g: number; carbs_g: number; fat_g: number };
+  error?: string;
+}> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'No autenticado.' };
+
+  const { data: plan } = await (supabase as any)
+    .from('nutrition_plans')
+    .select('status')
+    .eq('id', planId)
+    .eq('nutritionist_id', user.id)
+    .single();
+
+  if (!plan) return { error: 'Plan no encontrado.' };
+  if (plan.status !== 'draft') return { error: 'Solo se pueden recalcular macros en planes en borrador.' };
+
+  const ingredientsList = meal.ingredients
+    .map((ing) => `- ${ing.name}: ${ing.quantity} ${ing.unit}`)
+    .join('\n');
+
+  const calcTool: Anthropic.Tool = {
+    name: 'calculate_macros',
+    description: 'Calcula los macronutrientes y calorías totales de una comida',
+    input_schema: {
+      type: 'object',
+      properties: {
+        calories: { type: 'number' },
+        protein_g: { type: 'number' },
+        carbs_g: { type: 'number' },
+        fat_g: { type: 'number' },
+      },
+      required: ['calories', 'protein_g', 'carbs_g', 'fat_g'],
+    },
+  };
+
+  try {
+    const anthropic = new Anthropic({
+      apiKey: getEnvVar(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC_API_KEY'),
+    });
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 256,
+      tools: [calcTool],
+      tool_choice: { type: 'tool', name: 'calculate_macros' },
+      messages: [
+        {
+          role: 'user',
+          content: `Calcula los macronutrientes y calorías totales de esta comida basándote en sus ingredientes:\n\nComida: ${meal.meal_name}\nIngredientes:\n${ingredientsList}\n\nUsa la herramienta calculate_macros para devolver el resultado.`,
+        },
+      ],
+    });
+
+    const toolUse = response.content.find((b) => b.type === 'tool_use');
+    if (!toolUse || toolUse.type !== 'tool_use') {
+      return { error: 'No se pudo recalcular. Inténtalo de nuevo.' };
+    }
+
+    const result = toolUse.input as { calories: number; protein_g: number; carbs_g: number; fat_g: number };
+    return {
+      calories: Math.round(result.calories),
+      macros: {
+        protein_g: Math.round(result.protein_g),
+        carbs_g: Math.round(result.carbs_g),
+        fat_g: Math.round(result.fat_g),
+      },
+    };
+  } catch {
+    return { error: 'Error llamando a la IA. Inténtalo de nuevo.' };
+  }
+}
 
 // ── Update day (inline editing) ───────────────────────────────────────────────
 
@@ -216,7 +298,7 @@ Usa la herramienta generate_day para devolver el plan.`;
     });
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       tools: [dayTool],
       tool_choice: { type: 'tool', name: 'generate_day' },

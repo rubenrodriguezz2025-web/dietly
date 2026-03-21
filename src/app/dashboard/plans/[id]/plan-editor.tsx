@@ -29,6 +29,7 @@ export function PlanEditor({ days, planId, isDraft }: { days: PlanDay[]; planId:
           key={day.day_number}
           day={day}
           planId={planId}
+          isDraft={isDraft}
           onDirty={() => handleDirty(day.day_number)}
           onSaved={() => handleSaved(day.day_number)}
         />

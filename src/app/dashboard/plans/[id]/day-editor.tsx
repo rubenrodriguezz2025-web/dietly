@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 
 import type { Ingredient, Meal, PlanDay } from '@/types/dietly';
 
-import { updateDay } from './actions';
+import { recalculateMealMacros, updateDay } from './actions';
 import { RegenerateDayButton } from './regenerate-day-button';
 
 const MEAL_TYPE_LABELS: Record<string, string> = {
@@ -168,12 +168,31 @@ function IngredientRow({
 function MealEditor({
   meal,
   isInvalid,
+  isDraft,
+  planId,
   onChange,
 }: {
   meal: Meal;
   isInvalid: boolean;
+  isDraft: boolean;
+  planId: string;
   onChange: (updated: Meal) => void;
 }) {
+  const [isRecalculating, startRecalc] = useTransition();
+  const [recalcError, setRecalcError] = useState<string | null>(null);
+
+  function handleRecalculate() {
+    setRecalcError(null);
+    startRecalc(async () => {
+      const result = await recalculateMealMacros(planId, meal);
+      if (result.error) {
+        setRecalcError(result.error);
+      } else {
+        onChange({ ...meal, calories: result.calories!, macros: result.macros! });
+      }
+    });
+  }
+
   return (
     <div className={`px-5 py-4 ${isInvalid ? 'bg-red-950/20' : ''}`}>
       <div className='flex flex-wrap items-start justify-between gap-2'>
@@ -202,35 +221,55 @@ function MealEditor({
         </div>
 
         {/* Macros — editables */}
-        <div className='flex flex-shrink-0 gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs'>
-          <EditableNumber
-            value={meal.calories}
-            unit='kcal'
-            bold
-            onChange={(calories) => onChange({ ...meal, calories })}
-          />
-          <span className='text-zinc-700'>|</span>
-          <EditableNumber
-            value={meal.macros.protein_g}
-            unit='P'
-            onChange={(protein_g) =>
-              onChange({ ...meal, macros: { ...meal.macros, protein_g } })
-            }
-          />
-          <EditableNumber
-            value={meal.macros.carbs_g}
-            unit='C'
-            onChange={(carbs_g) =>
-              onChange({ ...meal, macros: { ...meal.macros, carbs_g } })
-            }
-          />
-          <EditableNumber
-            value={meal.macros.fat_g}
-            unit='G'
-            onChange={(fat_g) =>
-              onChange({ ...meal, macros: { ...meal.macros, fat_g } })
-            }
-          />
+        <div className='flex flex-col items-end gap-1'>
+          <div className='flex flex-shrink-0 gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs'>
+            <EditableNumber
+              value={meal.calories}
+              unit='kcal'
+              bold
+              onChange={(calories) => onChange({ ...meal, calories })}
+            />
+            <span className='text-zinc-700'>|</span>
+            <EditableNumber
+              value={meal.macros.protein_g}
+              unit='P'
+              onChange={(protein_g) =>
+                onChange({ ...meal, macros: { ...meal.macros, protein_g } })
+              }
+            />
+            <EditableNumber
+              value={meal.macros.carbs_g}
+              unit='C'
+              onChange={(carbs_g) =>
+                onChange({ ...meal, macros: { ...meal.macros, carbs_g } })
+              }
+            />
+            <EditableNumber
+              value={meal.macros.fat_g}
+              unit='G'
+              onChange={(fat_g) =>
+                onChange({ ...meal, macros: { ...meal.macros, fat_g } })
+              }
+            />
+          </div>
+          {isDraft && (
+            <button
+              type='button'
+              onClick={handleRecalculate}
+              disabled={isRecalculating}
+              className='flex items-center gap-1 text-[10px] text-zinc-600 transition-colors hover:text-emerald-500 disabled:opacity-50'
+            >
+              {isRecalculating ? (
+                <span className='inline-block h-2.5 w-2.5 animate-spin rounded-full border border-zinc-500 border-t-transparent' />
+              ) : (
+                <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'><path d='M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2'/></svg>
+              )}
+              Recalcular macros
+            </button>
+          )}
+          {recalcError && (
+            <p className='text-[10px] text-red-400'>{recalcError}</p>
+          )}
         </div>
       </div>
 
@@ -278,11 +317,13 @@ function MealEditor({
 export function DayEditor({
   day: initialDay,
   planId,
+  isDraft,
   onDirty,
   onSaved,
 }: {
   day: PlanDay;
   planId: string;
+  isDraft: boolean;
   onDirty: () => void;
   onSaved: () => void;
 }) {
@@ -401,6 +442,8 @@ export function DayEditor({
             key={i}
             meal={meal}
             isInvalid={invalidMealIndexes.includes(i)}
+            isDraft={isDraft}
+            planId={planId}
             onChange={(updated) => updateMeal(i, updated)}
           />
         ))}
