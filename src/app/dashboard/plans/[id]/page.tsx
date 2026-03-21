@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 import type { NutritionPlan, PlanContent } from '@/types/dietly';
 import { GOAL_LABELS, PLAN_STATUS_LABELS } from '@/types/dietly';
 
+import { GeneratingPoller } from './generating-poller';
 import { PlanEditor } from './plan-editor';
 import { ReminderModal } from './reminder-modal';
 
@@ -132,27 +133,8 @@ export default async function PlanPage({
         </div>
       )}
 
-      {/* Generating spinner */}
-      {isGenerating && (
-        <div className='flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
-          <div className='flex items-center gap-3'>
-            <div className='h-5 w-5 animate-spin rounded-full border-2 border-zinc-500 border-t-zinc-200' />
-            <p className='text-zinc-400'>Generando el plan nutricional... Esto puede tardar 2-3 minutos.</p>
-          </div>
-          <p className='text-xs text-zinc-600'>
-            Si llevas más de 5 minutos aquí,{' '}
-            {plan.patients && (
-              <Link
-                href={`/dashboard/patients/${plan.patients.id}`}
-                className='text-zinc-400 underline hover:text-zinc-200'
-              >
-                vuelve a la ficha del paciente
-              </Link>
-            )}{' '}
-            y genera un nuevo plan.
-          </p>
-        </div>
-      )}
+      {/* Generating — poller con auto-refresh cuando el plan termina */}
+      {isGenerating && <GeneratingPoller planId={id} />}
 
       {/* Weekly summary */}
       {content?.week_summary && !isGenerating && (
