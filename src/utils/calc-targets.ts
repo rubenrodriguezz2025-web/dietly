@@ -9,29 +9,29 @@ const ACTIVITY_FACTORS: Record<string, number> = {
 };
 
 const GOAL_CALORIE_ADJ: Record<PatientGoal, number> = {
-  weight_loss: -400,
+  weight_loss: -500,
   weight_gain: 300,
   maintenance: 0,
-  muscle_gain: 300,
+  muscle_gain: 250,
   health: 0,
 };
 
-// g/kg de peso corporal — punto medio del rango clínico por objetivo
+// g/kg de peso corporal — guías SENC, SEEN y consenso europeo
 const PROTEIN_PER_KG: Record<PatientGoal, number> = {
-  weight_loss: 1.8,  // rango 1.6–2.0 g/kg
-  weight_gain: 2.0,  // rango 1.8–2.2 g/kg
+  weight_loss: 2.0,  // déficit: más proteína para preservar masa muscular
+  weight_gain: 1.8,  // superávit calórico: menor necesidad relativa de proteína
   maintenance: 1.6,  // rango 1.4–1.8 g/kg
-  muscle_gain: 2.0,  // rango 1.8–2.2 g/kg
-  health: 1.5,       // rango 1.4–1.6 g/kg
+  muscle_gain: 2.2,  // máximo beneficio hipertrofia según ISSN
+  health: 1.4,       // población general sin objetivo específico
 };
 
 // Fracción de calorías restantes (tras proteína) asignadas a carbohidratos
 const CARBS_RATIO: Record<PatientGoal, number> = {
-  weight_loss: 0.50,
-  weight_gain: 0.60,
+  weight_loss: 0.45,  // más grasa mejora saciedad en déficit
+  weight_gain: 0.65,  // más carbs para cubrir superávit energético
   maintenance: 0.55,
-  muscle_gain: 0.60,
-  health: 0.55,
+  muscle_gain: 0.65,  // carbs prioritarios para hipertrofia
+  health: 0.60,       // dieta mediterránea española estándar
 };
 
 export type CalcTargets = {
