@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 
+import { ConsentForm } from '@/components/patients/ConsentForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -193,6 +194,9 @@ export function NewPatientForm() {
           </Field>
         </div>
       </section>
+
+      {/* Consentimiento informado — obligatorio para habilitar la generación de planes con IA */}
+      <ConsentForm disabled={pending} />
 
       {state?.error && (
         <p className='rounded-md bg-red-950 px-4 py-3 text-sm text-red-400'>{state.error}</p>

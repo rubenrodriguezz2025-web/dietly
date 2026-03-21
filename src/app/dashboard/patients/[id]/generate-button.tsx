@@ -18,10 +18,11 @@ interface Props {
   patientWeight: number;
   patientGoal: PatientGoal;
   hasIntake?: boolean;
+  hasConsent?: boolean;
   onGoToIntake?: () => void;
 }
 
-export function GenerateButton({ patientId, initialTargets, patientWeight, patientGoal, hasIntake, onGoToIntake }: Props) {
+export function GenerateButton({ patientId, initialTargets, patientWeight, patientGoal, hasIntake, hasConsent = true, onGoToIntake }: Props) {
   const router = useRouter();
   const [state, setState] = useState<State>('idle');
   const [currentDay, setCurrentDay] = useState(0);
@@ -197,6 +198,36 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // ── Sin consentimiento ───────────────────────────────────────────────────────
+  if (!hasConsent) {
+    return (
+      <div className='flex flex-col items-end gap-1.5'>
+        <div className='flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-1.5'>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            width='11'
+            height='11'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2.5'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            className='flex-shrink-0 text-zinc-500'
+            aria-hidden='true'
+          >
+            <rect x='3' y='11' width='18' height='11' rx='2' ry='2' />
+            <path d='M7 11V7a5 5 0 0 1 10 0v4' />
+          </svg>
+          <span className='text-[11px] text-zinc-500'>Sin consentimiento IA</span>
+        </div>
+        <Button disabled title='El paciente no ha dado consentimiento para procesar sus datos con IA'>
+          + Generar plan
+        </Button>
       </div>
     );
   }

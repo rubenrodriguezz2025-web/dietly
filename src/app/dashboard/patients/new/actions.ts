@@ -1,5 +1,6 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
@@ -38,6 +39,13 @@ export async function createPatient(
   } = await supabase.auth.getUser();
 
   if (!user) redirect('/login');
+
+  // Validar consentimiento antes de crear el paciente
+  const aiConsent = formData.get('ai_consent') as string | null;
+  if (aiConsent !== 'granted') {
+    return { error: 'Es necesario aceptar el consentimiento para el tratamiento de datos con IA.' };
+  }
+  const consentVersion = (formData.get('ai_consent_version') as string) || 'unknown';
 
   const name = formData.get('name') as string;
   const email = (formData.get('email') as string) || null;
@@ -86,6 +94,21 @@ export async function createPatient(
   if (error) {
     return { error: 'Error al guardar el paciente. Inténtalo de nuevo.' };
   }
+
+  // Registrar consentimiento — obtener IP del nutricionista para auditoría RGPD
+  const reqHeaders = await headers();
+  const ip =
+    reqHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    reqHeaders.get('x-real-ip') ??
+    null;
+
+  await (supabase as any).from('patient_consents').insert({
+    patient_id: patient.id,
+    nutritionist_id: user.id,
+    consent_type: 'ai_processing',
+    consent_text_version: consentVersion,
+    ip_address: ip,
+  });
 
   redirect(`/dashboard/patients/${patient.id}`);
 }

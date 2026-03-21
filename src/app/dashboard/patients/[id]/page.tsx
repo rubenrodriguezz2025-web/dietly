@@ -88,13 +88,28 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const nextReminder = nextReminderResult.data as { id: string; remind_at: string; status: string } | null;
   const overdueReminder = overdueReminderResult.data as { id: string; remind_at: string } | null;
 
-  const { data: intakeForm } = await (supabaseAdminClient as any)
-    .from('intake_forms')
-    .select('answers, completed_at')
-    .eq('patient_id', id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [intakeFormResult, consentResult] = await Promise.all([
+    (supabaseAdminClient as any)
+      .from('intake_forms')
+      .select('answers, completed_at')
+      .eq('patient_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+
+    // Consentimiento activo (no revocado) para procesamiento con IA
+    (supabaseAdminClient as any)
+      .from('patient_consents')
+      .select('id')
+      .eq('patient_id', id)
+      .eq('consent_type', 'ai_processing')
+      .is('revoked_at', null)
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const intakeForm = intakeFormResult.data;
+  const hasConsent = !!consentResult.data;
 
   const intakeUrl = intakeToken
     ? `${process.env.NEXT_PUBLIC_APP_URL}/p/intake/${intakeToken}`
@@ -152,6 +167,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             patientWeight={patient.weight_kg ?? 70}
             patientGoal={patient.goal ?? 'health'}
             hasIntake={!!intakeForm}
+            hasConsent={hasConsent}
           />
         </div>
       </div>
