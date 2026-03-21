@@ -33,7 +33,15 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testDir: './e2e',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // Tests de aislamiento RLS — sin navegador, solo Supabase JS client
+      // Ejecutar con: npx playwright test --project=rls
+      name: 'rls',
+      testDir: './tests',
+      use: {},
     },
   ],
 

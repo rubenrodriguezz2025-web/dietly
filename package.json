@@ -16,7 +16,9 @@
     "migration:new": "supabase migration new",
     "migration:up": "supabase migration up --linked --debug && npm run generate-types",
     "migration:squash": "supabase migration squash --linked",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:rls": "playwright test --project=rls",
+    "test:all": "playwright test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
