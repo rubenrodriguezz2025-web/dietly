@@ -74,6 +74,26 @@ function IconUserPlus({ className }: { className?: string }) {
   );
 }
 
+function IconShield({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='16'
+      height='16'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      className={className}
+      aria-hidden='true'
+    >
+      <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
+    </svg>
+  );
+}
+
 function IconSettings({ className }: { className?: string }) {
   return (
     <svg
@@ -122,6 +142,12 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Nuevo paciente',
     icon: IconUserPlus,
     matchFn: (p) => p === '/dashboard/patients/new',
+  },
+  {
+    href: '/dashboard/derechos-datos',
+    label: 'RGPD',
+    icon: IconShield,
+    matchFn: (p) => p.startsWith('/dashboard/derechos-datos'),
   },
   {
     href: '/dashboard/ajustes',
