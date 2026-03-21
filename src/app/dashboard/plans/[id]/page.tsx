@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
+import { validateNutritionPlan, type ValidatorPatient } from '@/lib/validation/nutrition-validator';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import type { NutritionPlan, PlanContent } from '@/types/dietly';
+import type { NutritionPlan, Patient, PlanContent } from '@/types/dietly';
 import { GOAL_LABELS, PLAN_STATUS_LABELS } from '@/types/dietly';
 
 import { GeneratingPoller } from './generating-poller';
@@ -27,10 +28,13 @@ export default async function PlanPage({
 
   const { data: plan } = (await (supabase as any)
     .from('nutrition_plans')
-    .select('*, patients(id, name)')
+    .select('*, patients(*), validation_acked_blocks')
     .eq('id', id)
     .single()) as {
-    data: (NutritionPlan & { patients: { id: string; name: string } | null }) | null;
+    data: (NutritionPlan & {
+      patients: Patient | null;
+      validation_acked_blocks: string[];
+    }) | null;
   };
 
   if (!plan) notFound();
@@ -38,6 +42,14 @@ export default async function PlanPage({
   const content = plan.content as PlanContent | null;
   const isGenerating = plan.status === 'generating';
   const hasError = plan.status === 'error';
+
+  // Ejecutar validación clínica sobre el borrador
+  const validationResult =
+    plan.status === 'draft' && content?.days?.length
+      ? validateNutritionPlan(content, (plan.patients as unknown as ValidatorPatient) ?? {} as ValidatorPatient)
+      : undefined;
+
+  const ackedBlocks: string[] = plan.validation_acked_blocks ?? [];
   const showReminderModal = approved === '1' && plan.status === 'approved' && !!plan.patients;
 
   return (
@@ -218,7 +230,13 @@ export default async function PlanPage({
 
       {/* Days */}
       {!isGenerating && content?.days && content.days.length > 0 ? (
-        <PlanEditor days={content.days} planId={id} isDraft={plan.status === 'draft'} />
+        <PlanEditor
+          days={content.days}
+          planId={id}
+          isDraft={plan.status === 'draft'}
+          validationResult={validationResult}
+          ackedBlocks={ackedBlocks}
+        />
       ) : (
         !isGenerating && (
           <div className='rounded-xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500'>

@@ -4,10 +4,19 @@ import { useActionState,useState } from 'react';
 
 import { approvePlan } from './actions';
 
-export function ApproveButton({ planId, hasDirty }: { planId: string; hasDirty?: boolean }) {
+export function ApproveButton({
+  planId,
+  hasDirty,
+  unackedBlocks = [],
+}: {
+  planId: string;
+  hasDirty?: boolean;
+  unackedBlocks?: string[];
+}) {
   const [showModal, setShowModal] = useState(false);
   const [checked, setChecked] = useState(false);
   const [state, action, pending] = useActionState(approvePlan.bind(null, planId), {});
+  const hasBlocks = unackedBlocks.length > 0;
 
   return (
     <>
@@ -16,9 +25,16 @@ export function ApproveButton({ planId, hasDirty }: { planId: string; hasDirty?:
         {hasDirty && (
           <p className='text-xs text-amber-500'>Guarda todos los cambios antes de aprobar</p>
         )}
+        {hasBlocks && !hasDirty && (
+          <p className='text-xs text-red-400'>
+            {unackedBlocks.length === 1
+              ? '1 bloqueo de validación pendiente de revisión'
+              : `${unackedBlocks.length} bloqueos de validación pendientes de revisión`}
+          </p>
+        )}
         <button
           type='button'
-          disabled={hasDirty}
+          disabled={hasDirty || hasBlocks}
           onClick={() => setShowModal(true)}
           className='inline-flex items-center gap-2 rounded-lg bg-[#1a7a45] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#22c55e] hover:text-black disabled:cursor-not-allowed disabled:opacity-40'
         >

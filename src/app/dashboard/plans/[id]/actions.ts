@@ -173,6 +173,52 @@ export async function approvePlan(
   redirect(`/dashboard/plans/${planId}?approved=1`);
 }
 
+// ── Acknowledge validation block ─────────────────────────────────────────────
+
+export async function acknowledgeValidationBlock(
+  planId: string,
+  blockCode: string
+): Promise<{ error?: string }> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  // Añadir el código al array usando el operador de array de Postgres
+  const { error } = await (supabase as any).rpc('append_validation_ack', {
+    p_plan_id: planId,
+    p_nutritionist_id: user.id,
+    p_block_code: blockCode,
+  });
+
+  if (error) {
+    // Fallback manual si la función RPC no existe aún
+    const { data: plan } = await (supabase as any)
+      .from('nutrition_plans')
+      .select('validation_acked_blocks')
+      .eq('id', planId)
+      .eq('nutritionist_id', user.id)
+      .single();
+
+    if (!plan) return { error: 'Plan no encontrado.' };
+
+    const current: string[] = plan.validation_acked_blocks ?? [];
+    if (current.includes(blockCode)) return {};
+
+    const { error: updateError } = await (supabase as any)
+      .from('nutrition_plans')
+      .update({ validation_acked_blocks: [...current, blockCode] })
+      .eq('id', planId)
+      .eq('nutritionist_id', user.id);
+
+    if (updateError) return { error: 'Error al registrar la revisión.' };
+  }
+
+  revalidatePath(`/dashboard/plans/${planId}`);
+  return {};
+}
+
 // ── Regenerate day ────────────────────────────────────────────────────────────
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
