@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { GOAL_LABELS, NutritionPlan, Patient, PLAN_STATUS_LABELS } from '@/types/dietly';
 
@@ -68,6 +69,15 @@ export default async function DashboardPage() {
       .in('id', (dueReminders as Array<{ id: string }>).map((r) => r.id));
   }
 
+  // plan_limit del usuario en beta_whitelist (para mostrar u ocultar el medidor)
+  const normalizedEmail = (user.email ?? '').toLowerCase().trim();
+  const { data: whitelistEntry } = await (supabaseAdminClient as any)
+    .from('beta_whitelist')
+    .select('plan_limit')
+    .eq('email', normalizedEmail)
+    .maybeSingle() as { data: { plan_limit: number | null } | null };
+  const betaPlanLimit: number | null = whitelistEntry?.plan_limit ?? null;
+
   // Borradores pendientes de aprobar del nutricionista autenticado
   const { data: draftPlans } = (await (supabase as any)
     .from('nutrition_plans')
@@ -131,8 +141,10 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Contador beta — límite de 10 planes */}
-      <BetaMeter used={totalPlans ?? 0} />
+      {/* Contador beta — oculto si el usuario tiene plan_limit=-1 */}
+      {betaPlanLimit !== -1 && (
+        <BetaMeter used={totalPlans ?? 0} limit={betaPlanLimit ?? 10} />
+      )}
 
       {/* Borradores pendientes de aprobar */}
       {draftCount > 0 && (
@@ -169,12 +181,10 @@ export default async function DashboardPage() {
 
 // ── Componentes ────────────────────────────────────────────────────────────────
 
-const BETA_LIMIT = 10;
-
-function BetaMeter({ used }: { used: number }) {
-  const pct = Math.min(100, (used / BETA_LIMIT) * 100);
-  const isWarning = used >= 8 && used < BETA_LIMIT;
-  const isFull = used >= BETA_LIMIT;
+function BetaMeter({ used, limit }: { used: number; limit: number }) {
+  const pct = Math.min(100, (used / limit) * 100);
+  const isWarning = used >= limit - 2 && used < limit;
+  const isFull = used >= limit;
 
   const barColor = isFull ? '#dc2626' : isWarning ? '#d97706' : '#1a7a45';
   const borderColor = isFull
@@ -195,7 +205,7 @@ function BetaMeter({ used }: { used: number }) {
             <span className={`text-lg font-bold ${isFull ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-zinc-100'}`}>
               {used}
             </span>
-            <span className='text-zinc-600'> / {BETA_LIMIT} planes utilizados</span>
+            <span className='text-zinc-600'> / {limit} planes utilizados</span>
           </p>
         </div>
         {isFull ? (
@@ -223,8 +233,8 @@ function BetaMeter({ used }: { used: number }) {
           role='progressbar'
           aria-valuenow={used}
           aria-valuemin={0}
-          aria-valuemax={BETA_LIMIT}
-          aria-label={`${used} de ${BETA_LIMIT} planes beta utilizados`}
+          aria-valuemax={limit}
+          aria-label={`${used} de ${limit} planes beta utilizados`}
         />
       </div>
 
