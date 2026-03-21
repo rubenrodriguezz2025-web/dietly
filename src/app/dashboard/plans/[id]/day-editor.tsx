@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 
 import type { Ingredient, Meal, PlanDay } from '@/types/dietly';
 
@@ -314,6 +314,8 @@ function MealEditor({
 
 // ── Day editor ────────────────────────────────────────────────────────────────
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 export function DayEditor({
   day: initialDay,
   planId,
@@ -329,9 +331,59 @@ export function DayEditor({
 }) {
   const [day, setDay] = useState(initialDay);
   const [dirty, setDirty] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveOk, setSaveOk] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRender = useRef(true);
+  // Keep stable refs to callbacks to avoid stale closures in async code
+  const onSavedRef = useRef(onSaved);
+  useEffect(() => { onSavedRef.current = onSaved; });
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
+
+  // Autoguardado con debounce de 1000ms
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      setSaveStatus('saving');
+      const result = await updateDay(planId, day.day_number, day);
+      if (result.error) {
+        setSaveStatus('error');
+        // Reintentar 1 vez tras 2s
+        setTimeout(async () => {
+          const retry = await updateDay(planId, day.day_number, day);
+          if (!retry.error) {
+            markSaved();
+          } else {
+            setSaveStatus('idle');
+          }
+        }, 2000);
+      } else {
+        markSaved();
+      }
+    }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day, planId]);
+
+  function markSaved() {
+    setSaveStatus('saved');
+    setDirty(false);
+    onSavedRef.current();
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+  }
 
   const invalidMealIndexes = day.meals
     .map((m, i) => (m.calories <= 0 || m.ingredients.length < 2 ? i : -1))
@@ -340,7 +392,6 @@ export function DayEditor({
   function markDirty() {
     if (!dirty) {
       setDirty(true);
-      setSaveOk(false);
       onDirty();
     }
   }
@@ -356,20 +407,6 @@ export function DayEditor({
   function updateDayTotals(patch: Partial<Pick<PlanDay, 'total_calories' | 'total_macros'>>) {
     setDay((prev) => ({ ...prev, ...patch }));
     markDirty();
-  }
-
-  function handleSave() {
-    startTransition(async () => {
-      const result = await updateDay(planId, day.day_number, day);
-      if (result.error) {
-        setSaveError(result.error);
-      } else {
-        setSaveError(null);
-        setSaveOk(true);
-        setDirty(false);
-        onSaved();
-      }
-    });
   }
 
   return (
@@ -449,27 +486,21 @@ export function DayEditor({
         ))}
       </div>
 
-      {/* Barra de guardado — solo visible cuando hay cambios */}
-      {dirty && (
-        <div className='flex items-center justify-between border-t border-zinc-800 bg-zinc-950 px-5 py-3'>
-          <p className='text-xs text-zinc-500'>Cambios sin guardar en este día</p>
-          <div className='flex items-center gap-3'>
-            {saveError && <p className='text-xs text-red-400'>{saveError}</p>}
-            <button
-              onClick={handleSave}
-              disabled={isPending}
-              className='rounded-lg bg-[#1a7a45] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#22c55e] hover:text-black disabled:opacity-50'
-            >
-              {isPending ? 'Guardando...' : 'Guardar cambios'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmación de guardado */}
-      {saveOk && !dirty && (
-        <div className='border-t border-zinc-800 px-5 py-2 text-xs text-emerald-500'>
-          ✓ Cambios guardados correctamente
+      {/* Indicador de autoguardado */}
+      {saveStatus !== 'idle' && (
+        <div className='flex justify-end border-t border-zinc-800/60 px-5 py-2'>
+          {saveStatus === 'saving' && (
+            <span className='flex items-center gap-1.5 text-xs text-zinc-500'>
+              <span className='inline-block h-2.5 w-2.5 animate-spin rounded-full border border-zinc-600 border-t-transparent' />
+              Guardando...
+            </span>
+          )}
+          {saveStatus === 'saved' && (
+            <span className='text-xs text-emerald-500'>✓ Guardado</span>
+          )}
+          {saveStatus === 'error' && (
+            <span className='text-xs text-amber-500'>Error al guardar — reintentando...</span>
+          )}
         </div>
       )}
     </div>
