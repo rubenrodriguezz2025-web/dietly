@@ -462,6 +462,7 @@ export async function POST(req: NextRequest) {
         // Generar los 7 días
         for (let dayNum = 1; dayNum <= 7; dayNum++) {
           send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1] });
+          console.log(`[plans/generate] plan=${planId} — iniciando día ${dayNum}`);
 
           let dayData: PlanDay | null = null;
           let attempts = 0;
@@ -480,11 +481,12 @@ export async function POST(req: NextRequest) {
                 ],
               });
 
-              // Registrar tokens y coste en plan_generations
               const inputTok = response.usage.input_tokens;
               const outputTok = response.usage.output_tokens;
               totalTokensInput += inputTok;
               totalTokensOutput += outputTok;
+              console.log(`[plans/generate] plan=${planId} día=${dayNum} — Claude OK (in=${inputTok} out=${outputTok} stop=${response.stop_reason})`);
+
               void (supabaseAdminClient as any).from('plan_generations').insert({
                 plan_id: planId,
                 nutritionist_id: user.id,
@@ -498,31 +500,37 @@ export async function POST(req: NextRequest) {
               if (toolUse?.type === 'tool_use') {
                 const candidate = toolUse.input as PlanDay;
                 const invalidMeals = validateDay(candidate);
+                console.log(`[plans/generate] plan=${planId} día=${dayNum} — meals=${candidate.meals?.length ?? 0} invalidMeals=${invalidMeals.length}`);
                 if (invalidMeals.length === 0 || attempts >= 2) {
                   dayData = candidate;
                 }
+              } else {
+                console.warn(`[plans/generate] plan=${planId} día=${dayNum} — sin tool_use en respuesta. stop_reason=${response.stop_reason}`);
               }
             } catch (err) {
-              console.error(`[plans/generate] day ${dayNum} attempt ${attempts} error:`, err instanceof Error ? err.message : err);
+              console.error(`[plans/generate] plan=${planId} día=${dayNum} attempt=${attempts} error:`, err instanceof Error ? err.message : err);
               if (attempts >= 2) throw err;
             }
           }
 
           if (!dayData) {
-            await (supabaseAdminClient as any)
+            const { error: errUpd } = await (supabaseAdminClient as any)
               .from('nutrition_plans')
               .update({ status: 'error' })
               .eq('id', planId);
+            if (errUpd) console.error(`[plans/generate] plan=${planId} — error marcando plan como error:`, errUpd.message);
             send({ type: 'error', message: `Error generando el día ${dayNum}. Inténtalo de nuevo.` });
             controller.close();
             return;
           }
 
           days.push(dayData);
+          console.log(`[plans/generate] plan=${planId} — día ${dayNum} guardado en memoria (total días: ${days.length})`);
         }
 
         // Generar lista de la compra
         send({ type: 'progress', day: 8, day_name: 'Lista de la compra' });
+        console.log(`[plans/generate] plan=${planId} — generando lista de la compra`);
         let shoppingList: ShoppingList = { produce: [], protein: [], dairy: [], grains: [], pantry: [] };
         try {
           const shoppingResponse = await anthropic.messages.create({
@@ -533,15 +541,16 @@ export async function POST(req: NextRequest) {
             messages: [{ role: 'user', content: buildShoppingListPrompt(days) }],
           });
 
-          // Registrar tokens de la lista de la compra como día 8
           const slInput = shoppingResponse.usage.input_tokens;
           const slOutput = shoppingResponse.usage.output_tokens;
           totalTokensInput += slInput;
           totalTokensOutput += slOutput;
+          console.log(`[plans/generate] plan=${planId} — shopping list OK (in=${slInput} out=${slOutput})`);
+
           void (supabaseAdminClient as any).from('plan_generations').insert({
             plan_id: planId,
             nutritionist_id: user.id,
-            day_generated: 8, // convenio: 8 = lista de la compra
+            day_generated: 8,
             tokens_input: slInput,
             tokens_output: slOutput,
             cost_usd: calcCost(slInput, slOutput),
@@ -552,8 +561,7 @@ export async function POST(req: NextRequest) {
             shoppingList = shoppingToolUse.input as ShoppingList;
           }
         } catch (err) {
-          // La lista de la compra no es crítica — continuamos con lista vacía
-          console.error('[plans/generate] shopping list error:', err);
+          console.error(`[plans/generate] plan=${planId} — shopping list error:`, err instanceof Error ? err.message : err);
         }
 
         // Promedios semanales
@@ -581,7 +589,8 @@ export async function POST(req: NextRequest) {
           shopping_list: shoppingList,
         };
 
-        await (supabaseAdminClient as any)
+        console.log(`[plans/generate] plan=${planId} — guardando plan en Supabase (días=${days.length})`);
+        const { error: finalUpdateError } = await (supabaseAdminClient as any)
           .from('nutrition_plans')
           .update({
             status: 'draft',
@@ -590,6 +599,14 @@ export async function POST(req: NextRequest) {
           })
           .eq('id', planId);
 
+        if (finalUpdateError) {
+          console.error(`[plans/generate] plan=${planId} — ERROR en UPDATE final:`, finalUpdateError.message, finalUpdateError);
+          send({ type: 'error', message: `Error guardando el plan: ${finalUpdateError.message}` });
+          controller.close();
+          return;
+        }
+
+        console.log(`[plans/generate] plan=${planId} — UPDATE final OK → enviando done`);
         send({ type: 'done', plan_id: planId });
       } catch (err) {
         console.error('[plans/generate] error:', err);
