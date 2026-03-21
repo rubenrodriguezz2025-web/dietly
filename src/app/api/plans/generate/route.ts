@@ -338,19 +338,31 @@ export async function POST(req: NextRequest) {
         send({ type: 'progress', step: 'auth_ok' });
 
         // ── Límite beta ───────────────────────────────────────────────────────
-        const { count: planCount } = await (supabaseAdminClient as any)
-          .from('nutrition_plans')
-          .select('id', { count: 'exact', head: true })
-          .eq('nutritionist_id', user.id);
+        const { data: whitelistEntry } = await (supabaseAdminClient as any)
+          .from('beta_whitelist')
+          .select('plan_limit')
+          .eq('email', user.email)
+          .maybeSingle() as { data: { plan_limit: number | null } | null };
 
-        if ((planCount ?? 0) >= BETA_PLAN_LIMIT) {
-          send({
-            type: 'error',
-            message: 'Has alcanzado el límite de 10 planes durante la beta. Escríbenos a hola@dietly.es para ampliar tu acceso.',
-            beta_limit_reached: true,
-          });
-          controller.close();
-          return;
+        const effectiveLimit = whitelistEntry?.plan_limit === -1
+          ? -1
+          : (whitelistEntry?.plan_limit ?? BETA_PLAN_LIMIT);
+
+        if (effectiveLimit !== -1) {
+          const { count: planCount } = await (supabaseAdminClient as any)
+            .from('nutrition_plans')
+            .select('id', { count: 'exact', head: true })
+            .eq('nutritionist_id', user.id);
+
+          if ((planCount ?? 0) >= effectiveLimit) {
+            send({
+              type: 'error',
+              message: `Has alcanzado el límite de ${effectiveLimit} planes durante la beta. Escríbenos a hola@dietly.es para ampliar tu acceso.`,
+              beta_limit_reached: true,
+            });
+            controller.close();
+            return;
+          }
         }
         send({ type: 'progress', step: 'beta_ok' });
 
@@ -453,9 +465,10 @@ export async function POST(req: NextRequest) {
 
           while (attempts < 2 && !dayData) {
             attempts++;
+            if (attempts > 1) send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1], retry: true });
             try {
               const response = await anthropic.messages.create({
-                model: 'claude-sonnet-4-5-20250929',
+                model: 'claude-sonnet-4-6',
                 max_tokens: 4096,
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
@@ -487,6 +500,7 @@ export async function POST(req: NextRequest) {
                 }
               }
             } catch (err) {
+              console.error(`[plans/generate] day ${dayNum} attempt ${attempts} error:`, err instanceof Error ? err.message : err);
               if (attempts >= 2) throw err;
             }
           }
@@ -509,7 +523,7 @@ export async function POST(req: NextRequest) {
         let shoppingList: ShoppingList = { produce: [], protein: [], dairy: [], grains: [], pantry: [] };
         try {
           const shoppingResponse = await anthropic.messages.create({
-            model: 'claude-sonnet-4-5-20250929',
+            model: 'claude-sonnet-4-6',
             max_tokens: 2048,
             tools: [SHOPPING_LIST_TOOL],
             tool_choice: { type: 'tool', name: 'generate_shopping_list' },
