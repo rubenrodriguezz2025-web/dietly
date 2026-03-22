@@ -138,6 +138,11 @@ export default async function PlanPage({
         )}
       </div>
 
+      {/* Lifecycle stepper */}
+      {!isGenerating && !hasError && (
+        <PlanLifecycle status={plan.status} />
+      )}
+
       {/* Error state */}
       {hasError && (
         <div className='flex flex-col gap-3 rounded-xl border border-red-900 bg-red-950/30 p-6'>
@@ -254,6 +259,61 @@ export default async function PlanPage({
           </div>
         )
       )}
+    </div>
+  );
+}
+
+// ── Plan lifecycle stepper ────────────────────────────────────────────────────
+
+const LIFECYCLE_STEPS = [
+  { key: 'draft',    label: 'Borrador generado' },
+  { key: 'approved', label: 'Aprobado por ti' },
+  { key: 'sent',     label: 'Enviado al paciente' },
+] as const;
+
+const STATUS_STEP: Record<string, number> = {
+  draft:    0,
+  approved: 1,
+  sent:     2,
+};
+
+function PlanLifecycle({ status }: { status: string }) {
+  const current = STATUS_STEP[status] ?? 0;
+  return (
+    <div className='flex items-center gap-0'>
+      {LIFECYCLE_STEPS.map((step, i) => {
+        const done    = i < current;
+        const active  = i === current;
+        return (
+          <div key={step.key} className='flex flex-1 items-center'>
+            <div className='flex flex-1 flex-col items-center gap-1.5'>
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                  done
+                    ? 'bg-[#1a7a45] text-white'
+                    : active
+                      ? 'border-2 border-[#1a7a45] bg-[#1a7a45]/10 text-emerald-400'
+                      : 'border border-zinc-700 bg-zinc-900 text-zinc-700'
+                }`}
+              >
+                {done ? (
+                  <svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                    <polyline points='20 6 9 17 4 12' />
+                  </svg>
+                ) : (
+                  i + 1
+                )}
+              </div>
+              <span className={`text-center text-[11px] font-medium leading-tight ${done || active ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                {step.label}
+              </span>
+            </div>
+            {i < LIFECYCLE_STEPS.length - 1 && (
+              <div className={`mb-5 h-px flex-1 transition-colors ${i < current ? 'bg-[#1a7a45]/60' : 'bg-zinc-800'}`} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
