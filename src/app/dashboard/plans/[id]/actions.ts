@@ -218,7 +218,7 @@ export async function sendPlanToPatient(
 
   try {
     await resendClient.emails.send({
-      from: 'Dietly <noreply@dietly.es>',
+      from: `${nombreDN} <noreply@dietly.es>`,
       to: plan.patients.email,
       subject: `Tu plan nutricional está listo · ${nombreDN}`,
       html: `
@@ -258,7 +258,7 @@ export async function sendPlanToPatient(
             <a href="${planUrl}" style="color:#1a7a45;word-break:break-all">${planUrl}</a>
           </p>
           <p style="margin-top:16px;font-size:11px;color:#d4d4d8">
-            Email enviado por Dietly en nombre de ${nombreDN}${clinica ? ` · ${clinica}` : ''}.
+            Email enviado por ${nombreDN}${clinica ? ` · ${clinica}` : ''}.
             Los valores nutricionales son estimaciones orientativas. Ante cualquier duda, consulta con tu nutricionista.
           </p>
         </div>

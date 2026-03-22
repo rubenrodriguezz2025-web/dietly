@@ -195,7 +195,7 @@ function Band({ color, left, right }: { color: string; left: React.ReactNode; ri
 function Footer({ name }: { name: string }) {
   return (
     <View style={S.footer} fixed>
-      <Text style={S.footerText}>Dietly · {name}</Text>
+      <Text style={S.footerText}>{name}</Text>
       <Text style={S.footerText} render={({ pageNumber, totalPages }) => `Pág ${pageNumber} de ${totalPages}`} />
     </View>
   );
@@ -691,15 +691,6 @@ function SignaturePage({
           </View>
         </View>
 
-        {/* Marca Dietly */}
-        <View style={{ alignItems: 'center', paddingBottom: 8 }}>
-          <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#dddddd', letterSpacing: 1.5 }}>
-            DIETLY
-          </Text>
-          <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 6.5, color: '#eeeeee', marginTop: 2 }}>
-            dietly.es
-          </Text>
-        </View>
       </View>
 
       <Footer name={nutritionistName} />
@@ -729,7 +720,7 @@ export function NutritionPlanPDF({
     <Document
       title={`Plan nutricional — ${patient.name}`}
       author={nutritionistName}
-      creator="Dietly"
+      creator={nutritionistName}
     >
       {/* Pág 1: Portada */}
       <CoverPage

@@ -15,19 +15,50 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 });
 
-// ── Metadata PWA ──────────────────────────────────────────────────────────────
+// ── Metadata PWA (dinámica) ────────────────────────────────────────────────────
 
-export const metadata: Metadata = {
-  title: 'Mi plan nutricional · Dietly',
-  description: 'Tu plan nutricional personalizado',
-  manifest: '/manifest.json',
-  themeColor: '#0a3622',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Mi Plan',
-  },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}): Promise<Metadata> {
+  const { token } = await params;
+
+  const { data: plan } = await (supabaseAdminClient as any)
+    .from('nutrition_plans')
+    .select('*, patients(name, nutritionist_id)')
+    .eq('patient_token', token)
+    .in('status', ['approved', 'sent'])
+    .single();
+
+  const paciente = (plan?.patients as { name: string; nutritionist_id: string } | null);
+  const nombrePaciente = paciente?.name ?? 'Paciente';
+
+  let nombreDN = 'tu nutricionista';
+  let primaryColor = '#0a3622';
+
+  if (paciente?.nutritionist_id) {
+    const { data: prof } = await (supabaseAdminClient as any)
+      .from('profiles')
+      .select('full_name, primary_color')
+      .eq('id', paciente.nutritionist_id)
+      .single();
+    if (prof?.full_name) nombreDN = prof.full_name;
+    if (prof?.primary_color) primaryColor = prof.primary_color;
+  }
+
+  return {
+    title: `${nombrePaciente} — Plan nutricional de ${nombreDN}`,
+    description: 'Tu plan nutricional personalizado',
+    manifest: '/manifest.json',
+    themeColor: primaryColor,
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'Mi Plan',
+    },
+  };
+}
 
 // ── Página ────────────────────────────────────────────────────────────────────
 
@@ -60,15 +91,17 @@ export default async function PaginaPaciente({
   let showMacros = true;
   let nombreDN: string | null = null;
   let colegiado: string | null = null;
+  let primaryColor = '#1a7a45';
   if (pacienteData?.nutritionist_id) {
     const { data: profileBrand } = await (supabaseAdminClient as any)
       .from('profiles')
-      .select('show_macros, full_name, college_number')
+      .select('show_macros, full_name, college_number, primary_color')
       .eq('id', pacienteData.nutritionist_id)
       .single();
     if (profileBrand?.show_macros === false) showMacros = false;
     nombreDN = profileBrand?.full_name ?? null;
     colegiado = profileBrand?.college_number ?? null;
+    if (profileBrand?.primary_color) primaryColor = profileBrand.primary_color;
   }
 
   const aprobadoEl = plan.approved_at
@@ -129,7 +162,7 @@ export default async function PaginaPaciente({
         <header
           className='anim-header relative overflow-hidden px-5 pb-7 pt-safe-top'
           style={{
-            background: 'linear-gradient(150deg, #0a3622 0%, #145c35 50%, #1a7a45 100%)',
+            background: `linear-gradient(150deg, color-mix(in srgb, ${primaryColor} 60%, #000) 0%, color-mix(in srgb, ${primaryColor} 80%, #000) 50%, ${primaryColor} 100%)`,
             paddingTop: 'calc(env(safe-area-inset-top, 0px) + 2.5rem)',
           }}
         >
@@ -146,17 +179,6 @@ export default async function PaginaPaciente({
             className='pointer-events-none absolute -left-6 bottom-0 h-32 w-32 rounded-full'
             style={{ background: 'rgba(255,255,255,0.03)' }}
           />
-
-          {/* Badge Dietly */}
-          <div className='mb-4 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1'>
-            <span
-              className='h-1.5 w-1.5 rounded-full'
-              style={{ background: '#4ade80' }}
-            />
-            <span className='text-[11px] font-semibold tracking-wide text-white/80'>
-              DIETLY
-            </span>
-          </div>
 
           <h1 className='text-2xl font-extrabold leading-tight text-white'>
             {nombrePaciente}

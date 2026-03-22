@@ -260,6 +260,26 @@ export function BrandSettings({
 
   return (
     <div className='flex flex-col gap-8'>
+      {/* Aviso de marca invisible */}
+      <div className='flex items-start gap-3 rounded-xl border border-emerald-800/40 bg-emerald-950/30 px-4 py-3'>
+        <svg
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+          className='mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400'
+          aria-hidden='true'
+        >
+          <circle cx='12' cy='12' r='10' />
+          <path d='M12 16v-4M12 8h.01' />
+        </svg>
+        <p className='text-sm text-emerald-300/90'>
+          Tus pacientes solo ven tu nombre y tu marca. Dietly es invisible para ellos.
+        </p>
+      </div>
+
       {/* ── Subsección 1: Identidad visual ── */}
       <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
         <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
