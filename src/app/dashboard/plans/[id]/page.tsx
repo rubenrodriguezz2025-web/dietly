@@ -91,9 +91,7 @@ export default async function PlanPage({
             <StatusBadge status={plan.status} />
           </div>
           {plan.status === 'draft' && (
-            <p className='mt-1 text-xs text-zinc-600'>
-              Borrador generado por IA · Revisa cada día y aprueba cuando esté listo
-            </p>
+            <AiBadge generatedAt={plan.generated_at} model={plan.ai_model} />
           )}
           {plan.status === 'approved' && (
             <p className='mt-1 text-xs text-emerald-500/70'>
@@ -249,6 +247,52 @@ export default async function PlanPage({
 }
 
 // ── Utility components ────────────────────────────────────────────────────────
+
+function AiBadge({
+  generatedAt,
+  model,
+}: {
+  generatedAt: string | null;
+  model: string | null;
+}) {
+  const modelLabel = model
+    ? model.replace('claude-', 'Claude ').replace(/-(\d)/, ' $1').replace(/-/g, ' ')
+    : 'Claude Sonnet';
+
+  const fechaGeneracion = generatedAt
+    ? new Date(generatedAt).toLocaleString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
+  return (
+    <div className='mt-2 flex items-start gap-2.5 rounded-lg border border-amber-900/40 bg-amber-950/20 px-3 py-2'>
+      {/* Icono de chispa */}
+      <svg
+        className='mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500'
+        viewBox='0 0 24 24'
+        fill='currentColor'
+      >
+        <path d='M13 2L4.09 12.96A1 1 0 0 0 5 14.5h5.5L11 22l8.91-10.96A1 1 0 0 0 19 9.5H13.5L13 2z' />
+      </svg>
+      <div className='min-w-0'>
+        <p className='text-xs font-medium text-amber-400'>
+          Borrador generado por IA — {modelLabel} (Anthropic)
+        </p>
+        <p className='mt-0.5 text-[11px] text-zinc-600'>
+          {fechaGeneracion
+            ? `Generado el ${fechaGeneracion} · `
+            : ''}
+          Revisa cada día y aprueba cuando esté listo
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function MacroStat({
   label,

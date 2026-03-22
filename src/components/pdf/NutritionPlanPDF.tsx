@@ -665,13 +665,28 @@ function SignaturePage({
             </Text>
           ) : null}
 
-          {/* Disclaimer */}
+          {/* Disclaimer profesional */}
           <View style={{ borderTopWidth: 0.5, borderTopColor: '#eeeeee', marginTop: 20, paddingTop: 14 }}>
             <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8, color: '#aaaaaa', lineHeight: 1.75 }}>
               Este plan nutricional ha sido elaborado y revisado por un profesional de la nutrición titulado y colegiado.
               Está diseñado exclusivamente para el paciente indicado y no debe compartirse ni utilizarse como guía general.
               Ante cualquier duda, consulte directamente con su nutricionista. La información contenida en este documento
               no sustituye en ningún caso la consulta médica o nutricional personalizada.
+            </Text>
+          </View>
+
+          {/* Transparencia IA */}
+          <View style={{ borderTopWidth: 0.5, borderTopColor: '#eeeeee', marginTop: 12, paddingTop: 12 }}>
+            <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 7, color: '#cccccc', letterSpacing: 0.5, marginBottom: 4 }}>
+              GENERADO CON ASISTENCIA DE INTELIGENCIA ARTIFICIAL
+            </Text>
+            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 7.5, color: '#aaaaaa', lineHeight: 1.7 }}>
+              {'El borrador de este plan fue generado mediante inteligencia artificial (Claude Sonnet, Anthropic) a partir de los datos clínicos y nutricionales del paciente. '}
+              {'Fue revisado y aprobado por '}
+              <Text style={{ fontWeight: 500, color: '#888888' }}>{nutritionistName}</Text>
+              {profile.college_number ? `, nº colegiado ${profile.college_number}` : ''}
+              {approved_at ? `, el ${approved_at}` : ''}
+              {'. La IA genera borradores de referencia; el criterio clínico final corresponde exclusivamente al profesional que lo aprueba.'}
             </Text>
           </View>
         </View>

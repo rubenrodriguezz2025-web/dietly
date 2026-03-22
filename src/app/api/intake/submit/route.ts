@@ -4,7 +4,7 @@ import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 export async function POST(req: Request) {
-  let body: { patient_id?: string; answers?: Record<string, unknown> };
+  let body: { patient_id?: string; answers?: Record<string, unknown>; consent?: boolean };
 
   try {
     body = await req.json();
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Cuerpo de petición inválido.' }, { status: 400 });
   }
 
-  const { patient_id, answers } = body;
+  const { patient_id, answers, consent } = body;
 
   if (!patient_id || !answers) {
     return NextResponse.json({ error: 'Faltan campos obligatorios.' }, { status: 400 });
@@ -49,6 +49,24 @@ export async function POST(req: Request) {
 
   if (error) {
     return NextResponse.json({ error: 'Error al guardar el cuestionario.' }, { status: 500 });
+  }
+
+  // Registrar consentimiento del paciente si fue otorgado
+  if (consent) {
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      req.headers.get('x-real-ip') ??
+      null;
+
+    await (supabaseAdminClient as any).from('patient_consents').insert({
+      patient_id,
+      nutritionist_id: paciente.nutritionist_id,
+      consent_type: 'ai_processing',
+      granted_at: new Date().toISOString(),
+      ip_address: ip,
+      consent_text_version: 'intake-v1',
+    });
+    // Si el insert falla no bloqueamos — el cuestionario ya está guardado
   }
 
   // Enviar notificación email al equipo de Dietly — fire-and-forget

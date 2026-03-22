@@ -126,6 +126,9 @@ export type NutritionPlan = {
   sent_at: string | null;
   approved_at: string | null;
   approved_by: string | null;
+  generated_at: string | null;
+  /** Modelo de IA usado para generar el plan (p.ej. "claude-sonnet-4-6") */
+  ai_model: string | null;
   created_at: string;
   updated_at: string;
 };

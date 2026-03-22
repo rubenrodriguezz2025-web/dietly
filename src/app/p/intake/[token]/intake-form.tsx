@@ -12,6 +12,7 @@ export function IntakeForm({ patientId }: { patientId: string }) {
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consentido, setConsentido] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,7 +44,7 @@ export function IntakeForm({ patientId }: { patientId: string }) {
       const res = await fetch('/api/intake/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patient_id: patientId, answers }),
+        body: JSON.stringify({ patient_id: patientId, answers, consent: true }),
       });
 
       if (!res.ok) {
@@ -237,14 +238,37 @@ export function IntakeForm({ patientId }: { patientId: string }) {
         </div>
       </section>
 
+      {/* Bloque de consentimiento */}
+      <section className='rounded-2xl border border-green-200 bg-green-50 p-5'>
+        <h2 className='mb-3 text-sm font-bold uppercase tracking-wider text-green-800'>
+          Consentimiento informado
+        </h2>
+        <p className='mb-4 text-sm leading-relaxed text-zinc-700'>
+          Acepto que mi nutricionista utilice herramientas digitales de asistencia
+          para elaborar mi plan nutricional, que será revisado y personalizado por
+          el profesional antes de entregármelo.
+        </p>
+        <label className='flex cursor-pointer items-start gap-3'>
+          <input
+            type='checkbox'
+            checked={consentido}
+            onChange={(e) => setConsentido(e.target.checked)}
+            className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-green-400 accent-green-600'
+          />
+          <span className='text-sm font-medium text-zinc-800'>
+            Acepto y doy mi consentimiento
+          </span>
+        </label>
+      </section>
+
       {error && (
         <p className='rounded-xl bg-red-50 p-4 text-sm text-red-600'>{error}</p>
       )}
 
       <button
         type='submit'
-        disabled={cargando}
-        className='w-full rounded-xl bg-green-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-60'
+        disabled={cargando || !consentido}
+        className='w-full rounded-xl bg-green-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-60'
       >
         {cargando ? 'Enviando...' : 'Enviar cuestionario'}
       </button>
