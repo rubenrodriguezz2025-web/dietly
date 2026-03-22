@@ -27,6 +27,7 @@ import { CopyButton } from './copy-button';
 import { sendFollowupQuestionnaire } from './followup-patient-actions';
 import { GenerateButton } from './generate-button';
 import { ProgressTab } from './progress-tab';
+import { updatePatientField } from './update-actions';
 
 // ── Reusable presentational helpers ──────────────────────────────────────
 
@@ -79,6 +80,189 @@ function DataField({
           <span className='text-zinc-700'>—</span>
         )}
       </span>
+    </div>
+  );
+}
+
+// ── Inline editable field ─────────────────────────────────────────────────────
+
+function InlineField({
+  label,
+  value,
+  displayValue,
+  type = 'text',
+  options,
+  patientId,
+  field,
+  suffix,
+}: {
+  label: string;
+  value: string | number | null;
+  displayValue?: string | null;
+  type?: 'text' | 'number' | 'select' | 'textarea' | 'date';
+  options?: { value: string; label: string }[];
+  patientId: string;
+  field: string;
+  suffix?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, startSaving] = useTransition();
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  function startEdit() {
+    setDraft(value != null ? String(value) : '');
+    setEditing(true);
+    setSaveError(null);
+  }
+
+  function confirm() {
+    const parsed: string | number | null =
+      type === 'number' ? (draft ? Number(draft) : null) : draft.trim() || null;
+    startSaving(async () => {
+      const result = await updatePatientField(patientId, field, parsed);
+      if (result.error) {
+        setSaveError(result.error);
+      } else {
+        setEditing(false);
+      }
+    });
+  }
+
+  function cancel() {
+    setEditing(false);
+    setSaveError(null);
+  }
+
+  const shown = displayValue ?? (value != null ? `${value}${suffix ? ` ${suffix}` : ''}` : null);
+
+  if (editing) {
+    return (
+      <div className='flex flex-col gap-0.5'>
+        <span className='text-xs text-zinc-600'>{label}</span>
+        <div className='flex flex-col gap-1.5'>
+          {type === 'textarea' ? (
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              autoFocus
+              rows={3}
+              className='resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30'
+            />
+          ) : type === 'select' && options ? (
+            <select
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              autoFocus
+              className='rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none'
+            >
+              <option value=''>— Sin especificar —</option>
+              {options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={type}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') confirm();
+                if (e.key === 'Escape') cancel();
+              }}
+              className='rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30'
+            />
+          )}
+          <div className='flex items-center gap-2'>
+            <button
+              type='button'
+              onClick={confirm}
+              disabled={saving}
+              className='flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-950/50 disabled:opacity-50'
+            >
+              {saving ? (
+                <span className='h-2.5 w-2.5 animate-spin rounded-full border-2 border-emerald-600/30 border-t-emerald-400' />
+              ) : (
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  width='10'
+                  height='10'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='3'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  aria-hidden='true'
+                >
+                  <polyline points='20 6 9 17 4 12' />
+                </svg>
+              )}
+              Guardar
+            </button>
+            <button
+              type='button'
+              onClick={cancel}
+              className='flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-800 hover:text-zinc-400'
+            >
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='10'
+                height='10'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='3'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                aria-hidden='true'
+              >
+                <line x1='18' y1='6' x2='6' y2='18' />
+                <line x1='6' y1='6' x2='18' y2='18' />
+              </svg>
+              Cancelar
+            </button>
+          </div>
+          {saveError && <p className='text-[11px] text-red-400'>{saveError}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='group/inline flex flex-col gap-0.5'>
+      <span className='text-xs text-zinc-600'>{label}</span>
+      <div className='flex items-center gap-1.5'>
+        <span className='text-sm text-zinc-200'>
+          {shown ?? <span className='text-zinc-700'>—</span>}
+        </span>
+        <button
+          type='button'
+          onClick={startEdit}
+          title={`Editar ${label.toLowerCase()}`}
+          aria-label={`Editar ${label.toLowerCase()}`}
+          className='rounded p-0.5 text-zinc-700 opacity-0 transition-all group-hover/inline:opacity-100 hover:text-zinc-300 focus-visible:opacity-100'
+        >
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            width='11'
+            height='11'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            aria-hidden='true'
+          >
+            <path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' />
+            <path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -390,23 +574,65 @@ export function PatientTabs({
             <div className='flex flex-col gap-6 lg:col-span-2'>
               <Section title='Datos personales'>
                 <div className='grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
-                  <DataField label='Sexo' value={patient.sex ? SEX_LABELS[patient.sex] : null} />
+                  <InlineField
+                    label='Nombre'
+                    value={patient.name}
+                    patientId={patient.id}
+                    field='name'
+                  />
+                  <InlineField
+                    label='Email'
+                    value={patient.email}
+                    patientId={patient.id}
+                    field='email'
+                  />
+                  <InlineField
+                    label='Teléfono'
+                    value={patient.phone ?? null}
+                    patientId={patient.id}
+                    field='phone'
+                  />
+                  <InlineField
+                    label='Sexo'
+                    value={patient.sex}
+                    displayValue={patient.sex ? SEX_LABELS[patient.sex] : null}
+                    type='select'
+                    options={[
+                      { value: 'male', label: 'Hombre' },
+                      { value: 'female', label: 'Mujer' },
+                      { value: 'other', label: 'Otro' },
+                    ]}
+                    patientId={patient.id}
+                    field='sex'
+                  />
                   <DataField label='Edad' value={age ? `${age} años` : null} />
-                  <DataField
+                  <InlineField
                     label='Fecha de nacimiento'
-                    value={
+                    value={patient.date_of_birth}
+                    displayValue={
                       patient.date_of_birth
                         ? new Date(patient.date_of_birth).toLocaleDateString('es-ES')
                         : null
                     }
+                    type='date'
+                    patientId={patient.id}
+                    field='date_of_birth'
                   />
-                  <DataField
+                  <InlineField
                     label='Peso'
-                    value={patient.weight_kg ? `${patient.weight_kg} kg` : null}
+                    value={patient.weight_kg}
+                    suffix='kg'
+                    type='number'
+                    patientId={patient.id}
+                    field='weight_kg'
                   />
-                  <DataField
+                  <InlineField
                     label='Altura'
-                    value={patient.height_cm ? `${patient.height_cm} cm` : null}
+                    value={patient.height_cm}
+                    suffix='cm'
+                    type='number'
+                    patientId={patient.id}
+                    field='height_cm'
                   />
                   <DataField
                     label='IMC'
@@ -436,13 +662,25 @@ export function PatientTabs({
 
                   return (
                     <div className='grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
-                      <DataField
+                      <InlineField
                         label='Objetivo'
-                        value={patient.goal ? GOAL_LABELS[patient.goal] : null}
+                        value={patient.goal}
+                        displayValue={patient.goal ? GOAL_LABELS[patient.goal] : null}
+                        type='select'
+                        options={Object.entries(GOAL_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+                        patientId={patient.id}
+                        field='goal'
                       />
-                      <DataField
+                      <InlineField
                         label='Nivel de actividad'
-                        value={patient.activity_level ? ACTIVITY_LABELS[patient.activity_level] : null}
+                        value={patient.activity_level}
+                        displayValue={
+                          patient.activity_level ? ACTIVITY_LABELS[patient.activity_level] : null
+                        }
+                        type='select'
+                        options={Object.entries(ACTIVITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+                        patientId={patient.id}
+                        field='activity_level'
                       />
                       <DataField
                         label='TMB'
@@ -461,34 +699,45 @@ export function PatientTabs({
                 })()}
               </Section>
 
-              {(patient.dietary_restrictions ||
-                patient.allergies ||
-                patient.intolerances ||
-                patient.preferences ||
-                patient.medical_notes) && (
-                <Section title='Notas clínicas'>
-                  <div className='flex flex-col gap-4'>
-                    {patient.dietary_restrictions && (
-                      <DataField
-                        label='Restricciones dietéticas'
-                        value={patient.dietary_restrictions}
-                      />
-                    )}
-                    {patient.allergies && (
-                      <DataField label='Alergias' value={patient.allergies} />
-                    )}
-                    {patient.intolerances && (
-                      <DataField label='Intolerancias' value={patient.intolerances} />
-                    )}
-                    {patient.preferences && (
-                      <DataField label='Preferencias' value={patient.preferences} />
-                    )}
-                    {patient.medical_notes && (
-                      <DataField label='Notas médicas' value={patient.medical_notes} />
-                    )}
-                  </div>
-                </Section>
-              )}
+              <Section title='Notas clínicas'>
+                <div className='flex flex-col gap-4'>
+                  <InlineField
+                    label='Restricciones dietéticas'
+                    value={patient.dietary_restrictions}
+                    type='textarea'
+                    patientId={patient.id}
+                    field='dietary_restrictions'
+                  />
+                  <InlineField
+                    label='Alergias'
+                    value={patient.allergies}
+                    type='textarea'
+                    patientId={patient.id}
+                    field='allergies'
+                  />
+                  <InlineField
+                    label='Intolerancias'
+                    value={patient.intolerances}
+                    type='textarea'
+                    patientId={patient.id}
+                    field='intolerances'
+                  />
+                  <InlineField
+                    label='Preferencias alimentarias'
+                    value={patient.preferences}
+                    type='textarea'
+                    patientId={patient.id}
+                    field='preferences'
+                  />
+                  <InlineField
+                    label='Notas médicas'
+                    value={patient.medical_notes}
+                    type='textarea'
+                    patientId={patient.id}
+                    field='medical_notes'
+                  />
+                </div>
+              </Section>
             </div>
 
             {/* Right: nutrition plans */}

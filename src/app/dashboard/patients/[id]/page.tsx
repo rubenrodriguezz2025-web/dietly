@@ -137,14 +137,38 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       {/* Header */}
       <div className='flex items-start justify-between gap-4'>
         <div className='flex items-center gap-4'>
-          <div className='flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-lg font-medium text-zinc-300'>
-            {patient.name
+          {(() => {
+            // Avatar color determinista por nombre (mismo algoritmo que patients-section.tsx)
+            const PALETTE = [
+              { bg: '#162818', color: '#4ade80' },
+              { bg: '#162038', color: '#60a5fa' },
+              { bg: '#21183a', color: '#a78bfa' },
+              { bg: '#271910', color: '#fb923c' },
+              { bg: '#221414', color: '#f87171' },
+              { bg: '#152030', color: '#38bdf8' },
+              { bg: '#1d2612', color: '#a3e635' },
+              { bg: '#22122a', color: '#e879f9' },
+            ];
+            let hash = 0;
+            for (let i = 0; i < patient.name.length; i++) {
+              hash = ((hash << 5) - hash + patient.name.charCodeAt(i)) | 0;
+            }
+            const style = PALETTE[Math.abs(hash) % PALETTE.length];
+            const initials = patient.name
               .split(' ')
               .slice(0, 2)
               .map((n: string) => n[0])
               .join('')
-              .toUpperCase()}
-          </div>
+              .toUpperCase();
+            return (
+              <div
+                className='flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full text-lg font-semibold'
+                style={{ backgroundColor: style.bg, color: style.color }}
+              >
+                {initials}
+              </div>
+            );
+          })()}
           <div>
             <div className='flex flex-wrap items-center gap-2'>
               <h1 className='text-2xl font-bold text-zinc-100'>{patient.name}</h1>

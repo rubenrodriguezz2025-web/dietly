@@ -84,6 +84,7 @@ export type Patient = {
   nutritionist_id: string;
   name: string;
   email: string | null;
+  phone: string | null;
   date_of_birth: string | null;
   sex: 'male' | 'female' | 'other' | null;
   weight_kg: number | null;
