@@ -87,6 +87,11 @@ export default async function AgendaPage({
     a.localeCompare(b)
   );
 
+  // Detectar si estamos viendo el mes actual
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+  const mesActualStr = mesActual;
+  const esMesActual = !mes || mes === mesActualStr;
+
   return (
     <div className='flex flex-col gap-8'>
       {/* Cabecera con navegación de mes */}
@@ -98,6 +103,15 @@ export default async function AgendaPage({
           </p>
         </div>
         <div className='flex items-center gap-2'>
+          {/* Botón "Hoy" solo cuando no estamos en el mes actual */}
+          {!esMesActual && (
+            <Link
+              href='/dashboard/agenda'
+              className='rounded-lg border border-[#1a7a45]/40 bg-[#1a7a45]/10 px-3 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-[#1a7a45]/20'
+            >
+              Hoy
+            </Link>
+          )}
           <Link
             href={`/dashboard/agenda?mes=${mesPrevStr}`}
             aria-label='Mes anterior'

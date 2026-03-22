@@ -7,6 +7,28 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { GOAL_LABELS } from '@/types/dietly';
 
+// ── Avatar color — determinista por nombre del paciente ───────────────────────
+
+// 8 tonos distintos en dark mode, compatibles con el verde de marca
+const AVATAR_PALETTE = [
+  { bg: '#162818', color: '#4ade80' },  // emerald (marca)
+  { bg: '#162038', color: '#60a5fa' },  // blue
+  { bg: '#21183a', color: '#a78bfa' },  // violet
+  { bg: '#271910', color: '#fb923c' },  // orange
+  { bg: '#221414', color: '#f87171' },  // rose
+  { bg: '#152030', color: '#38bdf8' },  // sky
+  { bg: '#1d2612', color: '#a3e635' },  // lime
+  { bg: '#22122a', color: '#e879f9' },  // fuchsia
+] as const;
+
+function getAvatarStyle(name: string): { bg: string; color: string } {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+  }
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type PlanMeta = { id: string; status: string; created_at: string };
@@ -228,6 +250,8 @@ function PatientRow({ patient }: { patient: PatientWithMeta }) {
     .join('')
     .toUpperCase();
 
+  const avatarStyle = getAvatarStyle(patient.name);
+
   const latestPlan = patient.nutrition_plans[0];
   const planLabel = latestPlan
     ? latestPlan.status === 'draft'
@@ -253,7 +277,10 @@ function PatientRow({ patient }: { patient: PatientWithMeta }) {
       href={`/dashboard/patients/${patient.id}`}
       className='flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-colors hover:border-zinc-600 hover:bg-zinc-900'
     >
-      <div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium text-zinc-300'>
+      <div
+        className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold'
+        style={{ backgroundColor: avatarStyle.bg, color: avatarStyle.color }}
+      >
         {initials}
       </div>
       <div className='min-w-0 flex-1'>

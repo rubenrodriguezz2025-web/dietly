@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
+import { signOut } from '@/app/(auth)/auth-actions';
 import { cn } from '@/utils/cn';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -161,6 +162,12 @@ const NAV_ITEMS: NavItem[] = [
 
 export function SidebarNav({ isAdmin }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await signOut();
+    router.push('/login');
+  }
 
   return (
     <nav className='flex flex-col gap-0.5'>
@@ -219,6 +226,33 @@ export function SidebarNav({ isAdmin }: { isAdmin?: boolean }) {
           </Link>
         </>
       )}
+
+      {/* Separador + cerrar sesión */}
+      <div className='mx-3 mt-3 border-t border-zinc-800/50' />
+      <button
+        type='button'
+        onClick={handleSignOut}
+        className='mt-1 flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors duration-150 hover:bg-zinc-900/70 hover:text-zinc-400'
+      >
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='16'
+          height='16'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+          className='flex-shrink-0'
+          aria-hidden='true'
+        >
+          <path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' />
+          <polyline points='16 17 21 12 16 7' />
+          <line x1='21' y1='12' x2='9' y2='12' />
+        </svg>
+        Cerrar sesión
+      </button>
     </nav>
   );
 }

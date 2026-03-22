@@ -114,16 +114,19 @@ export default async function DashboardPage() {
     <div className='flex flex-col gap-8'>
 
       {/* Header */}
-      <div className='flex items-center justify-between'>
+      <div className='flex items-start justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-zinc-100'>
+          <p className='text-xs font-medium capitalize text-zinc-600'>
+            {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+          <h1 className='mt-0.5 text-2xl font-bold text-zinc-100'>
             Hola, {profile.full_name.split(' ')[0]}
           </h1>
-          {profile.clinic_name?.trim() ? (
-            <p className='mt-1 text-sm text-zinc-500'>{profile.clinic_name}</p>
+          {profile.clinic_name?.trim() && profile.clinic_name.trim().length > 1 ? (
+            <p className='mt-0.5 text-sm text-zinc-500'>{profile.clinic_name}</p>
           ) : null}
         </div>
-        <Button asChild>
+        <Button asChild className='flex-shrink-0'>
           <Link href='/dashboard/patients/new'>+ Nuevo paciente</Link>
         </Button>
       </div>
@@ -144,20 +147,45 @@ export default async function DashboardPage() {
       )}
 
       {/* Métricas */}
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
         <MetricCard
           label='Pacientes activos'
           value={patients?.length ?? 0}
+          accent='zinc'
+          tooltip='Total de pacientes en tu base de datos'
+          icon={
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+              <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
+              <circle cx='9' cy='7' r='4' />
+              <path d='M23 21v-2a4 4 0 0 0-3-3.87' />
+              <path d='M16 3.13a4 4 0 0 1 0 7.75' />
+            </svg>
+          }
         />
         <MetricCard
           label='Planes generados este mes'
           value={plansThisMonth ?? 0}
+          accent='emerald'
+          tooltip='Planes nutricionales generados desde el 1 de este mes'
+          icon={
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
+              <path d='M13 2L4.09 12.96A1 1 0 0 0 5 14.5h5.5L11 22l8.91-10.96A1 1 0 0 0 19 9.5H13.5L13 2z' />
+            </svg>
+          }
         />
         <MetricCard
           label='Borradores pendientes'
           value={draftCount}
-          highlight={draftCount > 0}
+          accent={draftCount > 0 ? 'amber' : 'zinc'}
+          tooltip='Planes generados por IA pendientes de revisión y aprobación'
           href={draftCount > 0 ? '#borradores' : undefined}
+          cta={draftCount > 0 ? 'Revisar' : undefined}
+          icon={
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+              <path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' />
+              <path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' />
+            </svg>
+          }
         />
       </div>
 
@@ -254,34 +282,93 @@ function BetaMeter({ used, limit }: { used: number; limit: number }) {
   );
 }
 
+// Tooltip flotante accessible vía title nativo — sin librería extra
+const METRIC_ACCENT = {
+  zinc: {
+    border: 'border-zinc-800',
+    iconBg: 'bg-zinc-900',
+    iconColor: 'text-zinc-500',
+    valueColor: 'text-zinc-100',
+    hoverBorder: '',
+  },
+  emerald: {
+    border: 'border-zinc-800',
+    iconBg: 'bg-[#1a7a45]/10',
+    iconColor: 'text-emerald-500',
+    valueColor: 'text-zinc-100',
+    hoverBorder: '',
+  },
+  amber: {
+    border: 'border-amber-900/50',
+    iconBg: 'bg-amber-950/50',
+    iconColor: 'text-amber-400',
+    valueColor: 'text-amber-300',
+    hoverBorder: 'hover:border-amber-700/60',
+  },
+} as const;
+
 function MetricCard({
   label,
   value,
-  highlight,
+  accent = 'zinc',
+  icon,
+  tooltip,
   href,
+  cta,
 }: {
   label: string;
   value: number;
-  highlight?: boolean;
+  accent?: keyof typeof METRIC_ACCENT;
+  icon: React.ReactNode;
+  tooltip?: string;
   href?: string;
+  cta?: string;
 }) {
+  const s = METRIC_ACCENT[accent];
+
   const inner = (
-    <>
-      <div className={`text-3xl font-bold ${highlight ? 'text-amber-400' : 'text-zinc-100'}`}>
-        {value}
+    <div className='flex flex-col gap-3 p-5'>
+      {/* Label row */}
+      <div className='flex items-center gap-2'>
+        <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md ${s.iconBg} ${s.iconColor}`}>
+          {icon}
+        </div>
+        <span className='text-xs font-medium text-zinc-500 leading-tight flex-1'>
+          {label}
+        </span>
+        {tooltip && (
+          <span
+            title={tooltip}
+            aria-label={tooltip}
+            className='cursor-help text-zinc-700 transition-colors hover:text-zinc-500'
+          >
+            <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+              <circle cx='12' cy='12' r='10' />
+              <line x1='12' y1='16' x2='12' y2='12' />
+              <line x1='12' y1='8' x2='12.01' y2='8' />
+            </svg>
+          </span>
+        )}
       </div>
-      <div className='mt-1 text-sm text-zinc-500'>{label}</div>
-      {href && (
-        <div className='mt-2 text-xs text-amber-500/70'>Ver borradores →</div>
-      )}
-    </>
+      {/* Value row */}
+      <div className='flex items-end justify-between gap-2'>
+        <span className={`text-2xl font-bold tabular-nums leading-none ${s.valueColor}`}>
+          {value}
+        </span>
+        {cta && href && (
+          <span className='text-xs text-amber-500/70 leading-none'>
+            {cta} →
+          </span>
+        )}
+      </div>
+    </div>
   );
 
   if (href) {
     return (
       <a
         href={href}
-        className='rounded-xl border border-amber-900/50 bg-zinc-950 p-5 transition-colors hover:border-amber-700/60 hover:bg-zinc-900'
+        className={`group rounded-xl border ${s.border} bg-zinc-950 transition-colors duration-150 ${s.hoverBorder} hover:bg-zinc-900`}
       >
         {inner}
       </a>
@@ -289,7 +376,7 @@ function MetricCard({
   }
 
   return (
-    <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+    <div className={`rounded-xl border ${s.border} bg-zinc-950`}>
       {inner}
     </div>
   );
