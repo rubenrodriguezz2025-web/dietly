@@ -33,7 +33,9 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
         <div className='min-w-0 flex-1'>
           {/* Mobile nav — horizontal pills, shown only on mobile */}
           <MobileDashboardNav isAdmin={isAdmin} />
-          {children}
+          <div className='animate-page-in'>
+            {children}
+          </div>
         </div>
       </div>
     </div>
