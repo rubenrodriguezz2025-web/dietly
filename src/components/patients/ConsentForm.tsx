@@ -6,7 +6,7 @@ import { useState } from 'react';
  * Versión del texto de consentimiento. Incrementar cuando cambie el contenido
  * del aviso — permite auditar qué texto leyó el nutricionista en cada registro.
  */
-export const CONSENT_TEXT_VERSION = 'v1-2026-03-21';
+export const CONSENT_TEXT_VERSION = 'v2-2026-03-22';
 
 /**
  * Sección de consentimiento informado para el tratamiento de datos de salud
@@ -110,9 +110,8 @@ export function ConsentForm({ disabled }: { disabled?: boolean }) {
           aria-describedby='consent-description'
         />
         <span id='consent-description' className='text-sm leading-relaxed text-zinc-300'>
-          He leído y acepto el tratamiento descrito. Confirmo que he informado al paciente
-          y que éste ha prestado su consentimiento verbal o escrito para el uso de sus
-          datos de salud en la generación del plan nutricional.
+          Confirmo que informaré al paciente de que se utilizan herramientas digitales
+          de asistencia para elaborar su plan nutricional.
           <span className='ml-1 text-red-400' aria-hidden='true'>*</span>
         </span>
       </label>

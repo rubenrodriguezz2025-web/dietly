@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     await (supabaseAdminClient as any).from('patient_consents').insert({
       patient_id,
       nutritionist_id: paciente.nutritionist_id,
-      consent_type: 'ai_processing',
+      consent_type: 'patient_ai_consent',
       granted_at: new Date().toISOString(),
       ip_address: ip,
       consent_text_version: 'intake-v1',

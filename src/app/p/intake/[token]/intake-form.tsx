@@ -241,7 +241,7 @@ export function IntakeForm({ patientId }: { patientId: string }) {
       {/* Bloque de consentimiento */}
       <section className='rounded-2xl border border-green-200 bg-green-50 p-5'>
         <h2 className='mb-3 text-sm font-bold uppercase tracking-wider text-green-800'>
-          Consentimiento informado
+          Información sobre el tratamiento de tus datos
         </h2>
         <p className='mb-4 text-sm leading-relaxed text-zinc-700'>
           Acepto que mi nutricionista utilice herramientas digitales de asistencia
