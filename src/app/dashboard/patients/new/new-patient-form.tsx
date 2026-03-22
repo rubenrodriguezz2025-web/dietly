@@ -1,12 +1,21 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 
 import { ConsentForm } from '@/components/patients/ConsentForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 import { createPatient } from './actions';
+
+function calcAge(dob: string): number {
+  const birth = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
 
 const DIETARY_OPTIONS = [
   'Vegetariano',
@@ -57,6 +66,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export function NewPatientForm() {
   const [state, action, pending] = useActionState(createPatient, {});
+  const [dob, setDob] = useState('');
+  const isMinor = dob ? calcAge(dob) < 18 : false;
 
   return (
     <form action={action} className='flex flex-col gap-8'>
@@ -71,7 +82,13 @@ export function NewPatientForm() {
             <Input name='email' type='email' placeholder='ana@ejemplo.com' disabled={pending} />
           </Field>
           <Field label='Fecha de nacimiento'>
-            <Input name='date_of_birth' type='date' disabled={pending} />
+            <Input
+              name='date_of_birth'
+              type='date'
+              disabled={pending}
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+            />
           </Field>
           <Field label='Sexo'>
             <select name='sex' className={selectClass} disabled={pending}>
@@ -198,12 +215,24 @@ export function NewPatientForm() {
       {/* Consentimiento informado — obligatorio para habilitar la generación de planes con IA */}
       <ConsentForm disabled={pending} />
 
+      {isMinor && (
+        <div className='rounded-lg border border-amber-700/50 bg-amber-950/20 px-4 py-3 text-sm text-amber-300'>
+          <span className='font-semibold'>Paciente menor de edad.</span>{' '}
+          Para generar planes nutricionales para menores se requiere consentimiento parental por
+          escrito. Contacta con{' '}
+          <a href='mailto:hola@dietly.es' className='underline hover:text-amber-200'>
+            hola@dietly.es
+          </a>{' '}
+          para más información.
+        </div>
+      )}
+
       {state?.error && (
         <p className='rounded-md bg-red-950 px-4 py-3 text-sm text-red-400'>{state.error}</p>
       )}
 
       <div className='flex justify-end'>
-        <Button type='submit' disabled={pending}>
+        <Button type='submit' disabled={pending || isMinor}>
           {pending ? 'Guardando...' : 'Crear paciente'}
         </Button>
       </div>

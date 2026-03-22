@@ -50,6 +50,21 @@ export async function createPatient(
   const name = formData.get('name') as string;
   const email = (formData.get('email') as string) || null;
   const date_of_birth = (formData.get('date_of_birth') as string) || null;
+
+  // Bloquear menores de 18 años
+  if (date_of_birth) {
+    const birth = new Date(date_of_birth);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    if (age < 18) {
+      return {
+        error:
+          'Este paciente es menor de edad. Para generar planes nutricionales para menores se requiere consentimiento parental por escrito. Contacta con hola@dietly.es para más información.',
+      };
+    }
+  }
   const sex = (formData.get('sex') as string) || null;
   const weight_kg = formData.get('weight_kg') ? Number(formData.get('weight_kg')) : null;
   const height_cm = formData.get('height_cm') ? Number(formData.get('height_cm')) : null;

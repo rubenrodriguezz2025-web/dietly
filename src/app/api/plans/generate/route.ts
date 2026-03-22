@@ -389,6 +389,25 @@ export async function POST(req: NextRequest) {
           controller.close();
           return;
         }
+
+        // Bloquear menores de 18 años
+        if (patient.date_of_birth) {
+          const birth = new Date(patient.date_of_birth);
+          const today = new Date();
+          let age = today.getFullYear() - birth.getFullYear();
+          const m = today.getMonth() - birth.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+          if (age < 18) {
+            send({
+              type: 'error',
+              message:
+                'Este paciente es menor de edad. Para generar planes nutricionales para menores se requiere consentimiento parental por escrito. Contacta con hola@dietly.es para más información.',
+            });
+            controller.close();
+            return;
+          }
+        }
+
         send({ type: 'progress', step: 'patient_ok' });
 
         // Pseudonimizar el paciente ANTES de que sus datos salgan del servidor.

@@ -20,11 +20,40 @@ export default async function PaginaIntake({
   // Buscar el paciente por intake_token (sin auth — admin client)
   const { data: paciente } = await (supabaseAdminClient as any)
     .from('patients')
-    .select('id, name, intake_token')
+    .select('id, name, intake_token, date_of_birth')
     .eq('intake_token', token)
-    .single();
+    .single() as {
+      data: { id: string; name: string; intake_token: string; date_of_birth: string | null } | null;
+    };
 
   if (!paciente) notFound();
+
+  // Bloquear menores de 18 años
+  if (paciente.date_of_birth) {
+    const birth = new Date(paciente.date_of_birth);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    if (age < 18) {
+      return (
+        <div className='flex min-h-screen items-center justify-center bg-[#f4f7f5] p-6'>
+          <div className='max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center'>
+            <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100'>
+              <svg className='h-6 w-6 text-amber-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z' />
+              </svg>
+            </div>
+            <h1 className='text-lg font-bold text-zinc-900'>Acceso no disponible</h1>
+            <p className='mt-2 text-sm text-zinc-600'>
+              Este cuestionario no está disponible para este paciente. Contacta con tu
+              nutricionista para más información.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
 
   // Comprobar si ya existe una respuesta
   const { data: respuestaExistente } = await (supabaseAdminClient as any)
