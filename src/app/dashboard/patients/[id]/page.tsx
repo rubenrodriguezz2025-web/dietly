@@ -100,7 +100,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const [intakeFormResult, consentResult] = await Promise.all([
     (supabaseAdminClient as any)
       .from('intake_forms')
-      .select('answers, completed_at')
+      .select('answers, completed_at, filled_by')
       .eq('patient_id', id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -194,7 +194,9 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
           {intakeForm ? (
             <span className='inline-flex items-center gap-1.5 rounded-full bg-emerald-950 px-2.5 py-1 text-xs font-medium text-emerald-400'>
               <span className='h-1.5 w-1.5 rounded-full bg-emerald-400' />
-              Cuestionario completado
+              {intakeForm.filled_by === 'nutritionist'
+                ? 'Completado en consulta'
+                : 'Completado por el paciente'}
             </span>
           ) : (
             <span className='inline-flex items-center gap-1.5 rounded-full bg-amber-950 px-2.5 py-1 text-xs font-medium text-amber-400'>
