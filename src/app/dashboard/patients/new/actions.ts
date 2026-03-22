@@ -72,7 +72,12 @@ export async function createPatient(
     }
   }
 
-  const { data: patient, error } = await (supabase as any).from('patients').insert({
+  // Pre-generar el UUID para no depender del SELECT post-INSERT
+  // (evita errores PGRST116 si el SELECT falla por timing de RLS)
+  const patientId = crypto.randomUUID();
+
+  const { error } = await (supabase as any).from('patients').insert({
+    id: patientId,
     nutritionist_id: user.id,
     name,
     email,
@@ -89,10 +94,16 @@ export async function createPatient(
     medical_notes,
     tmb,
     tdee,
-  }).select('id').single();
+  });
 
   if (error) {
-    return { error: 'Error al guardar el paciente. Inténtalo de nuevo.' };
+    console.error('[createPatient] Error al insertar paciente:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    return { error: `Error al guardar el paciente: ${error.message}` };
   }
 
   // Registrar consentimiento — obtener IP del nutricionista para auditoría RGPD
@@ -102,13 +113,23 @@ export async function createPatient(
     reqHeaders.get('x-real-ip') ??
     null;
 
-  await (supabase as any).from('patient_consents').insert({
-    patient_id: patient.id,
+  const { error: consentError } = await (supabase as any).from('patient_consents').insert({
+    patient_id: patientId,
     nutritionist_id: user.id,
     consent_type: 'ai_processing',
     consent_text_version: consentVersion,
     ip_address: ip,
   });
 
-  redirect(`/dashboard/patients/${patient.id}`);
+  if (consentError) {
+    // No bloqueamos la creación del paciente si el consentimiento falla,
+    // pero sí lo registramos para auditoría
+    console.error('[createPatient] Error al registrar consentimiento:', {
+      code: consentError.code,
+      message: consentError.message,
+      patient_id: patientId,
+    });
+  }
+
+  redirect(`/dashboard/patients/${patientId}`);
 }
