@@ -4,10 +4,11 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { GOAL_LABELS, NutritionPlan, Patient, PLAN_STATUS_LABELS } from '@/types/dietly';
+import { NutritionPlan, Patient, PLAN_STATUS_LABELS } from '@/types/dietly';
 
 import { DueRemindersBanner } from './due-reminders-banner';
 import { OnboardingChecklist } from './onboarding-checklist';
+import { PatientsSection } from './patients-section';
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -27,12 +28,31 @@ export default async function DashboardPage() {
 
   if (!profile) redirect('/onboarding');
 
-  // Pacientes activos del nutricionista autenticado
-  const { data: patients } = (await (supabase as any)
+  // Pacientes activos del nutricionista autenticado (con estado de planes)
+  const { data: patientsRaw } = (await (supabase as any)
     .from('patients')
-    .select('id, name, email, goal, created_at')
+    .select('id, name, email, goal, created_at, nutrition_plans(id, status, created_at)')
     .eq('nutritionist_id', user.id)
-    .order('created_at', { ascending: false })) as { data: Patient[] | null };
+    .order('created_at', { ascending: false })) as {
+    data: (Patient & { nutrition_plans: { id: string; status: string; created_at: string }[] })[] | null;
+  };
+
+  // Recordatorios con seguimiento pendiente por paciente
+  const { data: allPendingReminders } = await (supabase as any)
+    .from('followup_reminders')
+    .select('patient_id')
+    .eq('nutritionist_id', user.id)
+    .eq('status', 'pending') as { data: { patient_id: string }[] | null };
+
+  const pendingReminderPatientIds = new Set((allPendingReminders ?? []).map((r) => r.patient_id));
+
+  const patients = (patientsRaw ?? []).map((p) => ({
+    ...p,
+    nutrition_plans: [...(p.nutrition_plans ?? [])].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    ),
+    has_pending_reminder: pendingReminderPatientIds.has(p.id),
+  }));
 
   // Planes generados este mes por el nutricionista autenticado
   const startOfMonth = new Date();
@@ -161,20 +181,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Lista de pacientes */}
-      <div>
-        <h2 className='mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500'>
-          Pacientes
-        </h2>
-        {!patients || patients.length === 0 ? (
-          <EmptyPatients />
-        ) : (
-          <div className='flex flex-col gap-2'>
-            {patients.map((patient) => (
-              <PatientRow key={patient.id} patient={patient} />
-            ))}
-          </div>
-        )}
-      </div>
+      <PatientsSection patients={patients} />
     </div>
   );
 }
@@ -318,82 +325,3 @@ function DraftPlanRow({
   );
 }
 
-function PatientRow({ patient }: { patient: Patient }) {
-  const initials = patient.name
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase();
-
-  return (
-    <Link
-      href={`/dashboard/patients/${patient.id}`}
-      className='flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-colors hover:border-zinc-600 hover:bg-zinc-900'
-    >
-      <div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium text-zinc-300'>
-        {initials}
-      </div>
-      <div className='min-w-0 flex-1'>
-        <div className='font-medium text-zinc-100'>{patient.name}</div>
-        {patient.email && (
-          <div className='truncate text-sm text-zinc-500'>{patient.email}</div>
-        )}
-      </div>
-      {patient.goal && (
-        <div className='hidden rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400 sm:block'>
-          {GOAL_LABELS[patient.goal]}
-        </div>
-      )}
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='14'
-        height='14'
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='flex-shrink-0 text-zinc-700'
-        aria-hidden='true'
-      >
-        <polyline points='9 18 15 12 9 6' />
-      </svg>
-    </Link>
-  );
-}
-
-function EmptyPatients() {
-  return (
-    <div className='flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-800 py-16 text-center'>
-      <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900'>
-        <svg
-          xmlns='http://www.w3.org/2000/svg'
-          width='22'
-          height='22'
-          viewBox='0 0 24 24'
-          fill='none'
-          stroke='currentColor'
-          strokeWidth='1.5'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-          className='text-zinc-600'
-          aria-hidden='true'
-        >
-          <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
-          <circle cx='9' cy='7' r='4' />
-          <path d='M23 21v-2a4 4 0 0 0-3-3.87' />
-          <path d='M16 3.13a4 4 0 0 1 0 7.75' />
-        </svg>
-      </div>
-      <p className='font-medium text-zinc-300'>Añade tu primer paciente</p>
-      <p className='mt-1 text-sm text-zinc-600'>
-        Crea su ficha y genera un plan nutricional en 2 minutos.
-      </p>
-      <Button asChild className='mt-6'>
-        <Link href='/dashboard/patients/new'>+ Nuevo paciente</Link>
-      </Button>
-    </div>
-  );
-}

@@ -15,8 +15,70 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
   cena: 'Cena',
 };
 
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+function PencilIcon({ size = 11 }: { size?: number }) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width={size}
+      height={size}
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      aria-hidden='true'
+    >
+      <path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' />
+      <path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' />
+    </svg>
+  );
+}
+
+function CheckIcon({ size = 10 }: { size?: number }) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width={size}
+      height={size}
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      aria-hidden='true'
+    >
+      <polyline points='20 6 9 17 4 12' />
+    </svg>
+  );
+}
+
+function XIcon({ size = 10 }: { size?: number }) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width={size}
+      height={size}
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      aria-hidden='true'
+    >
+      <line x1='18' y1='6' x2='6' y2='18' />
+      <line x1='6' y1='6' x2='18' y2='18' />
+    </svg>
+  );
+}
+
 // ── Editable primitives ───────────────────────────────────────────────────────
 
+/** Single-line editable text. Confirm-only (parent state updates on confirm). */
 function EditableField({
   value,
   onChange,
@@ -27,110 +89,229 @@ function EditableField({
   className?: string;
 }) {
   const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+
+  function startEdit() {
+    setDraft(value);
+    setEditing(true);
+  }
+
+  function confirm() {
+    onChange(draft);
+    setEditing(false);
+  }
+
+  function cancel() {
+    setEditing(false);
+  }
 
   if (editing) {
     return (
-      <input
-        autoFocus
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setEditing(false)}
-        className={`w-full rounded border border-[#1a7a45]/60 bg-zinc-900 px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a7a45] ${className}`}
-      />
+      <span className='inline-flex items-center gap-1.5'>
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              confirm();
+            }
+            if (e.key === 'Escape') cancel();
+          }}
+          className={`min-w-[80px] rounded border border-[#1a7a45]/60 bg-zinc-900 px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a7a45] ${className}`}
+        />
+        <button
+          type='button'
+          onClick={confirm}
+          title='Confirmar (Enter)'
+          className='flex-shrink-0 rounded p-0.5 text-emerald-400 transition-colors hover:bg-emerald-500/10'
+        >
+          <CheckIcon />
+        </button>
+        <button
+          type='button'
+          onClick={cancel}
+          title='Cancelar (Esc)'
+          className='flex-shrink-0 rounded p-0.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300'
+        >
+          <XIcon />
+        </button>
+      </span>
     );
   }
 
   return (
-    <span
-      role='button'
-      tabIndex={0}
-      onClick={() => setEditing(true)}
-      onKeyDown={(e) => e.key === 'Enter' && setEditing(true)}
-      title='Clic para editar'
-      className={`cursor-text rounded border-b border-dashed border-zinc-700 px-1 hover:border-transparent hover:bg-zinc-800 ${className}`}
+    <button
+      type='button'
+      onClick={startEdit}
+      className={`group/edit inline-flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-left transition-colors hover:bg-zinc-800/80 ${className}`}
     >
       {value || <span className='italic text-zinc-600'>—</span>}
-    </span>
+      <span className='flex-shrink-0 text-zinc-600 opacity-0 transition-opacity group-hover/edit:opacity-100'>
+        <PencilIcon size={10} />
+      </span>
+    </button>
   );
 }
 
+/** Numeric editable field. Calls `onQuantityChanged` (if provided) when confirmed with a different value. */
 function EditableNumber({
   value,
   onChange,
   unit,
   bold,
+  onQuantityChanged,
 }: {
   value: number;
   onChange: (v: number) => void;
   unit?: string;
   bold?: boolean;
+  onQuantityChanged?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+
+  function startEdit() {
+    setDraft(String(value));
+    setEditing(true);
+  }
+
+  function confirm() {
+    const n = Number(draft);
+    if (!isNaN(n) && n >= 0) {
+      if (onQuantityChanged && n !== value) onQuantityChanged();
+      onChange(n);
+    }
+    setEditing(false);
+  }
+
+  function cancel() {
+    setEditing(false);
+  }
 
   if (editing) {
     return (
-      <input
-        autoFocus
-        type='number'
-        min={0}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        onBlur={() => setEditing(false)}
-        className='w-14 rounded border border-[#1a7a45]/60 bg-zinc-900 px-1 py-0.5 text-xs text-zinc-100 focus:outline-none'
-      />
+      <span className='inline-flex items-center gap-1'>
+        <input
+          autoFocus
+          type='number'
+          min={0}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') confirm();
+            if (e.key === 'Escape') cancel();
+          }}
+          className='w-14 rounded border border-[#1a7a45]/60 bg-zinc-900 px-1 py-0.5 text-xs text-zinc-100 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]'
+        />
+        <button
+          type='button'
+          onClick={confirm}
+          title='Confirmar (Enter)'
+          className='flex-shrink-0 rounded p-0.5 text-emerald-400 transition-colors hover:bg-emerald-500/10'
+        >
+          <CheckIcon />
+        </button>
+        <button
+          type='button'
+          onClick={cancel}
+          title='Cancelar (Esc)'
+          className='flex-shrink-0 rounded p-0.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300'
+        >
+          <XIcon />
+        </button>
+      </span>
     );
   }
 
   return (
-    <span
-      role='button'
-      tabIndex={0}
-      onClick={() => setEditing(true)}
-      onKeyDown={(e) => e.key === 'Enter' && setEditing(true)}
-      title='Clic para editar'
-      className={`cursor-text rounded border-b border-dashed border-zinc-700 px-0.5 hover:border-transparent hover:bg-zinc-800 ${bold ? 'font-semibold text-zinc-200' : 'text-zinc-400'}`}
+    <button
+      type='button'
+      onClick={startEdit}
+      className={`group/edit inline-flex cursor-pointer items-center gap-1 rounded px-0.5 py-0.5 transition-colors hover:bg-zinc-800/80 ${bold ? 'font-semibold text-zinc-200' : 'text-zinc-400'}`}
     >
       {value}
       {unit && <span className='ml-0.5 text-zinc-600'>{unit}</span>}
-    </span>
+      <span className='flex-shrink-0 text-zinc-600 opacity-0 transition-opacity group-hover/edit:opacity-100'>
+        <PencilIcon size={9} />
+      </span>
+    </button>
   );
 }
 
+/** Multi-line editable area. Uses explicit Confirmar/Cancelar buttons (Enter adds newlines). */
 function EditableArea({
   value,
   onChange,
-  className = '',
+  placeholder = '',
 }: {
   value: string;
   onChange: (v: string) => void;
-  className?: string;
+  placeholder?: string;
 }) {
   const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+
+  function startEdit() {
+    setDraft(value);
+    setEditing(true);
+  }
+
+  function confirm() {
+    onChange(draft);
+    setEditing(false);
+  }
+
+  function cancel() {
+    setEditing(false);
+  }
 
   if (editing) {
     return (
-      <textarea
-        autoFocus
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setEditing(false)}
-        rows={3}
-        className={`w-full resize-none rounded border border-[#1a7a45]/60 bg-zinc-900 px-2 py-1 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-[#1a7a45] ${className}`}
-      />
+      <div>
+        <textarea
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === 'Escape' && cancel()}
+          rows={4}
+          placeholder={placeholder}
+          className='w-full resize-none rounded-lg border border-[#1a7a45]/60 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]'
+        />
+        <div className='mt-1.5 flex justify-end gap-1.5'>
+          <button
+            type='button'
+            onClick={cancel}
+            className='rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200'
+          >
+            Cancelar
+          </button>
+          <button
+            type='button'
+            onClick={confirm}
+            className='rounded-md border border-[#1a7a45]/40 bg-[#1a7a45]/20 px-2.5 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-[#1a7a45]/30'
+          >
+            Confirmar
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <p
-      role='button'
-      tabIndex={0}
-      onClick={() => setEditing(true)}
-      onKeyDown={(e) => e.key === 'Enter' && setEditing(true)}
-      title='Clic para editar'
-      className={`cursor-text rounded border border-dashed border-zinc-800 px-1 leading-relaxed hover:border-transparent hover:bg-zinc-800 ${className}`}
+    <button
+      type='button'
+      onClick={startEdit}
+      className='group/edit relative w-full cursor-pointer rounded-lg border border-transparent px-2 py-1.5 text-left transition-colors hover:border-zinc-800 hover:bg-zinc-900/50'
     >
-      {value || <span className='italic text-zinc-600'>—</span>}
-    </p>
+      <span className='block leading-relaxed'>
+        {value || <span className='italic text-zinc-700'>{placeholder || '—'}</span>}
+      </span>
+      <span className='absolute right-2 top-2 text-zinc-600 opacity-0 transition-opacity group-hover/edit:opacity-100'>
+        <PencilIcon size={10} />
+      </span>
+    </button>
   );
 }
 
@@ -139,9 +320,11 @@ function EditableArea({
 function IngredientRow({
   ingredient,
   onChange,
+  onQuantityChanged,
 }: {
   ingredient: Ingredient;
   onChange: (updated: Ingredient) => void;
+  onQuantityChanged?: () => void;
 }) {
   return (
     <li className='flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs'>
@@ -152,6 +335,7 @@ function IngredientRow({
       />
       <EditableNumber
         value={ingredient.quantity}
+        onQuantityChanged={onQuantityChanged}
         onChange={(quantity) => onChange({ ...ingredient, quantity })}
       />
       <EditableField
@@ -180,6 +364,14 @@ function MealEditor({
 }) {
   const [isRecalculating, startRecalc] = useTransition();
   const [recalcError, setRecalcError] = useState<string | null>(null);
+  const [macrosDirty, setMacrosDirty] = useState(false);
+
+  function handleIngredientChange(i: number, updated: Ingredient) {
+    onChange({
+      ...meal,
+      ingredients: meal.ingredients.map((x, j) => (j === i ? updated : x)),
+    });
+  }
 
   function handleRecalculate() {
     setRecalcError(null);
@@ -188,6 +380,7 @@ function MealEditor({
       if (result.error) {
         setRecalcError(result.error);
       } else {
+        setMacrosDirty(false);
         onChange({ ...meal, calories: result.calories!, macros: result.macros! });
       }
     });
@@ -210,7 +403,7 @@ function MealEditor({
               <span className='text-xs text-zinc-700'>{meal.time_suggestion}</span>
             )}
           </div>
-          {/* Nombre — editable */}
+          {/* Nombre de la comida — editable */}
           <h4 className='mt-1 font-medium'>
             <EditableField
               value={meal.meal_name}
@@ -221,7 +414,7 @@ function MealEditor({
         </div>
 
         {/* Macros — editables */}
-        <div className='flex flex-col items-end gap-1'>
+        <div className='flex flex-col items-end gap-1.5'>
           <div className='flex flex-shrink-0 gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs'>
             <EditableNumber
               value={meal.calories}
@@ -252,7 +445,27 @@ function MealEditor({
               }
             />
           </div>
-          {isDraft && (
+
+          {/* Badge macros pendientes / botón recalcular */}
+          {isDraft && macrosDirty && (
+            <button
+              type='button'
+              onClick={handleRecalculate}
+              disabled={isRecalculating}
+              className='flex items-center gap-1.5 rounded-full border border-amber-800/50 bg-amber-950/40 px-2.5 py-0.5 text-[11px] font-medium text-amber-400 transition-colors hover:border-amber-700/60 hover:bg-amber-950/60 disabled:opacity-60'
+            >
+              {isRecalculating ? (
+                <span className='h-2.5 w-2.5 animate-spin rounded-full border border-amber-500/40 border-t-amber-400' />
+              ) : (
+                <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                  <path d='M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2' />
+                </svg>
+              )}
+              Macros pendientes de recalcular
+            </button>
+          )}
+
+          {isDraft && !macrosDirty && (
             <button
               type='button'
               onClick={handleRecalculate}
@@ -262,11 +475,14 @@ function MealEditor({
               {isRecalculating ? (
                 <span className='inline-block h-2.5 w-2.5 animate-spin rounded-full border border-zinc-500 border-t-transparent' />
               ) : (
-                <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'><path d='M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2'/></svg>
+                <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                  <path d='M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2' />
+                </svg>
               )}
               Recalcular macros
             </button>
           )}
+
           {recalcError && (
             <p className='text-[10px] text-red-400'>{recalcError}</p>
           )}
@@ -280,12 +496,8 @@ function MealEditor({
             <IngredientRow
               key={i}
               ingredient={ing}
-              onChange={(updated) =>
-                onChange({
-                  ...meal,
-                  ingredients: meal.ingredients.map((x, j) => (j === i ? updated : x)),
-                })
-              }
+              onQuantityChanged={() => setMacrosDirty(true)}
+              onChange={(updated) => handleIngredientChange(i, updated)}
             />
           ))}
         </ul>
@@ -295,15 +507,17 @@ function MealEditor({
       <div className='mt-3 text-sm text-zinc-500'>
         <EditableArea
           value={meal.preparation ?? ''}
+          placeholder='Instrucciones de preparación…'
           onChange={(preparation) => onChange({ ...meal, preparation })}
         />
       </div>
 
       {/* Notas / sustituciones — editables */}
-      {(meal.notes !== undefined) && (
+      {meal.notes !== undefined && (
         <div className='mt-1 text-xs italic text-zinc-600'>
           <EditableArea
             value={meal.notes ?? ''}
+            placeholder='Notas o sustituciones…'
             onChange={(notes) => onChange({ ...meal, notes })}
           />
         </div>
