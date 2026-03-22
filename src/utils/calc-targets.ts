@@ -62,7 +62,25 @@ export type CalcTargets = {
   protein_per_kg: number; // ratio efectivo = protein_g / peso_real_kg (para mostrar en UI)
   carbs_pct: number;
   fat_pct: number;
+  /** true si el TDEE se estimó con Mifflin-St Jeor; false si proviene de la BD. */
+  estimated: boolean;
 };
+
+/** Error lanzado cuando calcTargets no puede producir un resultado válido. */
+export class CalcTargetsError extends Error {
+  constructor(
+    message: string,
+    public readonly code: 'MISSING_DATA' | 'TDEE_OUT_OF_RANGE',
+    public readonly missingFields?: string[]
+  ) {
+    super(message);
+    this.name = 'CalcTargetsError';
+  }
+}
+
+/** Rango TDEE clínicamente aceptable para un adulto sano (kcal/día). */
+const TDEE_MIN_KCAL = 1200;
+const TDEE_MAX_KCAL = 4000;
 
 export type MacroOverrides = Partial<{
   calories: number;
@@ -146,7 +164,31 @@ export function calcTargets(patient: Patient, overrides?: MacroOverrides): CalcT
     tdee = Math.round(tmb * actFactor);
   }
 
-  const baseTdee = tdee ?? 2000; // fallback cuando no hay datos suficientes
+  // Sin TDEE: datos insuficientes — falla explícitamente en lugar de usar un valor ficticio.
+  if (!tdee) {
+    const missing: string[] = [];
+    if (!patient.weight_kg)    missing.push('peso');
+    if (!patient.height_cm)    missing.push('altura');
+    if (!patient.date_of_birth) missing.push('fecha de nacimiento');
+    throw new CalcTargetsError(
+      `No se puede calcular el TDEE: faltan datos del paciente (${missing.join(', ')}).`,
+      'MISSING_DATA',
+      missing
+    );
+  }
+
+  // Validar que el TDEE calculado está dentro del rango clínicamente aceptable.
+  if (tdee < TDEE_MIN_KCAL || tdee > TDEE_MAX_KCAL) {
+    throw new CalcTargetsError(
+      `TDEE calculado (${tdee} kcal/día) fuera del rango clínico (${TDEE_MIN_KCAL}–${TDEE_MAX_KCAL} kcal). Revisa los datos del paciente.`,
+      'TDEE_OUT_OF_RANGE'
+    );
+  }
+
+  // estimated = true cuando el TDEE se calculó en esta función (Mifflin-St Jeor),
+  // false cuando proviene directamente de la BD (calculado al crear/actualizar el paciente).
+  const estimated = !patient.tdee;
+  const baseTdee = tdee;
 
   // ── IMC ────────────────────────────────────────────────────────────────────
   const bmi =
@@ -192,5 +234,5 @@ export function calcTargets(patient: Patient, overrides?: MacroOverrides): CalcT
   // para coherencia en la UI (el nutricionista puede verificar protein_g / weight_kg).
   const protein_per_kg = Math.round((protein_g / weight) * 100) / 100;
 
-  return { calories, protein_g, carbs_g, fat_g, protein_per_kg, carbs_pct, fat_pct };
+  return { calories, protein_g, carbs_g, fat_g, protein_per_kg, carbs_pct, fat_pct, estimated };
 }

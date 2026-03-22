@@ -4,7 +4,7 @@ import { generateIntakeAccessToken } from '@/lib/auth/intake-tokens';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
-import { calcTargets } from '@/utils/calc-targets';
+import { CalcTargets, calcTargets,CalcTargetsError } from '@/utils/calc-targets';
 
 import { GenerateButton } from './generate-button';
 import { PatientTabs } from './patient-tabs';
@@ -27,7 +27,15 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
 
   if (!patient) notFound();
 
-  const initialTargets = calcTargets(patient);
+  let initialTargets: CalcTargets | null = null;
+  let targetsError: string | null = null;
+  try {
+    initialTargets = calcTargets(patient);
+  } catch (err) {
+    if (err instanceof CalcTargetsError) {
+      targetsError = err.message;
+    }
+  }
 
   // Consultas en paralelo para minimizar latencia
   const [plansResult, progressResult, patientExtraResult, followupFormsResult, nextReminderResult, overdueReminderResult] = await Promise.all([
@@ -182,6 +190,12 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Tabs: Ficha | Progreso | Cuestionario */}
+      {targetsError && (
+        <div className='rounded-lg border border-amber-700/40 bg-amber-950/10 px-4 py-3 text-sm text-amber-300'>
+          <span className='font-semibold'>Datos incompletos:</span>{' '}{targetsError}
+        </div>
+      )}
+
       <PatientTabs
         patient={patient}
         plans={plans}

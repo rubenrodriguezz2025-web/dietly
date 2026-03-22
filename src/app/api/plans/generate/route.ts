@@ -426,7 +426,16 @@ export async function POST(req: NextRequest) {
         const intakeAnswers: IntakeAnswers | undefined = intakeFormData?.answers ?? undefined;
         send({ type: 'progress', step: 'intake_ok' });
 
-        const targets = calcTargets(patient, macro_overrides);
+        const targetsResult = (() => {
+          try { return calcTargets(patient, macro_overrides); }
+          catch (err) { return err instanceof Error ? err.message : 'Error al calcular los objetivos nutricionales.'; }
+        })();
+        if (typeof targetsResult === 'string') {
+          send({ type: 'error', message: targetsResult });
+          controller.close();
+          return;
+        }
+        const targets = targetsResult;
 
         // ── Crear registro del plan ───────────────────────────────────────────
         const now = new Date();

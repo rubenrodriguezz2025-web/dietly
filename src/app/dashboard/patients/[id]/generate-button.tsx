@@ -16,7 +16,7 @@ type State = 'idle' | 'confirm' | 'generating' | 'error';
 
 interface Props {
   patientId: string;
-  initialTargets: CalcTargets;
+  initialTargets: CalcTargets | null;
   patientWeight: number;
   patientGoal: PatientGoal;
   hasIntake?: boolean;
@@ -168,17 +168,30 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
           )}
 
           {/* Objetivo + macros calculados */}
-          <p className='mb-2 text-[11px] font-medium text-zinc-500'>{GOAL_LABELS[patientGoal]}</p>
-          <div className='grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-lg bg-zinc-800/60 px-3 py-2.5'>
-            <span className='text-[12px] text-zinc-500'>Kcal/día</span>
-            <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.calories} kcal</span>
-            <span className='text-[12px] text-zinc-500'>Proteína</span>
-            <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.protein_g}g · {initialTargets.protein_per_kg}g/kg</span>
-            <span className='text-[12px] text-zinc-500'>Carbohidratos</span>
-            <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.carbs_g}g · {Math.round(initialTargets.carbs_pct * 100)}%</span>
-            <span className='text-[12px] text-zinc-500'>Grasa</span>
-            <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.fat_g}g · {Math.round(initialTargets.fat_pct * 100)}%</span>
+          <div className='mb-2 flex items-center justify-between'>
+            <p className='text-[11px] font-medium text-zinc-500'>{GOAL_LABELS[patientGoal]}</p>
+            {initialTargets?.estimated && (
+              <span className='rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500'>
+                ~ estimado
+              </span>
+            )}
           </div>
+          {initialTargets ? (
+            <div className='grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-lg bg-zinc-800/60 px-3 py-2.5'>
+              <span className='text-[12px] text-zinc-500'>Kcal/día</span>
+              <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.calories} kcal</span>
+              <span className='text-[12px] text-zinc-500'>Proteína</span>
+              <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.protein_g}g · {initialTargets.protein_per_kg}g/kg</span>
+              <span className='text-[12px] text-zinc-500'>Carbohidratos</span>
+              <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.carbs_g}g · {Math.round(initialTargets.carbs_pct * 100)}%</span>
+              <span className='text-[12px] text-zinc-500'>Grasa</span>
+              <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.fat_g}g · {Math.round(initialTargets.fat_pct * 100)}%</span>
+            </div>
+          ) : (
+            <p className='rounded-lg bg-amber-950/40 px-3 py-2.5 text-[11px] text-amber-400'>
+              Completa peso, altura y fecha de nacimiento para ver los objetivos estimados.
+            </p>
+          )}
 
           {/* Acciones */}
           <div className='mt-4 flex gap-2'>

@@ -160,6 +160,10 @@ export function PatientTabs({
   const [followupSendError, setFollowupSendError] = useState<string | null>(null);
   const [followupSent, setFollowupSent] = useState(false);
 
+  const patientTargets = (() => {
+    try { return calcTargets(patient); } catch { return null; }
+  })();
+
   const age = patient.date_of_birth
     ? Math.floor(
         (Date.now() - new Date(patient.date_of_birth).getTime()) /
@@ -408,7 +412,7 @@ export function PatientTabs({
                   <div className='mt-4'>
                     <GenerateButton
                       patientId={patient.id}
-                      initialTargets={calcTargets(patient)}
+                      initialTargets={patientTargets}
                       patientWeight={patient.weight_kg ?? 70}
                       patientGoal={patient.goal ?? 'health'}
                       hasIntake={!!intakeForm}
