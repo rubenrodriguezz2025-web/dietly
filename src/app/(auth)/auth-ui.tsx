@@ -132,7 +132,18 @@ export function AuthUI({
           </div>
         )}
 
-        {error && <p className='rounded-md bg-red-950 px-3 py-2 text-xs text-red-400'>{error}</p>}
+        {error && (
+          <p
+            className={[
+              'rounded-md px-3 py-2 text-xs',
+              error.includes('pendiente de activación')
+                ? 'bg-amber-950/60 text-amber-300'
+                : 'bg-red-950 text-red-400',
+            ].join(' ')}
+          >
+            {error}
+          </p>
+        )}
 
         <Button
           type='submit'

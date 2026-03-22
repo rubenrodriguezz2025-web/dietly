@@ -348,8 +348,8 @@ function HeroSection() {
 
         {/* CTA */}
         <div className='fu3 mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center'>
-          <CtaButton href='mailto:hola@dietly.es'>
-            Solicitar acceso anticipado →
+          <CtaButton href='/signup'>
+            Empezar gratis →
           </CtaButton>
           <a
             href='#como-funciona'
@@ -358,6 +358,12 @@ function HeroSection() {
             Ver cómo funciona →
           </a>
         </div>
+        <p className='fu3 mt-4 text-xs text-zinc-700'>
+          ¿Ya tienes cuenta?{' '}
+          <Link href='/login' className='text-zinc-500 transition-colors hover:text-zinc-400'>
+            Inicia sesión
+          </Link>
+        </p>
 
         {/* Métricas */}
         <div className='fu4 mx-auto mt-10 grid max-w-lg grid-cols-3 overflow-hidden rounded-2xl border border-[#1a2e1a]'>
@@ -823,11 +829,11 @@ function FinalCtaSection() {
           Empieza hoy. Tu próximo plan en 2 minutos.
         </h2>
         <p className='mx-auto mt-4 max-w-md text-sm leading-relaxed text-zinc-400'>
-          Escríbenos y te damos acceso. Estamos incorporando nutricionistas de forma individual.
+          Regístrate en segundos. Si tu email está en la lista de acceso, empiezas hoy.
         </p>
         <div className='mt-8'>
-          <CtaButton href='mailto:hola@dietly.es'>
-            Solicitar acceso anticipado →
+          <CtaButton href='/signup'>
+            Empezar gratis →
           </CtaButton>
         </div>
         <p className='mt-5 text-xs text-zinc-700'>

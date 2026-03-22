@@ -8,7 +8,7 @@ import { ActionResponse } from '@/types/action-response';
 import { getURL } from '@/utils/get-url';
 
 const BETA_BLOCKED_MSG =
-  'Dietly está en acceso anticipado por invitación. Si quieres unirte a la beta escríbenos a hola@dietly.es';
+  'Tu acceso está pendiente de activación. Escríbenos a hola@dietly.es para solicitar acceso.';
 
 export async function signInWithOAuth(provider: 'github' | 'google'): Promise<ActionResponse> {
   const supabase = await createSupabaseServerClient();
