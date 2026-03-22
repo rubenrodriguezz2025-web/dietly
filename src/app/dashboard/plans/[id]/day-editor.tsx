@@ -19,18 +19,7 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
 
 function PencilIcon({ size = 11 }: { size?: number }) {
   return (
-    <svg
-      xmlns='http://www.w3.org/2000/svg'
-      width={size}
-      height={size}
-      viewBox='0 0 24 24'
-      fill='none'
-      stroke='currentColor'
-      strokeWidth='2'
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden='true'
-    >
+    <svg xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
       <path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' />
       <path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' />
     </svg>
@@ -39,18 +28,7 @@ function PencilIcon({ size = 11 }: { size?: number }) {
 
 function CheckIcon({ size = 10 }: { size?: number }) {
   return (
-    <svg
-      xmlns='http://www.w3.org/2000/svg'
-      width={size}
-      height={size}
-      viewBox='0 0 24 24'
-      fill='none'
-      stroke='currentColor'
-      strokeWidth='2.5'
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden='true'
-    >
+    <svg xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
       <polyline points='20 6 9 17 4 12' />
     </svg>
   );
@@ -58,35 +36,50 @@ function CheckIcon({ size = 10 }: { size?: number }) {
 
 function XIcon({ size = 10 }: { size?: number }) {
   return (
-    <svg
-      xmlns='http://www.w3.org/2000/svg'
-      width={size}
-      height={size}
-      viewBox='0 0 24 24'
-      fill='none'
-      stroke='currentColor'
-      strokeWidth='2.5'
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden='true'
-    >
+    <svg xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
       <line x1='18' y1='6' x2='6' y2='18' />
       <line x1='6' y1='6' x2='18' y2='18' />
     </svg>
   );
 }
 
+function PlusIcon({ size = 10 }: { size?: number }) {
+  return (
+    <svg xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+      <line x1='12' y1='5' x2='12' y2='19' />
+      <line x1='5' y1='12' x2='19' y2='12' />
+    </svg>
+  );
+}
+
+function RefreshIcon({ size = 10 }: { size?: number }) {
+  return (
+    <svg xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+      <path d='M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2' />
+    </svg>
+  );
+}
+
 // ── Editable primitives ───────────────────────────────────────────────────────
 
-/** Single-line editable text. Confirm-only (parent state updates on confirm). */
+/**
+ * Single-line editable text.
+ *
+ * Always shows a faint dotted underline + pencil icon at ~35% opacity so
+ * the field is visibly interactive even before hover.
+ * On hover: border + background appear; icon reaches full opacity.
+ * On click: green-ring input + confirm ✓ / cancel ✗.
+ */
 function EditableField({
   value,
   onChange,
   className = '',
+  placeholder = '—',
 }: {
   value: string;
   onChange: (v: string) => void;
   className?: string;
+  placeholder?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -113,19 +106,16 @@ function EditableField({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              confirm();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); confirm(); }
             if (e.key === 'Escape') cancel();
           }}
-          className={`min-w-[80px] rounded border border-[#1a7a45]/60 bg-zinc-900 px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a7a45] ${className}`}
+          className={`min-w-[100px] rounded-md border border-[#1a7a45]/50 bg-zinc-900 px-2 py-1 text-sm ring-1 ring-[#1a7a45]/30 focus:border-[#1a7a45]/70 focus:outline-none focus:ring-[#1a7a45]/50 ${className}`}
         />
         <button
           type='button'
           onClick={confirm}
           title='Confirmar (Enter)'
-          className='flex-shrink-0 rounded p-0.5 text-emerald-400 transition-colors hover:bg-emerald-500/10'
+          className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[#1a7a45]/20 text-emerald-400 transition-colors hover:bg-[#1a7a45]/35'
         >
           <CheckIcon />
         </button>
@@ -133,7 +123,7 @@ function EditableField({
           type='button'
           onClick={cancel}
           title='Cancelar (Esc)'
-          className='flex-shrink-0 rounded p-0.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300'
+          className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-zinc-800 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-300'
         >
           <XIcon />
         </button>
@@ -145,28 +135,35 @@ function EditableField({
     <button
       type='button'
       onClick={startEdit}
-      className={`group/edit inline-flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-left transition-colors hover:bg-zinc-800/80 ${className}`}
+      title='Haz clic para editar'
+      className={`group/ef inline-flex cursor-text items-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-left transition-all duration-150 hover:border-zinc-700 hover:bg-zinc-900 ${className}`}
     >
-      {value || <span className='italic text-zinc-600'>—</span>}
-      <span className='flex-shrink-0 text-zinc-600 opacity-0 transition-opacity group-hover/edit:opacity-100'>
+      <span className='border-b border-dashed border-zinc-700/60'>
+        {value || <span className='italic text-zinc-600'>{placeholder}</span>}
+      </span>
+      <span className='flex-shrink-0 text-zinc-600 opacity-35 transition-opacity duration-150 group-hover/ef:opacity-100'>
         <PencilIcon size={10} />
       </span>
     </button>
   );
 }
 
-/** Numeric editable field. Calls `onQuantityChanged` (if provided) when confirmed with a different value. */
+/**
+ * Numeric editable field.
+ */
 function EditableNumber({
   value,
   onChange,
   unit,
   bold,
+  size = 'default',
   onQuantityChanged,
 }: {
   value: number;
   onChange: (v: number) => void;
   unit?: string;
   bold?: boolean;
+  size?: 'default' | 'sm';
   onQuantityChanged?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -203,23 +200,13 @@ function EditableNumber({
             if (e.key === 'Enter') confirm();
             if (e.key === 'Escape') cancel();
           }}
-          className='w-14 rounded border border-[#1a7a45]/60 bg-zinc-900 px-1 py-0.5 text-xs text-zinc-100 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]'
+          className={`rounded-md border border-[#1a7a45]/50 bg-zinc-900 px-1.5 py-0.5 text-zinc-100 ring-1 ring-[#1a7a45]/30 focus:outline-none focus:ring-[#1a7a45]/50 ${size === 'sm' ? 'w-12 text-xs' : 'w-16 text-sm'}`}
         />
-        <button
-          type='button'
-          onClick={confirm}
-          title='Confirmar (Enter)'
-          className='flex-shrink-0 rounded p-0.5 text-emerald-400 transition-colors hover:bg-emerald-500/10'
-        >
-          <CheckIcon />
+        <button type='button' onClick={confirm} className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-[#1a7a45]/20 text-emerald-400 transition-colors hover:bg-[#1a7a45]/35'>
+          <CheckIcon size={9} />
         </button>
-        <button
-          type='button'
-          onClick={cancel}
-          title='Cancelar (Esc)'
-          className='flex-shrink-0 rounded p-0.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300'
-        >
-          <XIcon />
+        <button type='button' onClick={cancel} className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-zinc-800 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-300'>
+          <XIcon size={9} />
         </button>
       </span>
     );
@@ -229,26 +216,31 @@ function EditableNumber({
     <button
       type='button'
       onClick={startEdit}
-      className={`group/edit inline-flex cursor-pointer items-center gap-1 rounded px-0.5 py-0.5 transition-colors hover:bg-zinc-800/80 ${bold ? 'font-semibold text-zinc-200' : 'text-zinc-400'}`}
+      title='Haz clic para editar'
+      className={`group/en inline-flex cursor-text items-center gap-0.5 rounded border border-transparent px-0.5 py-0.5 transition-all duration-150 hover:border-zinc-700 hover:bg-zinc-900 ${bold ? 'font-semibold text-zinc-100' : size === 'sm' ? 'text-zinc-400' : 'text-zinc-300'}`}
     >
-      {value}
+      <span className='border-b border-dashed border-zinc-700/60 tabular-nums'>{value}</span>
       {unit && <span className='ml-0.5 text-zinc-600'>{unit}</span>}
-      <span className='flex-shrink-0 text-zinc-600 opacity-0 transition-opacity group-hover/edit:opacity-100'>
-        <PencilIcon size={9} />
+      <span className='ml-0.5 text-zinc-600 opacity-0 transition-opacity duration-150 group-hover/en:opacity-100'>
+        <PencilIcon size={8} />
       </span>
     </button>
   );
 }
 
-/** Multi-line editable area. Uses explicit Confirmar/Cancelar buttons (Enter adds newlines). */
+/**
+ * Multi-line editable textarea.
+ */
 function EditableArea({
   value,
   onChange,
-  placeholder = '',
+  placeholder = '—',
+  textClassName = '',
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  textClassName?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -269,7 +261,7 @@ function EditableArea({
 
   if (editing) {
     return (
-      <div>
+      <div className='rounded-lg border border-[#1a7a45]/40 bg-zinc-900 ring-1 ring-[#1a7a45]/20'>
         <textarea
           autoFocus
           value={draft}
@@ -277,9 +269,9 @@ function EditableArea({
           onKeyDown={(e) => e.key === 'Escape' && cancel()}
           rows={4}
           placeholder={placeholder}
-          className='w-full resize-none rounded-lg border border-[#1a7a45]/60 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]'
+          className='w-full resize-none rounded-t-lg bg-transparent px-3 py-2.5 text-sm text-zinc-300 placeholder:text-zinc-700 focus:outline-none'
         />
-        <div className='mt-1.5 flex justify-end gap-1.5'>
+        <div className='flex items-center justify-end gap-1.5 border-t border-zinc-800/80 px-3 py-2'>
           <button
             type='button'
             onClick={cancel}
@@ -290,7 +282,7 @@ function EditableArea({
           <button
             type='button'
             onClick={confirm}
-            className='rounded-md border border-[#1a7a45]/40 bg-[#1a7a45]/20 px-2.5 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-[#1a7a45]/30'
+            className='rounded-md bg-[#1a7a45]/20 px-2.5 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-[#1a7a45]/30'
           >
             Confirmar
           </button>
@@ -303,13 +295,14 @@ function EditableArea({
     <button
       type='button'
       onClick={startEdit}
-      className='group/edit relative w-full cursor-pointer rounded-lg border border-transparent px-2 py-1.5 text-left transition-colors hover:border-zinc-800 hover:bg-zinc-900/50'
+      title='Haz clic para editar'
+      className='group/ea relative w-full cursor-text rounded-lg border border-transparent px-3 py-2 text-left transition-all duration-150 hover:border-zinc-700 hover:bg-zinc-900/60'
     >
-      <span className='block leading-relaxed'>
-        {value || <span className='italic text-zinc-700'>{placeholder || '—'}</span>}
+      <span className={`block leading-relaxed ${textClassName}`}>
+        {value || <span className='italic text-zinc-700'>{placeholder}</span>}
       </span>
-      <span className='absolute right-2 top-2 text-zinc-600 opacity-0 transition-opacity group-hover/edit:opacity-100'>
-        <PencilIcon size={10} />
+      <span className='absolute right-2.5 top-2.5 text-zinc-600 opacity-30 transition-opacity duration-150 group-hover/ea:opacity-100'>
+        <PencilIcon size={11} />
       </span>
     </button>
   );
@@ -321,13 +314,17 @@ function IngredientRow({
   ingredient,
   onChange,
   onQuantityChanged,
+  onDelete,
+  isDraft,
 }: {
   ingredient: Ingredient;
   onChange: (updated: Ingredient) => void;
   onQuantityChanged?: () => void;
+  onDelete?: () => void;
+  isDraft?: boolean;
 }) {
   return (
-    <li className='flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs'>
+    <li className='group/ing flex items-center gap-0.5 rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs transition-colors duration-150 hover:border-zinc-700'>
       <EditableField
         value={ingredient.name}
         onChange={(name) => onChange({ ...ingredient, name })}
@@ -337,12 +334,95 @@ function IngredientRow({
         value={ingredient.quantity}
         onQuantityChanged={onQuantityChanged}
         onChange={(quantity) => onChange({ ...ingredient, quantity })}
+        size='sm'
       />
       <EditableField
         value={ingredient.unit}
         onChange={(unit) => onChange({ ...ingredient, unit })}
         className='text-zinc-600'
       />
+      {isDraft && onDelete && (
+        <button
+          type='button'
+          onClick={onDelete}
+          title='Eliminar ingrediente'
+          className='ml-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-zinc-700 opacity-0 transition-all duration-150 group-hover/ing:opacity-100 hover:bg-red-950/60 hover:text-red-400'
+        >
+          <XIcon size={8} />
+        </button>
+      )}
+    </li>
+  );
+}
+
+// ── Add-ingredient inline form ────────────────────────────────────────────────
+
+function AddIngredientForm({
+  onAdd,
+  onCancel,
+}: {
+  onAdd: (ing: Ingredient) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [qty, setQty] = useState('100');
+  const [unit, setUnit] = useState('g');
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { nameRef.current?.focus(); }, []);
+
+  function confirm() {
+    const quantity = Number(qty);
+    if (!name.trim() || isNaN(quantity) || quantity < 0) return;
+    onAdd({ name: name.trim(), quantity, unit: unit.trim() || 'g' });
+  }
+
+  function handleKey(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') { e.preventDefault(); confirm(); }
+    if (e.key === 'Escape') onCancel();
+  }
+
+  return (
+    <li className='flex items-center gap-1.5 rounded-full border border-[#1a7a45]/50 bg-zinc-900/80 px-3 py-1.5 text-xs ring-1 ring-[#1a7a45]/15'>
+      <input
+        ref={nameRef}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder='Ingrediente'
+        className='w-24 bg-transparent text-zinc-300 outline-none placeholder:text-zinc-600'
+      />
+      <span className='select-none text-zinc-700'>·</span>
+      <input
+        type='number'
+        min={0}
+        value={qty}
+        onChange={(e) => setQty(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder='100'
+        className='w-10 bg-transparent text-right text-zinc-300 outline-none'
+      />
+      <input
+        value={unit}
+        onChange={(e) => setUnit(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder='g'
+        className='w-8 bg-transparent text-zinc-500 outline-none'
+      />
+      <button
+        type='button'
+        onClick={confirm}
+        className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#1a7a45]/25 text-emerald-400 transition-colors hover:bg-[#1a7a45]/40'
+      >
+        <CheckIcon size={9} />
+      </button>
+      <button
+        type='button'
+        onClick={onCancel}
+        className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-300'
+      >
+        <XIcon size={9} />
+      </button>
     </li>
   );
 }
@@ -365,12 +445,24 @@ function MealEditor({
   const [isRecalculating, startRecalc] = useTransition();
   const [recalcError, setRecalcError] = useState<string | null>(null);
   const [macrosDirty, setMacrosDirty] = useState(false);
+  const [addingIngredient, setAddingIngredient] = useState(false);
 
   function handleIngredientChange(i: number, updated: Ingredient) {
     onChange({
       ...meal,
       ingredients: meal.ingredients.map((x, j) => (j === i ? updated : x)),
     });
+  }
+
+  function handleDeleteIngredient(i: number) {
+    onChange({ ...meal, ingredients: meal.ingredients.filter((_, j) => j !== i) });
+    setMacrosDirty(true);
+  }
+
+  function handleAddIngredient(ing: Ingredient) {
+    onChange({ ...meal, ingredients: [...meal.ingredients, ing] });
+    setAddingIngredient(false);
+    setMacrosDirty(true);
   }
 
   function handleRecalculate() {
@@ -388,44 +480,49 @@ function MealEditor({
 
   return (
     <div className={`px-5 py-4 ${isInvalid ? 'bg-red-950/20' : ''}`}>
+      {/* Header: tipo + nombre + macros */}
       <div className='flex flex-wrap items-start justify-between gap-2'>
         <div className='min-w-0 flex-1'>
+          {/* Tipo y hora */}
           <div className='flex items-center gap-2'>
             {isInvalid && (
-              <span className='rounded bg-red-900 px-1.5 py-0.5 text-xs font-medium text-red-300'>
+              <span className='rounded bg-red-900/60 px-1.5 py-0.5 text-xs font-medium text-red-300'>
                 Error
               </span>
             )}
-            <span className='text-xs font-medium uppercase tracking-wider text-zinc-600'>
+            <span className='text-[11px] font-semibold uppercase tracking-widest text-zinc-600'>
               {MEAL_TYPE_LABELS[meal.meal_type] ?? meal.meal_type}
             </span>
             {meal.time_suggestion && (
               <span className='text-xs text-zinc-700'>{meal.time_suggestion}</span>
             )}
           </div>
-          {/* Nombre de la comida — editable */}
-          <h4 className='mt-1 font-medium'>
+
+          {/* Nombre del plato — editable prominente */}
+          <h4 className='mt-0.5'>
             <EditableField
               value={meal.meal_name}
               onChange={(meal_name) => onChange({ ...meal, meal_name })}
-              className='text-zinc-100'
+              className='text-base font-semibold text-zinc-100'
+              placeholder='Nombre del plato…'
             />
           </h4>
         </div>
 
-        {/* Macros — editables */}
+        {/* Macros block */}
         <div className='flex flex-col items-end gap-1.5'>
-          <div className='flex flex-shrink-0 gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs'>
+          <div className='flex flex-shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-xs'>
             <EditableNumber
               value={meal.calories}
               unit='kcal'
               bold
               onChange={(calories) => onChange({ ...meal, calories })}
             />
-            <span className='text-zinc-700'>|</span>
+            <span className='select-none text-zinc-800'>·</span>
             <EditableNumber
               value={meal.macros.protein_g}
               unit='P'
+              size='sm'
               onChange={(protein_g) =>
                 onChange({ ...meal, macros: { ...meal.macros, protein_g } })
               }
@@ -433,6 +530,7 @@ function MealEditor({
             <EditableNumber
               value={meal.macros.carbs_g}
               unit='C'
+              size='sm'
               onChange={(carbs_g) =>
                 onChange({ ...meal, macros: { ...meal.macros, carbs_g } })
               }
@@ -440,28 +538,27 @@ function MealEditor({
             <EditableNumber
               value={meal.macros.fat_g}
               unit='G'
+              size='sm'
               onChange={(fat_g) =>
                 onChange({ ...meal, macros: { ...meal.macros, fat_g } })
               }
             />
           </div>
 
-          {/* Badge macros pendientes / botón recalcular */}
+          {/* Badge macros pendientes de recálculo */}
           {isDraft && macrosDirty && (
             <button
               type='button'
               onClick={handleRecalculate}
               disabled={isRecalculating}
-              className='flex items-center gap-1.5 rounded-full border border-amber-800/50 bg-amber-950/40 px-2.5 py-0.5 text-[11px] font-medium text-amber-400 transition-colors hover:border-amber-700/60 hover:bg-amber-950/60 disabled:opacity-60'
+              className='flex items-center gap-1.5 rounded-full border border-amber-700/50 bg-amber-950/50 px-2.5 py-1 text-[11px] font-medium text-amber-400 transition-all duration-150 hover:border-amber-600/70 hover:bg-amber-950/70 disabled:opacity-60'
             >
               {isRecalculating ? (
                 <span className='h-2.5 w-2.5 animate-spin rounded-full border border-amber-500/40 border-t-amber-400' />
               ) : (
-                <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
-                  <path d='M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2' />
-                </svg>
+                <RefreshIcon />
               )}
-              Macros pendientes de recalcular
+              ⚠️ Macros pendientes · Recalcular con IA
             </button>
           )}
 
@@ -475,50 +572,76 @@ function MealEditor({
               {isRecalculating ? (
                 <span className='inline-block h-2.5 w-2.5 animate-spin rounded-full border border-zinc-500 border-t-transparent' />
               ) : (
-                <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
-                  <path d='M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2' />
-                </svg>
+                <RefreshIcon />
               )}
               Recalcular macros
             </button>
           )}
 
-          {recalcError && (
-            <p className='text-[10px] text-red-400'>{recalcError}</p>
-          )}
+          {recalcError && <p className='text-[10px] text-red-400'>{recalcError}</p>}
         </div>
       </div>
 
-      {/* Ingredientes — editables */}
-      {meal.ingredients.length > 0 && (
-        <ul className='mt-3 flex flex-wrap gap-2'>
-          {meal.ingredients.map((ing, i) => (
-            <IngredientRow
-              key={i}
-              ingredient={ing}
-              onQuantityChanged={() => setMacrosDirty(true)}
-              onChange={(updated) => handleIngredientChange(i, updated)}
-            />
-          ))}
-        </ul>
-      )}
+      {/* Ingredientes */}
+      <ul className='mt-3 flex flex-wrap gap-1.5'>
+        {meal.ingredients.map((ing, i) => (
+          <IngredientRow
+            key={i}
+            ingredient={ing}
+            isDraft={isDraft}
+            onQuantityChanged={() => setMacrosDirty(true)}
+            onChange={(updated) => handleIngredientChange(i, updated)}
+            onDelete={isDraft ? () => handleDeleteIngredient(i) : undefined}
+          />
+        ))}
 
-      {/* Preparación — editable */}
-      <div className='mt-3 text-sm text-zinc-500'>
+        {/* Añadir ingrediente */}
+        {isDraft && (
+          addingIngredient ? (
+            <AddIngredientForm
+              onAdd={handleAddIngredient}
+              onCancel={() => setAddingIngredient(false)}
+            />
+          ) : (
+            <li>
+              <button
+                type='button'
+                onClick={() => setAddingIngredient(true)}
+                className='flex items-center gap-1 rounded-full border border-dashed border-zinc-700/70 px-2.5 py-1 text-[11px] text-zinc-600 transition-all duration-150 hover:border-[#1a7a45]/60 hover:text-emerald-500'
+                title='Añadir ingrediente'
+              >
+                <PlusIcon size={9} />
+                Añadir
+              </button>
+            </li>
+          )
+        )}
+      </ul>
+
+      {/* Preparación */}
+      <div className='mt-3'>
+        <p className='mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-700'>
+          Preparación
+        </p>
         <EditableArea
           value={meal.preparation ?? ''}
           placeholder='Instrucciones de preparación…'
           onChange={(preparation) => onChange({ ...meal, preparation })}
+          textClassName='text-sm text-zinc-500'
         />
       </div>
 
-      {/* Notas / sustituciones — editables */}
+      {/* Notas */}
       {meal.notes !== undefined && (
-        <div className='mt-1 text-xs italic text-zinc-600'>
+        <div className='mt-1'>
+          <p className='mb-0.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-700'>
+            Notas / sustituciones
+          </p>
           <EditableArea
             value={meal.notes ?? ''}
             placeholder='Notas o sustituciones…'
             onChange={(notes) => onChange({ ...meal, notes })}
+            textClassName='text-xs italic text-zinc-600'
           />
         </div>
       )}
@@ -546,15 +669,14 @@ export function DayEditor({
   const [day, setDay] = useState(initialDay);
   const [dirty, setDirty] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [hintDismissed, setHintDismissed] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRender = useRef(true);
-  // Keep stable refs to callbacks to avoid stale closures in async code
   const onSavedRef = useRef(onSaved);
   useEffect(() => { onSavedRef.current = onSaved; });
 
-  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -562,7 +684,7 @@ export function DayEditor({
     };
   }, []);
 
-  // Autoguardado con debounce de 1000ms
+  // Autoguardado con debounce de 1000 ms
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -575,14 +697,10 @@ export function DayEditor({
       const result = await updateDay(planId, day.day_number, day);
       if (result.error) {
         setSaveStatus('error');
-        // Reintentar 1 vez tras 2s
         setTimeout(async () => {
           const retry = await updateDay(planId, day.day_number, day);
-          if (!retry.error) {
-            markSaved();
-          } else {
-            setSaveStatus('idle');
-          }
+          if (!retry.error) markSaved();
+          else setSaveStatus('idle');
         }, 2000);
       } else {
         markSaved();
@@ -606,6 +724,7 @@ export function DayEditor({
   function markDirty() {
     if (!dirty) {
       setDirty(true);
+      setHintDismissed(true);
       onDirty();
     }
   }
@@ -618,18 +737,20 @@ export function DayEditor({
     markDirty();
   }
 
-  function updateDayTotals(patch: Partial<Pick<PlanDay, 'total_calories' | 'total_macros'>>) {
+  function updateDayTotals(
+    patch: Partial<Pick<PlanDay, 'total_calories' | 'total_macros'>>
+  ) {
     setDay((prev) => ({ ...prev, ...patch }));
     markDirty();
   }
 
   return (
     <div
-      className={`rounded-xl border bg-zinc-950 ${
+      className={`rounded-xl border bg-zinc-950 transition-[border-color,box-shadow] duration-300 ${
         dirty
-          ? 'border-[#1a7a45]/50'
+          ? 'border-[#1a7a45]/40 shadow-[0_0_0_1px_rgba(26,122,69,0.08)]'
           : invalidMealIndexes.length > 0
-            ? 'border-red-800'
+            ? 'border-red-800/70'
             : 'border-zinc-800'
       }`}
     >
@@ -637,32 +758,35 @@ export function DayEditor({
       <div className='flex items-center justify-between border-b border-zinc-800 px-5 py-4'>
         <div>
           <h3 className='font-semibold text-zinc-100'>{day.day_name}</h3>
-          <div className='mt-0.5 flex flex-wrap gap-2 text-xs text-zinc-500'>
+          <div className='mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-zinc-600'>
             <EditableNumber
               value={day.total_calories}
               unit='kcal'
               onChange={(total_calories) => updateDayTotals({ total_calories })}
             />
-            <span>·</span>
+            <span className='select-none text-zinc-800'>·</span>
             <EditableNumber
               value={day.total_macros.protein_g}
               unit='g P'
+              size='sm'
               onChange={(protein_g) =>
                 updateDayTotals({ total_macros: { ...day.total_macros, protein_g } })
               }
             />
-            <span>·</span>
+            <span className='select-none text-zinc-800'>·</span>
             <EditableNumber
               value={day.total_macros.carbs_g}
               unit='g C'
+              size='sm'
               onChange={(carbs_g) =>
                 updateDayTotals({ total_macros: { ...day.total_macros, carbs_g } })
               }
             />
-            <span>·</span>
+            <span className='select-none text-zinc-800'>·</span>
             <EditableNumber
               value={day.total_macros.fat_g}
               unit='g G'
+              size='sm'
               onChange={(fat_g) =>
                 updateDayTotals({ total_macros: { ...day.total_macros, fat_g } })
               }
@@ -674,7 +798,8 @@ export function DayEditor({
           {invalidMealIndexes.length > 0 && (
             <>
               <span className='text-xs text-red-400'>
-                {invalidMealIndexes.length} comida{invalidMealIndexes.length > 1 ? 's' : ''} con error
+                {invalidMealIndexes.length} comida
+                {invalidMealIndexes.length > 1 ? 's' : ''} con error
               </span>
               <RegenerateDayButton
                 planId={planId}
@@ -685,6 +810,26 @@ export function DayEditor({
           )}
         </div>
       </div>
+
+      {/* Hint de edición — visible hasta primera edición */}
+      {isDraft && !hintDismissed && (
+        <div className='flex items-center justify-between border-b border-zinc-800/50 bg-[#1a7a45]/5 px-5 py-2'>
+          <div className='flex items-center gap-2 text-zinc-500'>
+            <PencilIcon size={11} />
+            <p className='text-xs'>
+              Haz clic en cualquier texto subrayado para editarlo
+            </p>
+          </div>
+          <button
+            type='button'
+            onClick={() => setHintDismissed(true)}
+            className='text-zinc-700 transition-colors hover:text-zinc-500'
+            aria-label='Cerrar ayuda'
+          >
+            <XIcon size={9} />
+          </button>
+        </div>
+      )}
 
       {/* Comidas */}
       <div className='divide-y divide-zinc-900'>
@@ -704,16 +849,21 @@ export function DayEditor({
       {saveStatus !== 'idle' && (
         <div className='flex justify-end border-t border-zinc-800/60 px-5 py-2'>
           {saveStatus === 'saving' && (
-            <span className='flex items-center gap-1.5 text-xs text-zinc-500'>
+            <span className='flex items-center gap-1.5 text-xs text-zinc-600'>
               <span className='inline-block h-2.5 w-2.5 animate-spin rounded-full border border-zinc-600 border-t-transparent' />
-              Guardando...
+              Guardando…
             </span>
           )}
           {saveStatus === 'saved' && (
-            <span className='text-xs text-emerald-500'>✓ Guardado</span>
+            <span className='flex items-center gap-1.5 text-xs text-emerald-600'>
+              <CheckIcon size={10} />
+              Guardado
+            </span>
           )}
           {saveStatus === 'error' && (
-            <span className='text-xs text-amber-500'>Error al guardar — reintentando...</span>
+            <span className='text-xs text-amber-500'>
+              Error al guardar — reintentando…
+            </span>
           )}
         </div>
       )}
