@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { updateSession } from '@/libs/supabase/supabase-middleware-client';
 import { validatePlanAccessToken } from '@/lib/auth/plan-tokens';
+import { updateSession } from '@/libs/supabase/supabase-middleware-client';
 
 // ─── Configuración de rate limiting ────────────────────────────────────────
 

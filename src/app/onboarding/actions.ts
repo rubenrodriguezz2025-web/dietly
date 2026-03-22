@@ -30,14 +30,12 @@ export async function saveProfile(formData: FormData) {
     return { error: 'Debes confirmar que conoces las capacidades y limitaciones de la IA.' };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from('profiles').upsert({
     id: user.id,
     full_name,
     clinic_name,
     specialty,
     college_number,
-    // Campo añadido en migración 023; usar `as any` hasta regenerar tipos Supabase
     ai_literacy_acknowledged_at: new Date().toISOString(),
   });
 
