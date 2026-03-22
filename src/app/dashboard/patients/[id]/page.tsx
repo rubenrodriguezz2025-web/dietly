@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 
+import { generateIntakeAccessToken } from '@/lib/auth/intake-tokens';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
@@ -111,9 +112,17 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const intakeForm = intakeFormResult.data;
   const hasConsent = !!consentResult.data;
 
-  const intakeUrl = intakeToken
-    ? `${process.env.NEXT_PUBLIC_APP_URL}/p/intake/${intakeToken}`
-    : null;
+  let intakeUrl: string | null = null;
+  if (intakeToken) {
+    try {
+      const { url } = await generateIntakeAccessToken(intakeToken);
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+      intakeUrl = `${appUrl}${url}`;
+    } catch {
+      // Si falta PLAN_TOKEN_SECRET en dev, caer a URL sin firma
+      intakeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/p/intake/${intakeToken}`;
+    }
+  }
 
   return (
     <div className='flex flex-col gap-6'>
