@@ -32,8 +32,7 @@ export default async function AjustesPage() {
   const isPro =
     subscription != null &&
     (productName.toLowerCase().includes('pro') ||
-      productName.toLowerCase().includes('profesional') ||
-      productName === ''); // fallback: cualquier suscripción activa
+      productName.toLowerCase().includes('profesional'));
 
   // URL firmada del logo para previsualización (1 hora de validez)
   let logoPreviewUrl: string | null = null;

@@ -47,7 +47,7 @@ function EditableField({
       onClick={() => setEditing(true)}
       onKeyDown={(e) => e.key === 'Enter' && setEditing(true)}
       title='Clic para editar'
-      className={`cursor-text rounded px-1 hover:bg-zinc-800 ${className}`}
+      className={`cursor-text rounded border-b border-dashed border-zinc-700 px-1 hover:border-transparent hover:bg-zinc-800 ${className}`}
     >
       {value || <span className='italic text-zinc-600'>—</span>}
     </span>
@@ -88,7 +88,7 @@ function EditableNumber({
       onClick={() => setEditing(true)}
       onKeyDown={(e) => e.key === 'Enter' && setEditing(true)}
       title='Clic para editar'
-      className={`cursor-text rounded px-0.5 hover:bg-zinc-800 ${bold ? 'font-semibold text-zinc-200' : 'text-zinc-400'}`}
+      className={`cursor-text rounded border-b border-dashed border-zinc-700 px-0.5 hover:border-transparent hover:bg-zinc-800 ${bold ? 'font-semibold text-zinc-200' : 'text-zinc-400'}`}
     >
       {value}
       {unit && <span className='ml-0.5 text-zinc-600'>{unit}</span>}
@@ -127,7 +127,7 @@ function EditableArea({
       onClick={() => setEditing(true)}
       onKeyDown={(e) => e.key === 'Enter' && setEditing(true)}
       title='Clic para editar'
-      className={`cursor-text rounded px-1 leading-relaxed hover:bg-zinc-800 ${className}`}
+      className={`cursor-text rounded border border-dashed border-zinc-800 px-1 leading-relaxed hover:border-transparent hover:bg-zinc-800 ${className}`}
     >
       {value || <span className='italic text-zinc-600'>—</span>}
     </p>

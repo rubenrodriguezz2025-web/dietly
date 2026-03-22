@@ -5,9 +5,10 @@ import { redirect } from 'next/navigation';
 
 import { logAIRequest } from '@/libs/ai/logger';
 import { pseudonymizePatient } from '@/libs/ai/pseudonymize';
+import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import type { Meal, Patient, PlanContent, PlanDay } from '@/types/dietly';
+import type { Meal, NutritionPlan, Patient, PlanContent, PlanDay } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -171,6 +172,104 @@ export async function approvePlan(
 
   revalidatePath(`/dashboard/plans/${planId}`);
   redirect(`/dashboard/plans/${planId}?approved=1`);
+}
+
+// ── Send plan to patient ──────────────────────────────────────────────────────
+
+export async function sendPlanToPatient(
+  planId: string,
+  _prev: { error?: string; ok?: boolean },
+  _formData: FormData
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const { data: plan } = (await (supabase as any)
+    .from('nutrition_plans')
+    .select('*, patients(*)')
+    .eq('id', planId)
+    .eq('nutritionist_id', user.id)
+    .single()) as { data: (NutritionPlan & { patients: Patient | null }) | null };
+
+  if (!plan) return { error: 'Plan no encontrado.' };
+  if (plan.status !== 'approved' && plan.status !== 'sent')
+    return { error: 'Solo se pueden enviar planes aprobados.' };
+  if (!plan.patients?.email) return { error: 'El paciente no tiene email registrado. Añádelo en su ficha.' };
+
+  const { data: profile } = (await (supabase as any)
+    .from('profiles')
+    .select('full_name, clinic_name')
+    .eq('id', user.id)
+    .single()) as { data: { full_name: string; clinic_name: string | null } | null };
+
+  const nombreDN = profile?.full_name ?? 'Tu nutricionista';
+  const clinica = profile?.clinic_name ?? '';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const planUrl = `${appUrl}/p/${plan.patient_token}`;
+  const semana = new Date(plan.week_start_date).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  try {
+    await resendClient.emails.send({
+      from: 'Dietly <noreply@dietly.es>',
+      to: plan.patients.email,
+      subject: `Tu plan nutricional está listo · ${nombreDN}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#18181b">
+          <div style="margin-bottom:20px">
+            <span style="display:inline-block;background:#d1fae5;color:#065f46;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:0.05em">
+              PLAN NUTRICIONAL LISTO
+            </span>
+          </div>
+          <h2 style="margin:0 0 10px;font-size:22px;color:#18181b">
+            Tu plan nutricional está listo
+          </h2>
+          <p style="margin:0 0 28px;color:#52525b;font-size:15px;line-height:1.6">
+            <strong>${nombreDN}</strong> ha preparado tu plan nutricional personalizado para la semana del ${semana}.
+            Puedes consultarlo en cualquier momento desde el enlace de abajo.
+          </p>
+          <div style="margin-bottom:28px">
+            <a
+              href="${planUrl}"
+              style="display:inline-block;background:#1a7a45;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px"
+            >
+              Ver mi plan nutricional →
+            </a>
+          </div>
+          <div style="background:#f4f4f5;border-radius:8px;padding:16px;margin-bottom:28px">
+            <p style="margin:0 0 4px;font-size:12px;color:#71717a;text-transform:uppercase;letter-spacing:0.05em">Semana del plan</p>
+            <p style="margin:0;font-size:14px;font-weight:600;color:#18181b">${semana}</p>
+          </div>
+          <p style="margin:0;font-size:12px;color:#a1a1aa;border-top:1px solid #e4e4e7;padding-top:16px">
+            Si el botón no funciona, copia esta URL en tu navegador:<br/>
+            <a href="${planUrl}" style="color:#1a7a45;word-break:break-all">${planUrl}</a>
+          </p>
+          <p style="margin-top:16px;font-size:11px;color:#d4d4d8">
+            Email enviado por Dietly en nombre de ${nombreDN}${clinica ? ` · ${clinica}` : ''}.
+            Los valores nutricionales son estimaciones orientativas. Ante cualquier duda, consulta con tu nutricionista.
+          </p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error('[sendPlanToPatient] email error:', err);
+    return { error: 'Error al enviar el email. Inténtalo de nuevo.' };
+  }
+
+  await (supabase as any)
+    .from('nutrition_plans')
+    .update({ status: 'sent', sent_at: new Date().toISOString() })
+    .eq('id', planId)
+    .eq('nutritionist_id', user.id);
+
+  revalidatePath(`/dashboard/plans/${planId}`);
+  return { ok: true };
 }
 
 // ── Acknowledge validation block ─────────────────────────────────────────────
