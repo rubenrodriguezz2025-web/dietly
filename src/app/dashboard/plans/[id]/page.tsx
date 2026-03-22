@@ -130,6 +130,9 @@ export default async function PlanPage({
               hasEmail={!!plan.patients?.email}
               patientToken={plan.patient_token}
               alreadySent={plan.status === 'sent'}
+              patientName={plan.patients?.name ?? ''}
+              patientEmail={plan.patients?.email ?? ''}
+              planTitle={`Semana del ${new Date(plan.week_start_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`}
             />
           </div>
         )}

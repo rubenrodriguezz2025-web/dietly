@@ -41,15 +41,80 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function DataField({ label, value }: { label: string; value: string | number | null }) {
+function DataField({
+  label,
+  value,
+  tooltip,
+  estimated,
+}: {
+  label: string;
+  value: string | number | null;
+  tooltip?: string;
+  estimated?: boolean;
+}) {
   return (
     <div className='flex flex-col gap-0.5'>
       <span className='text-xs text-zinc-600'>{label}</span>
-      <span className='text-sm text-zinc-200'>
-        {value ?? <span className='text-zinc-700'>—</span>}
+      <span className='flex items-center gap-1.5 text-sm text-zinc-200'>
+        {value != null ? (
+          <>
+            {value}
+            {estimated && (
+              <span
+                className='rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] leading-none text-zinc-500'
+                title='Valor estimado con Mifflin-St Jeor a partir de los datos del paciente'
+              >
+                ~est.
+              </span>
+            )}
+          </>
+        ) : tooltip ? (
+          <span className='group relative cursor-help'>
+            <span className='text-zinc-700'>—</span>
+            <span className='pointer-events-none absolute bottom-full left-0 z-10 mb-1.5 hidden w-max max-w-[200px] rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-[11px] leading-snug text-zinc-300 shadow-lg group-hover:block'>
+              {tooltip}
+            </span>
+          </span>
+        ) : (
+          <span className='text-zinc-700'>—</span>
+        )}
       </span>
     </div>
   );
+}
+
+// ── Cálculo client-side de TMB/TDEE ──────────────────────────────────────────
+
+const ACTIVITY_MULT: Record<string, number> = {
+  sedentary:         1.2,
+  lightly_active:    1.375,
+  moderately_active: 1.55,
+  very_active:       1.725,
+  extra_active:      1.9,
+};
+
+function computeTMBClientSide(patient: Patient): { tmb: number | null; missingFor: string | null } {
+  if (!patient.weight_kg) return { tmb: null, missingFor: 'Falta el peso para calcular el TMB' };
+  if (!patient.height_cm) return { tmb: null, missingFor: 'Falta la altura para calcular el TMB' };
+  if (!patient.date_of_birth) return { tmb: null, missingFor: 'Falta la fecha de nacimiento para calcular el TMB' };
+
+  const age = Math.floor(
+    (Date.now() - new Date(patient.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+  );
+  const base = 10 * patient.weight_kg + 6.25 * patient.height_cm - 5 * age;
+  const tmb = patient.sex === 'male' ? base + 5 : patient.sex === 'female' ? base - 161 : base - 78;
+  return { tmb: Math.round(tmb), missingFor: null };
+}
+
+function computeTDEEClientSide(
+  tmb: number | null,
+  activityLevel: string | null
+): { tdee: number | null; missingFor: string | null } {
+  if (!tmb) return { tdee: null, missingFor: null };
+  if (!activityLevel) return { tdee: null, missingFor: 'Falta el nivel de actividad para calcular el TDEE' };
+  const mult = ACTIVITY_MULT[activityLevel] ?? null;
+  if (!mult) return { tdee: null, missingFor: 'Nivel de actividad desconocido' };
+  return { tdee: Math.round(tmb * mult), missingFor: null };
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -355,20 +420,45 @@ export function PatientTabs({
               </Section>
 
               <Section title='Objetivos y actividad'>
-                <div className='grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
-                  <DataField
-                    label='Objetivo'
-                    value={patient.goal ? GOAL_LABELS[patient.goal] : null}
-                  />
-                  <DataField
-                    label='Nivel de actividad'
-                    value={
-                      patient.activity_level ? ACTIVITY_LABELS[patient.activity_level] : null
-                    }
-                  />
-                  <DataField label='TMB' value={patient.tmb ? `${patient.tmb} kcal` : null} />
-                  <DataField label='TDEE' value={patient.tdee ? `${patient.tdee} kcal` : null} />
-                </div>
+                {(() => {
+                  // Usar valor de BD si existe; si no, calcular en cliente
+                  const tmbDb = patient.tmb ?? null;
+                  const tdeeDb = patient.tdee ?? null;
+                  const { tmb: tmbCalc, missingFor: tmbMissing } = tmbDb
+                    ? { tmb: tmbDb, missingFor: null }
+                    : computeTMBClientSide(patient);
+                  const tmbEstimated = !tmbDb && tmbCalc !== null;
+
+                  const { tdee: tdeeCalc, missingFor: tdeeMissing } = tdeeDb
+                    ? { tdee: tdeeDb, missingFor: null }
+                    : computeTDEEClientSide(tmbCalc, patient.activity_level ?? null);
+                  const tdeeEstimated = !tdeeDb && tdeeCalc !== null;
+
+                  return (
+                    <div className='grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
+                      <DataField
+                        label='Objetivo'
+                        value={patient.goal ? GOAL_LABELS[patient.goal] : null}
+                      />
+                      <DataField
+                        label='Nivel de actividad'
+                        value={patient.activity_level ? ACTIVITY_LABELS[patient.activity_level] : null}
+                      />
+                      <DataField
+                        label='TMB'
+                        value={tmbCalc !== null ? `${tmbCalc} kcal` : null}
+                        estimated={tmbEstimated}
+                        tooltip={tmbMissing ?? undefined}
+                      />
+                      <DataField
+                        label='TDEE'
+                        value={tdeeCalc !== null ? `${tdeeCalc} kcal` : null}
+                        estimated={tdeeEstimated}
+                        tooltip={tdeeMissing ?? undefined}
+                      />
+                    </div>
+                  );
+                })()}
               </Section>
 
               {(patient.dietary_restrictions ||

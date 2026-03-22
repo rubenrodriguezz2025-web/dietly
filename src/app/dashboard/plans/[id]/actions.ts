@@ -179,8 +179,9 @@ export async function approvePlan(
 export async function sendPlanToPatient(
   planId: string,
   _prev: { error?: string; ok?: boolean },
-  _formData: FormData
+  formData: FormData
 ): Promise<{ error?: string; ok?: boolean }> {
+  const personalMessage = (formData.get('personal_message') as string | null)?.trim() || null;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -230,10 +231,16 @@ export async function sendPlanToPatient(
           <h2 style="margin:0 0 10px;font-size:22px;color:#18181b">
             Tu plan nutricional está listo
           </h2>
-          <p style="margin:0 0 28px;color:#52525b;font-size:15px;line-height:1.6">
+          <p style="margin:0 0 ${personalMessage ? '16px' : '28px'};color:#52525b;font-size:15px;line-height:1.6">
             <strong>${nombreDN}</strong> ha preparado tu plan nutricional personalizado para la semana del ${semana}.
             Puedes consultarlo en cualquier momento desde el enlace de abajo.
           </p>
+          ${personalMessage ? `
+          <div style="margin-bottom:28px;border-left:3px solid #1a7a45;padding:12px 16px;background:#f0fdf4;border-radius:0 8px 8px 0">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:600;color:#1a7a45;text-transform:uppercase;letter-spacing:0.05em">Mensaje de tu nutricionista</p>
+            <p style="margin:0;font-size:14px;color:#18181b;line-height:1.6;white-space:pre-wrap">${personalMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+          </div>
+          ` : ''}
           <div style="margin-bottom:28px">
             <a
               href="${planUrl}"
