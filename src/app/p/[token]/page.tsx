@@ -45,7 +45,7 @@ export default async function PaginaPaciente({
     .from('nutrition_plans')
     .select('*, patients(name, nutritionist_id)')
     .eq('patient_token', token)
-    .eq('status', 'approved')
+    .in('status', ['approved', 'sent'])
     .single();
 
   if (!plan) notFound();
