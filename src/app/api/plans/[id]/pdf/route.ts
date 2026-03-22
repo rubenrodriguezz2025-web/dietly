@@ -34,7 +34,7 @@ export async function GET(
     return Response.json({ error: 'Plan no encontrado' }, { status: 404 });
   }
 
-  if (plan.status !== 'approved') {
+  if (plan.status !== 'approved' && plan.status !== 'sent') {
     return Response.json(
       { error: 'El plan debe estar aprobado antes de generar el PDF' },
       { status: 400 }
@@ -145,7 +145,16 @@ export async function GET(
 
     const buffer = await renderToBuffer(elemento as any);
 
-    const nombreArchivo = `plan-nutricional-${patient.name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+    const fechaStr = new Date(plan.week_start_date as string)
+      .toISOString()
+      .split('T')[0]; // YYYY-MM-DD
+    const nombrePaciente = patient.name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // eliminar tildes
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+    const nombreArchivo = `plan-${nombrePaciente}-${fechaStr}.pdf`;
 
     return new Response(new Uint8Array(buffer), {
       headers: {
