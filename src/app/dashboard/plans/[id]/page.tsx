@@ -53,6 +53,13 @@ export default async function PlanPage({
   const ackedBlocks: string[] = plan.validation_acked_blocks ?? [];
   const showReminderModal = approved === '1' && plan.status === 'approved' && !!plan.patients;
 
+  // Obtener registro de visitas del paciente
+  const { data: planView } = await (supabase as any)
+    .from('plan_views')
+    .select('open_count, last_opened_at')
+    .eq('plan_id', id)
+    .maybeSingle() as { data: { open_count: number; last_opened_at: string } | null };
+
   return (
     <div className='flex flex-col gap-8'>
       {/* Modal de recordatorio post-aprobación */}
@@ -90,6 +97,7 @@ export default async function PlanPage({
           <div className='mt-1 flex flex-wrap items-center gap-3'>
             <h1 className='text-2xl font-bold text-zinc-100'>Plan nutricional</h1>
             <StatusBadge status={plan.status} />
+            <PlanViewBadge view={planView} />
           </div>
           {plan.status === 'draft' && (
             <AiBadge generatedAt={plan.generated_at} model={plan.ai_model} />
@@ -414,6 +422,36 @@ const STATUS_COLORS: Partial<Record<string, string>> = {
   sent: 'bg-blue-950 text-blue-400',
   error: 'bg-red-950 text-red-400',
 };
+
+function PlanViewBadge({
+  view,
+}: {
+  view: { open_count: number; last_opened_at: string } | null;
+}) {
+  if (!view || view.open_count === 0) {
+    return (
+      <span className='rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-xs text-zinc-500'>
+        No abierto aún
+      </span>
+    );
+  }
+
+  const fecha = new Date(view.last_opened_at).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const hora = new Date(view.last_opened_at).toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return (
+    <span className='rounded-full border border-emerald-800/50 bg-emerald-950/30 px-2.5 py-0.5 text-xs text-emerald-400'>
+      ✓ Visto el {fecha} a las {hora}
+    </span>
+  );
+}
 
 function StatusBadge({ status }: { status: string }) {
   return (

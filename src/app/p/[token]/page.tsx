@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
@@ -83,6 +84,43 @@ export default async function PaginaPaciente({
 
   const content = plan.content as PlanContent | null;
   if (!content?.days?.length) notFound();
+
+  // ── Registrar visita del paciente (fire-and-forget) ────────────────────────
+  void (async () => {
+    try {
+      const reqHeaders = await headers();
+      const ip =
+        reqHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+        reqHeaders.get('x-real-ip') ??
+        null;
+
+      const { data: existing } = await (supabaseAdminClient as any)
+        .from('plan_views')
+        .select('id, open_count')
+        .eq('plan_id', plan.id)
+        .maybeSingle();
+
+      if (existing) {
+        await (supabaseAdminClient as any)
+          .from('plan_views')
+          .update({
+            last_opened_at: new Date().toISOString(),
+            open_count: (existing.open_count ?? 0) + 1,
+          })
+          .eq('id', existing.id);
+      } else {
+        await (supabaseAdminClient as any)
+          .from('plan_views')
+          .insert({
+            plan_id: plan.id,
+            patient_token: token,
+            ip_address: ip,
+          });
+      }
+    } catch {
+      // No bloqueamos el render si falla el registro
+    }
+  })();
 
   const pacienteData = plan.patients as { name: string; nutritionist_id: string } | null;
   const nombrePaciente = pacienteData?.name ?? 'Paciente';
