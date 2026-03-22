@@ -24,6 +24,7 @@ export type AIRequestType =
   | 'generate_day'
   | 'regenerate_day'
   | 'recalculate_macros'
+  | 'calculate_recipe_macros'
   | 'shopping_list';
 
 export interface LogAIRequestParams {

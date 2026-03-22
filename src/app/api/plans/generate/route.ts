@@ -9,7 +9,7 @@ import {
 } from '@/libs/ai/resilience';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import type { Patient, PlanContent, PlanDay, ShoppingList } from '@/types/dietly';
+import type { Patient, PlanContent, PlanDay, Recipe, ShoppingList } from '@/types/dietly';
 import { GOAL_LABELS } from '@/types/dietly';
 import { calcTargets, type MacroOverrides } from '@/utils/calc-targets';
 import { getEnvVar } from '@/utils/get-env-var';
@@ -193,12 +193,36 @@ function buildIntakeSection(answers: IntakeAnswers): string {
   return `\nCUESTIONARIO DEL PACIENTE (respondido por el propio paciente):\n${lines.join('\n')}`;
 }
 
+function buildRecipesSection(recipes: Recipe[]): string {
+  if (recipes.length === 0) return '';
+  const lines = recipes
+    .filter((r) => r.name && r.ingredients && (r.ingredients as { name: string }[]).length > 0)
+    .slice(0, 20)
+    .map((r) => {
+      const ings = (r.ingredients as { name: string; quantity: number; unit: string }[])
+        .map((i) => `${i.name} ${i.quantity}${i.unit}`)
+        .join(', ');
+      const macros = r.calories_per_serving
+        ? ` | ${r.calories_per_serving}kcal, ${r.protein_g_per_serving}g P, ${r.carbs_g_per_serving}g C, ${r.fat_g_per_serving}g G por ración`
+        : '';
+      const cat = r.category ? ` [${r.category}]` : '';
+      return `  - "${r.name}"${cat}${macros} · Ingredientes: ${ings}`;
+    });
+
+  if (lines.length === 0) return '';
+
+  return `\nRECETAS PERSONALES DEL NUTRICIONISTA (puedes usarlas si encajan nutricionalmente):
+${lines.join('\n')}
+Si usas una receta personal, indícalo en el nombre del plato añadiendo ★ al inicio.`;
+}
+
 function buildDayPrompt(
   patient: PseudonymizedPatient,
   dayNum: number,
   targets: ReturnType<typeof calcTargets>,
   previousDays: PlanDay[],
-  intakeAnswers?: IntakeAnswers
+  intakeAnswers?: IntakeAnswers,
+  nutritionistRecipes?: Recipe[]
 ): string {
   const restrictions = [
     patient.dietary_restrictions,
@@ -216,6 +240,7 @@ function buildDayPrompt(
       : '';
 
   const intakeSection = intakeAnswers ? buildIntakeSection(intakeAnswers) : '';
+  const recipesSection = nutritionistRecipes ? buildRecipesSection(nutritionistRecipes) : '';
 
   const carbsPctDisplay = Math.round(targets.carbs_pct * 100);
   const fatPctDisplay = Math.round(targets.fat_pct * 100);
@@ -233,7 +258,7 @@ PERFIL DEL PACIENTE:
 - Calorías diarias objetivo: ${targets.calories} kcal
 - Proteína objetivo: ${targets.protein_g}g (${targets.protein_per_kg}g/kg peso corporal)
 - Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
-- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${variety}
+- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${recipesSection}${variety}
 
 REQUISITOS OBLIGATORIOS:
 - 4-5 comidas (desayuno, media mañana opcional, almuerzo, merienda, cena)
@@ -426,6 +451,22 @@ export async function POST(req: NextRequest) {
         const intakeAnswers: IntakeAnswers | undefined = intakeFormData?.answers ?? undefined;
         send({ type: 'progress', step: 'intake_ok' });
 
+        // ── Recetas personales del nutricionista ──────────────────────────────
+        // Cargamos hasta 20 recetas para inyectar contexto en el prompt.
+        // No bloqueamos la generación si falla (fire-and-continue).
+        let nutritionistRecipes: Recipe[] = [];
+        try {
+          const { data: recipesData } = await (supabaseAdminClient as any)
+            .from('recipes')
+            .select('*')
+            .eq('nutritionist_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+          if (recipesData) nutritionistRecipes = recipesData as Recipe[];
+        } catch {
+          console.warn('[plans/generate] No se pudieron cargar recetas del nutricionista (no bloqueante)');
+        }
+
         const targetsResult = (() => {
           try { return calcTargets(patient, macro_overrides); }
           catch (err) { return err instanceof Error ? err.message : 'Error al calcular los objetivos nutricionales.'; }
@@ -506,7 +547,7 @@ export async function POST(req: NextRequest) {
           let dayData: PlanDay | null = null;
 
           // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
-          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers);
+          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, nutritionistRecipes);
           try {
             const response = await callAnthropicWithResilience(
               () => anthropic.messages.create({

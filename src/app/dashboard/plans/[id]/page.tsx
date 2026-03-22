@@ -187,9 +187,31 @@ export default async function PlanPage({
             </div>
           )}
 
-          <h2 className='mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
-            Resumen semanal
-          </h2>
+          <div className='mb-4 flex items-center gap-2'>
+            <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+              Resumen semanal
+            </h2>
+            {/* Tooltip de transparencia IA — solo visible para el nutricionista */}
+            <div className='group relative'>
+              <button
+                type='button'
+                aria-label='Información sobre los valores nutricionales'
+                className='flex h-4 w-4 items-center justify-center rounded-full border border-zinc-700 text-[9px] font-bold text-zinc-600 transition-colors hover:border-zinc-500 hover:text-zinc-400'
+              >
+                i
+              </button>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-72 -translate-x-1/2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-xs leading-relaxed text-zinc-400 opacity-0 shadow-xl shadow-black/40 transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100'>
+                <p className='font-medium text-zinc-300'>Sobre los valores nutricionales</p>
+                <p className='mt-1.5'>
+                  Los valores nutricionales son <strong className='text-zinc-200'>estimaciones generadas por IA</strong> (Claude Sonnet, Anthropic) basadas en la composición media de los alimentos. No proceden de una base de datos verificada externa.
+                </p>
+                <p className='mt-1.5'>
+                  El plan ha sido revisado y aprobado por el nutricionista responsable.
+                </p>
+                <div className='absolute bottom-[-5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-zinc-700 bg-zinc-900' />
+              </div>
+            </div>
+          </div>
           <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
             <MacroStat
               label='Kcal objetivo/día'

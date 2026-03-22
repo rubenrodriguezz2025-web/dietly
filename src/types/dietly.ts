@@ -134,6 +134,41 @@ export type NutritionPlan = {
   updated_at: string;
 };
 
+export type RecipeCategory = 'desayuno' | 'almuerzo' | 'merienda' | 'cena' | 'snack';
+export type RecipeValuesSource = 'ai_estimated' | 'nutritionist_verified';
+
+export type RecipeIngredient = {
+  name: string;
+  quantity: number;
+  unit: string;
+};
+
+export type Recipe = {
+  id: string;
+  nutritionist_id: string;
+  name: string;
+  category: RecipeCategory | null;
+  servings: number;
+  ingredients: RecipeIngredient[] | null;
+  instructions: string | null;
+  notes: string | null;
+  calories_per_serving: number | null;
+  protein_g_per_serving: number | null;
+  carbs_g_per_serving: number | null;
+  fat_g_per_serving: number | null;
+  values_source: RecipeValuesSource;
+  created_at: string;
+  updated_at: string;
+};
+
+export const RECIPE_CATEGORY_LABELS: Record<RecipeCategory, string> = {
+  desayuno: 'Desayuno',
+  almuerzo: 'Almuerzo',
+  merienda: 'Merienda',
+  cena: 'Cena',
+  snack: 'Snack',
+};
+
 // Labels legibles para mostrar en UI
 export const SPECIALTY_LABELS: Record<Specialty, string> = {
   weight_loss: 'Pérdida de peso',
