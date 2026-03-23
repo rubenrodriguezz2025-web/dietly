@@ -50,11 +50,15 @@ export async function GET(
   }
 
   // Obtener perfil del nutricionista (logo, firma, número de colegiado y ajustes de marca)
-  const { data: profileData } = await (supabase as any)
+  const { data: profileData, error: profileError } = await (supabase as any)
     .from('profiles')
     .select('full_name, clinic_name, logo_url, signature_url, college_number, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url')
     .eq('id', user.id)
     .single();
+
+  if (profileError) {
+    console.error('[PDF] Error al cargar perfil del nutricionista:', profileError.message);
+  }
 
   const profile: Pick<Profile, 'full_name' | 'clinic_name' | 'college_number'> & {
     primary_color?: string | null;
@@ -66,6 +70,10 @@ export async function GET(
   } = {
     ...(profileData ?? { full_name: '', clinic_name: null, college_number: null }),
     font_preference: ((profileData?.font_preference as string | null) ?? 'clasica') as FontPreference,
+    // Si full_name está vacío (perfil sin completar o query fallida), usar metadatos de auth como fallback
+    full_name: profileData?.full_name
+      || (user.user_metadata?.full_name as string | undefined)
+      || '',
   };
 
   // Verificar si el usuario tiene suscripción Pro activa
@@ -74,6 +82,7 @@ export async function GET(
   const { data: subscription } = await (supabase as any)
     .from('subscriptions')
     .select('status, price_id, prices(unit_amount, products(name))')
+    .eq('user_id', user.id)
     .in('status', ['trialing', 'active'])
     .maybeSingle();
 
@@ -124,7 +133,7 @@ export async function GET(
       })
     : null;
 
-  const patient = plan.patients as Pick<Patient, 'name' | 'email'>;
+  const patient = plan.patients as { name: string; email?: string };
 
   // Generar el PDF
   try {
@@ -137,7 +146,7 @@ export async function GET(
       signature_uri,
       profile_photo_uri,
       is_pro,
-      approved_at,
+      approved_at: approved_at ?? undefined,
     });
 
     const buffer = await renderToBuffer(elemento as any);

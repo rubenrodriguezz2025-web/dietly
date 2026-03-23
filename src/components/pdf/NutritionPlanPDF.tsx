@@ -63,12 +63,18 @@ function weekLabel(isoDate: string): string {
 
 function goalLabel(goal: string): string {
   const map: Record<string, string> = {
+    // Valores del enum patient_goal_type en la BD
+    weight_loss: 'Pérdida de peso',
+    weight_gain: 'Ganancia de peso',
+    muscle_gain: 'Ganancia muscular',
+    maintenance: 'Mantenimiento',
+    health: 'Alimentación saludable',
+    sports_performance: 'Rendimiento deportivo',
+    // Aliases alternativos presentes en planes generados por IA
     lose_weight: 'Pérdida de peso',
     gain_muscle: 'Ganancia muscular',
     maintain: 'Mantenimiento',
     eat_healthy: 'Alimentación saludable',
-    sports_performance: 'Rendimiento deportivo',
-    health: 'Salud general',
   };
   return map[goal] ?? goal;
 }
@@ -224,7 +230,9 @@ function MacroRow({ calories, macros, color }: {
   );
 }
 
-// Bloque de una comida — wrap={false} evita cortes a mitad
+// Bloque de una comida
+// El encabezado + ingredientes están en wrap={false} para evitar cortes en medio de la tabla.
+// La preparación queda fuera del wrap={false} para que texto largo no genere páginas en blanco.
 function MealBlock({
   meal,
   color,
@@ -237,41 +245,44 @@ function MealBlock({
   isLast: boolean;
 }) {
   return (
-    <View wrap={false} style={{ marginBottom: isLast ? 0 : 0 }}>
-      {/* Fila: hora | nombre comida */}
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-        {meal.time_suggestion ? (
-          <Text style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 8, color, flexShrink: 0 }}>
-            {meal.time_suggestion}
+    <View>
+      {/* Encabezado + ingredientes — sin cortes a mitad */}
+      <View wrap={false}>
+        {/* Fila: hora | nombre comida */}
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+          {meal.time_suggestion ? (
+            <Text style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 8, color, flexShrink: 0 }}>
+              {meal.time_suggestion}
+            </Text>
+          ) : null}
+          <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 10, color: '#1a1a1a', flex: 1 }}>
+            {meal.meal_name}
           </Text>
-        ) : null}
-        <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 10, color: '#1a1a1a', flex: 1 }}>
-          {trunc(meal.meal_name, 60)}
-        </Text>
-        {/* Macros inline a la derecha para ahorrar línea */}
-        {showMacros && (
-          <View style={{ flexShrink: 0, marginLeft: 4 }}>
-            <MacroRow calories={meal.calories} macros={meal.macros} color={color} />
+          {/* Macros inline a la derecha para ahorrar línea */}
+          {showMacros && (
+            <View style={{ flexShrink: 0, marginLeft: 4 }}>
+              <MacroRow calories={meal.calories} macros={meal.macros} color={color} />
+            </View>
+          )}
+        </View>
+
+        {/* Ingredientes — tabla compacta */}
+        {meal.ingredients && meal.ingredients.length > 0 && (
+          <View style={{ marginBottom: 4, borderRadius: 2, overflow: 'hidden' }}>
+            {meal.ingredients.map((ing, i) => (
+              <View key={i} style={[S.ingRow, { backgroundColor: i % 2 === 0 ? '#f9f9f9' : '#ffffff' }]}>
+                <Text style={S.ingQty}>{`${ing.quantity} ${ing.unit}`}</Text>
+                <Text style={S.ingName}>{ing.name}</Text>
+              </View>
+            ))}
           </View>
         )}
       </View>
 
-      {/* Ingredientes — tabla compacta */}
-      {meal.ingredients && meal.ingredients.length > 0 && (
-        <View style={{ marginBottom: 4, borderRadius: 2, overflow: 'hidden' }}>
-          {meal.ingredients.map((ing, i) => (
-            <View key={i} style={[S.ingRow, { backgroundColor: i % 2 === 0 ? '#f9f9f9' : '#ffffff' }]}>
-              <Text style={S.ingQty}>{trunc(`${ing.quantity} ${ing.unit}`, 16)}</Text>
-              <Text style={S.ingName}>{trunc(ing.name, 40)}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Preparación — máx ~160 chars (≈2 líneas a 8px en A4) */}
+      {/* Preparación — fuera del wrap={false} para que texto largo pueda continuar en la página siguiente */}
       {meal.preparation && meal.preparation.trim() !== '' && (
         <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 7.5, color: '#666666', lineHeight: 1.5, marginBottom: 2 }}>
-          {trunc(meal.preparation, 160)}
+          {meal.preparation}
         </Text>
       )}
 
@@ -678,15 +689,14 @@ function SignaturePage({
           {/* Transparencia IA */}
           <View style={{ borderTopWidth: 0.5, borderTopColor: '#eeeeee', marginTop: 12, paddingTop: 12 }}>
             <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 7, color: '#cccccc', letterSpacing: 0.5, marginBottom: 4 }}>
-              GENERADO CON ASISTENCIA DE INTELIGENCIA ARTIFICIAL
+              ELABORACIÓN DEL PLAN
             </Text>
             <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 7.5, color: '#aaaaaa', lineHeight: 1.7 }}>
-              {'El borrador de este plan fue generado mediante inteligencia artificial (Claude Sonnet, Anthropic) a partir de los datos clínicos y nutricionales del paciente. '}
-              {'Fue revisado y aprobado por '}
+              {'El borrador de este plan fue generado mediante herramientas digitales de asistencia y fue revisado y aprobado por '}
               <Text style={{ fontWeight: 500, color: '#888888' }}>{nutritionistName}</Text>
               {profile.college_number ? `, nº colegiado ${profile.college_number}` : ''}
               {approved_at ? `, el ${approved_at}` : ''}
-              {'. La IA genera borradores de referencia; el criterio clínico final corresponde exclusivamente al profesional que lo aprueba.'}
+              {'. El criterio clínico final corresponde exclusivamente al profesional que lo aprueba.'}
             </Text>
           </View>
         </View>
@@ -743,8 +753,8 @@ export function NutritionPlanPDF({
         nutritionistName={nutritionistName}
       />
 
-      {/* Págs 3-9: Un día por página */}
-      {content.days.map((day) => (
+      {/* Págs 3-9: Un día por página — solo si tiene comidas */}
+      {content.days.filter((day) => day.meals && day.meals.length > 0).map((day) => (
         <DayPage
           key={day.day_number}
           day={day}
@@ -754,8 +764,9 @@ export function NutritionPlanPDF({
         />
       ))}
 
-      {/* Pág 10: Lista de la compra */}
-      {showShoppingList && content.shopping_list && (
+      {/* Pág 10: Lista de la compra — solo si hay algún artículo */}
+      {showShoppingList && content.shopping_list &&
+        Object.values(content.shopping_list).some((items) => Array.isArray(items) && items.length > 0) && (
         <ShoppingPage
           shopping={content.shopping_list}
           color={color}
