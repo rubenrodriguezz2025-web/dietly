@@ -49,7 +49,7 @@ export type ValidatorPatient = {
   date_of_birth: string | null;
   allergies: string | null;
   intolerances: string | null;
-  dietary_restrictions: string | null;
+  dietary_restrictions: string[] | null;
   medical_notes: string | null;
   tdee: number | null;
 };
@@ -140,8 +140,8 @@ function findAllergenMatches(
   }
 
   // 2. Restricciones etiquetadas (selector de alta)
-  if (patient.dietary_restrictions) {
-    const restrictNorm = norm(patient.dietary_restrictions);
+  if (patient.dietary_restrictions?.length) {
+    const restrictNorm = norm(patient.dietary_restrictions.join(', '));
     for (const [label, keywords] of Object.entries(RESTRICTION_INGREDIENT_MAP)) {
       if (restrictNorm.includes(label)) {
         keywords.forEach((k) => searchTokens.add(k));
@@ -255,7 +255,7 @@ export function validateNutritionPlan(
   }
 
   // 4. Alérgenos declarados presentes en ingredientes
-  if (patient.allergies || patient.dietary_restrictions) {
+  if (patient.allergies || patient.dietary_restrictions?.length) {
     const allergenMatches = findAllergenMatches(plan, patient);
     if (allergenMatches.length > 0) {
       const uniqueAllergens = [...new Set(allergenMatches.map((m) => m.allergen))].join(', ');

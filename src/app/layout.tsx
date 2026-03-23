@@ -80,6 +80,7 @@ function Footer() {
               <nav className='flex flex-col gap-2 lg:gap-6'>
                 <Link href='/legal/privacidad'>Privacidad</Link>
                 <Link href='/legal/terminos'>Términos</Link>
+                <Link href='/derechos-datos'>Tus derechos RGPD</Link>
               </nav>
             </div>
             <div className='flex flex-col gap-2 lg:gap-6'>

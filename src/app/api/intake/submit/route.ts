@@ -69,13 +69,24 @@ export async function POST(req: Request) {
     // Si el insert falla no bloqueamos — el cuestionario ya está guardado
   }
 
-  // Enviar notificación email al equipo de Dietly — fire-and-forget
+  // Enviar notificación email al nutricionista — fire-and-forget
   try {
     const { data: perfil } = await (supabaseAdminClient as any)
       .from('profiles')
       .select('full_name')
       .eq('id', paciente.nutritionist_id)
       .maybeSingle() as { data: { full_name: string } | null };
+
+    // Obtener email del nutricionista desde auth.users
+    const { data: { user: nutricionistaUser } } = await supabaseAdminClient.auth.admin.getUserById(
+      paciente.nutritionist_id
+    );
+    const emailNutricionista = nutricionistaUser?.email;
+
+    if (!emailNutricionista) {
+      // Si no hay email, no enviamos notificación pero no fallamos
+      return NextResponse.json({ ok: true });
+    }
 
     const nombreNutricionista = perfil?.full_name ?? 'Nutricionista';
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
@@ -90,7 +101,7 @@ export async function POST(req: Request) {
 
     await resendClient.emails.send({
       from: 'Dietly <noreply@dietly.es>',
-      to: 'hola@dietly.es',
+      to: emailNutricionista,
       subject: `Paciente ha completado su cuestionario — ${paciente.name}`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#18181b">

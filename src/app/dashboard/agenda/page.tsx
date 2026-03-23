@@ -69,10 +69,11 @@ export default async function AgendaPage({
     .order('date', { ascending: true })
     .order('time', { ascending: true })) as { data: Appointment[] | null };
 
-  // Pacientes para el formulario nueva cita
+  // Pacientes para el formulario nueva cita (solo los del nutricionista autenticado)
   const { data: pacientes } = await (supabase as any)
     .from('patients')
     .select('id, name')
+    .eq('nutritionist_id', user.id)
     .order('name', { ascending: true });
 
   // Agrupar citas por día

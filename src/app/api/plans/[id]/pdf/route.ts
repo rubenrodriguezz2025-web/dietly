@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
+import { type FontPreference,NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Patient, PlanContent, Profile } from '@/types/dietly';
 import { renderToBuffer } from '@react-pdf/renderer';
@@ -61,12 +61,11 @@ export async function GET(
     show_macros?: boolean | null;
     show_shopping_list?: boolean | null;
     welcome_message?: string | null;
-    font_preference?: string | null;
+    font_preference?: FontPreference | null;
     profile_photo_url?: string | null;
-  } = profileData ?? {
-    full_name: '',
-    clinic_name: null,
-    college_number: null,
+  } = {
+    ...(profileData ?? { full_name: '', clinic_name: null, college_number: null }),
+    font_preference: ((profileData?.font_preference as string | null) ?? 'clasica') as FontPreference,
   };
 
   // Verificar si el usuario tiene suscripción Pro activa
@@ -82,9 +81,7 @@ export async function GET(
   const is_pro =
     subscription != null &&
     (productName.toLowerCase().includes('pro') ||
-      productName.toLowerCase().includes('profesional') ||
-      // Fallback: si tiene suscripción activa pero no podemos leer el nombre, es Pro
-      productName === '');
+      productName.toLowerCase().includes('profesional'));
 
   // Helper: descarga un archivo de Storage y devuelve data URI base64
   async function downloadAsDataUri(bucket: string, path: string): Promise<string | null> {

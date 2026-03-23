@@ -705,7 +705,7 @@ export function PatientTabs({
                 <div className='flex flex-col gap-4'>
                   <InlineField
                     label='Restricciones dietéticas'
-                    value={patient.dietary_restrictions}
+                    value={patient.dietary_restrictions?.join(', ') ?? null}
                     type='textarea'
                     patientId={patient.id}
                     field='dietary_restrictions'

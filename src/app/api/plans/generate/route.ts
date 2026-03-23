@@ -225,7 +225,7 @@ function buildDayPrompt(
   nutritionistRecipes?: Recipe[]
 ): string {
   const restrictions = [
-    patient.dietary_restrictions,
+    patient.dietary_restrictions?.length ? patient.dietary_restrictions.join(', ') : null,
     patient.allergies ? `Alergias: ${patient.allergies}` : null,
     patient.intolerances ? `Intolerancias: ${patient.intolerances}` : null,
   ]

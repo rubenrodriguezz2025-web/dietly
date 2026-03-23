@@ -91,7 +91,7 @@ export type Patient = {
   height_cm: number | null;
   activity_level: ActivityLevel | null;
   goal: PatientGoal | null;
-  dietary_restrictions: string | null;
+  dietary_restrictions: string[] | null;
   allergies: string | null;
   intolerances: string | null;
   preferences: string | null;

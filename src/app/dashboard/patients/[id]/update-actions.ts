@@ -35,7 +35,15 @@ export async function updatePatientField(
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const update: Record<string, unknown> = { [field]: value };
+  // dietary_restrictions se edita como texto libre (separado por comas) pero se guarda como text[]
+  let dbValue: unknown = value;
+  if (field === 'dietary_restrictions' && typeof value === 'string') {
+    const items = value.split(',').map((s) => s.trim()).filter(Boolean);
+    dbValue = items.length > 0 ? items : null;
+  } else if (field === 'dietary_restrictions' && value === null) {
+    dbValue = null;
+  }
+  const update: Record<string, unknown> = { [field]: dbValue };
 
   // Recalcular TMB y TDEE cuando cambia un campo biométrico
   if (['sex', 'weight_kg', 'height_cm', 'date_of_birth', 'activity_level'].includes(field)) {

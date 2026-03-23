@@ -70,8 +70,8 @@ export async function createPatient(
   const height_cm = formData.get('height_cm') ? Number(formData.get('height_cm')) : null;
   const activity_level = (formData.get('activity_level') as ActivityLevel) || null;
   const goal = (formData.get('goal') as string) || null;
-  const dietary_restrictions =
-    (formData.getAll('dietary_restrictions') as string[]).join(', ') || null;
+  const dietary_restrictions_arr = formData.getAll('dietary_restrictions') as string[];
+  const dietary_restrictions = dietary_restrictions_arr.length > 0 ? dietary_restrictions_arr : null;
   const allergies = (formData.get('allergies') as string) || null;
   const intolerances = (formData.get('intolerances') as string) || null;
   const preferences = (formData.get('preferences') as string) || null;

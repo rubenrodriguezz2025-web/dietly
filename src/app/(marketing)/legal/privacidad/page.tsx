@@ -184,7 +184,11 @@ export default function PoliticaPrivacidad() {
             </li>
           </ul>
           <p className='mt-3'>
-            Para ejercer cualquiera de estos derechos, escríbenos a{' '}
+            Para ejercer cualquiera de estos derechos, usa nuestro{' '}
+            <a href='/derechos-datos' className='text-green-400 hover:underline'>
+              formulario de derechos RGPD
+            </a>{' '}
+            o escríbenos a{' '}
             <a href='mailto:privacidad@dietly.es' className='text-green-400 hover:underline'>
               privacidad@dietly.es
             </a>{' '}
