@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 import type { ValidationResult } from '@/lib/validation/nutrition-validator';
 import type { PlanDay } from '@/types/dietly';
 
-import { ApproveButton } from './approve-button';
 import { DayEditor } from './day-editor';
 import { ValidationPanel } from './validation-panel';
 
@@ -166,11 +165,6 @@ export function PlanEditor({ days, planId, isDraft, validationResult, ackedBlock
     window.scrollTo({ top, behavior: 'smooth' });
   }
 
-  // Bloques activos aún no reconocidos por el D-N
-  const unackedBlocks = validationResult
-    ? validationResult.blocks.filter((b) => !ackedBlocks.includes(b.code)).map((b) => b.code)
-    : [];
-
   return (
     <div className='flex flex-col gap-6'>
       {/* Tabs de navegación */}
@@ -205,15 +199,6 @@ export function PlanEditor({ days, planId, isDraft, validationResult, ackedBlock
         </div>
       ))}
 
-      {isDraft && (
-        <div className='flex justify-end'>
-          <ApproveButton
-            planId={planId}
-            hasDirty={dirtyDays.size > 0}
-            unackedBlocks={unackedBlocks}
-          />
-        </div>
-      )}
     </div>
   );
 }

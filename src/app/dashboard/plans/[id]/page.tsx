@@ -7,9 +7,9 @@ import type { NutritionPlan, Patient, PlanContent } from '@/types/dietly';
 import { GOAL_LABELS, PLAN_STATUS_LABELS } from '@/types/dietly';
 
 import { GeneratingPoller } from './generating-poller';
+import { PlanActionsBar } from './plan-actions-bar';
 import { PlanEditor } from './plan-editor';
 import { ReminderModal } from './reminder-modal';
-import { SendPlanButton } from './send-plan-button';
 
 export default async function PlanPage({
   params,
@@ -109,40 +109,16 @@ export default async function PlanPage({
           )}
         </div>
 
-        {(plan.status === 'approved' || plan.status === 'sent') && (
-          <div className='flex items-start gap-2'>
-            <a
-              href={`/api/plans/${id}/pdf`}
-              download
-              className='inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700'
-            >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='14'
-                height='14'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              >
-                <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' />
-                <polyline points='7 10 12 15 17 10' />
-                <line x1='12' y1='15' x2='12' y2='3' />
-              </svg>
-              Descargar PDF
-            </a>
-            <SendPlanButton
-              planId={id}
-              hasEmail={!!plan.patients?.email}
-              patientToken={plan.patient_token}
-              alreadySent={plan.status === 'sent'}
-              patientName={plan.patients?.name ?? ''}
-              patientEmail={plan.patients?.email ?? ''}
-              planTitle={`Semana del ${new Date(plan.week_start_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`}
-            />
-          </div>
+        {!isGenerating && !hasError && (
+          <PlanActionsBar
+            planId={id}
+            status={plan.status}
+            patientToken={plan.patient_token}
+            patientName={plan.patients?.name ?? ''}
+            patientEmail={plan.patients?.email ?? ''}
+            planTitle={`Semana del ${new Date(plan.week_start_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`}
+            hasEmail={!!plan.patients?.email}
+          />
         )}
       </div>
 
@@ -373,7 +349,7 @@ function AiBadge({ generatedAt }: { generatedAt: string | null }) {
       </svg>
       <div className='min-w-0'>
         <p className='text-xs font-medium text-amber-400'>
-          Borrador generado por IA · Revisa cada día y aprueba cuando esté listo
+          Borrador generado por IA · Revisa cada día y aprueba cuando estés listo
         </p>
         {fechaGeneracion && (
           <p className='mt-0.5 text-[11px] text-zinc-600'>Generado el {fechaGeneracion}</p>

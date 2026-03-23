@@ -149,9 +149,9 @@ export async function updateDay(
 
 export async function approvePlan(
   planId: string,
-  _prev: { error?: string },
+  _prev: { error?: string; ok?: boolean },
   _formData: FormData
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; ok?: boolean }> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -163,7 +163,6 @@ export async function approvePlan(
     .update({
       status: 'approved',
       approved_at: new Date().toISOString(),
-      approved_by: user.id,
     })
     .eq('id', planId)
     .eq('nutritionist_id', user.id);
@@ -171,7 +170,7 @@ export async function approvePlan(
   if (error) return { error: 'Error al aprobar el plan. Inténtalo de nuevo.' };
 
   revalidatePath(`/dashboard/plans/${planId}`);
-  redirect(`/dashboard/plans/${planId}?approved=1`);
+  return { ok: true };
 }
 
 // ── Send plan to patient ──────────────────────────────────────────────────────
