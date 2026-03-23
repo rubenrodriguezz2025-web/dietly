@@ -100,7 +100,7 @@ export default async function PlanPage({
             <PlanViewBadge view={planView} />
           </div>
           {plan.status === 'draft' && (
-            <AiBadge generatedAt={plan.generated_at} model={plan.ai_model} />
+            <AiBadge generatedAt={plan.generated_at} />
           )}
           {plan.status === 'approved' && (
             <p className='mt-1 text-xs text-emerald-500/70'>
@@ -211,7 +211,7 @@ export default async function PlanPage({
               <div className='pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-72 -translate-x-1/2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-xs leading-relaxed text-zinc-400 opacity-0 shadow-xl shadow-black/40 transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100'>
                 <p className='font-medium text-zinc-300'>Sobre los valores nutricionales</p>
                 <p className='mt-1.5'>
-                  Los valores nutricionales son <strong className='text-zinc-200'>estimaciones generadas por IA</strong> (Claude Sonnet, Anthropic) basadas en la composición media de los alimentos. No proceden de una base de datos verificada externa.
+                  Los valores nutricionales son <strong className='text-zinc-200'>estimaciones generadas por IA</strong> basadas en la composición media de los alimentos. No proceden de una base de datos verificada externa.
                 </p>
                 <p className='mt-1.5'>
                   El plan ha sido revisado y aprobado por el nutricionista responsable.
@@ -350,17 +350,7 @@ function PlanLifecycle({ status }: { status: string }) {
 
 // ── Utility components ────────────────────────────────────────────────────────
 
-function AiBadge({
-  generatedAt,
-  model,
-}: {
-  generatedAt: string | null;
-  model: string | null;
-}) {
-  const modelLabel = model
-    ? model.replace('claude-', 'Claude ').replace(/-(\d)/, ' $1').replace(/-/g, ' ')
-    : 'Claude Sonnet';
-
+function AiBadge({ generatedAt }: { generatedAt: string | null }) {
   const fechaGeneracion = generatedAt
     ? new Date(generatedAt).toLocaleString('es-ES', {
         day: 'numeric',
@@ -383,14 +373,11 @@ function AiBadge({
       </svg>
       <div className='min-w-0'>
         <p className='text-xs font-medium text-amber-400'>
-          Borrador generado por IA — {modelLabel} (Anthropic)
+          Borrador generado por IA · Revisa cada día y aprueba cuando esté listo
         </p>
-        <p className='mt-0.5 text-[11px] text-zinc-600'>
-          {fechaGeneracion
-            ? `Generado el ${fechaGeneracion} · `
-            : ''}
-          Revisa cada día y aprueba cuando esté listo
-        </p>
+        {fechaGeneracion && (
+          <p className='mt-0.5 text-[11px] text-zinc-600'>Generado el {fechaGeneracion}</p>
+        )}
       </div>
     </div>
   );
