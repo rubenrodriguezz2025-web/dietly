@@ -148,28 +148,34 @@ export async function updateDay(
 // ── Approve ───────────────────────────────────────────────────────────────────
 
 export async function approvePlan(
-  planId: string,
-  _prev: { error?: string; ok?: boolean },
-  _formData: FormData
+  planId: string
 ): Promise<{ error?: string; ok?: boolean }> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  if (!user) return { error: 'No autenticado.' };
 
-  const { error } = await (supabase as any)
+  console.log('[approvePlan] Usuario:', user.id, 'Plan:', planId);
+
+  const { error, count } = await (supabase as any)
     .from('nutrition_plans')
     .update({
       status: 'approved',
       approved_at: new Date().toISOString(),
     })
     .eq('id', planId)
-    .eq('nutritionist_id', user.id);
+    .eq('nutritionist_id', user.id)
+    .select('id', { count: 'exact', head: true });
 
   if (error) {
     console.error('[approvePlan] Supabase error:', JSON.stringify(error));
     return { error: 'Error al aprobar el plan. Inténtalo de nuevo.' };
+  }
+
+  console.log('[approvePlan] Filas actualizadas:', count);
+  if (count === 0) {
+    return { error: 'No se encontró el plan o no tienes permiso para aprobarlo.' };
   }
 
   revalidatePath(`/dashboard/plans/${planId}`);

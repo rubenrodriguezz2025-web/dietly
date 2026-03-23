@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { approvePlan, sendPlanToPatient } from './actions';
@@ -202,10 +202,8 @@ export function PlanActionsBar({
   }, [waPanelOpen, closeWaPanel]);
 
   // ── Email modal ───────────────────────────────────────────────────────────
-  const [emailState, emailAction, emailPending] = useActionState(
-    sendPlanToPatient.bind(null, planId),
-    {}
-  );
+  const [emailPending, startEmailTransition] = useTransition();
+  const [emailState, setEmailState] = useState<{ error?: string; ok?: boolean }>({});
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [mensaje, setMensaje] = useState('');
@@ -234,18 +232,25 @@ export function PlanActionsBar({
     return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', onKey); };
   }, [emailModalOpen, closeEmailModal]);
 
-  useEffect(() => {
-    if (emailState.ok) {
-      closeEmailModal();
-      showToast('success', '✓ Email enviado correctamente');
-    }
-  }, [emailState.ok, closeEmailModal, showToast]);
+  const handleEmailSubmit = useCallback(() => {
+    const mensaje = emailTextareaRef.current?.value ?? '';
+    startEmailTransition(async () => {
+      const fd = new FormData();
+      fd.append('personal_message', mensaje);
+      const result = await sendPlanToPatient(planId, {}, fd);
+      setEmailState(result);
+      if (result.ok) {
+        closeEmailModal();
+        showToast('success', '✓ Email enviado correctamente');
+      } else if (result.error) {
+        showToast('error', result.error);
+      }
+    });
+  }, [planId, closeEmailModal, showToast, startEmailTransition]);
 
   // ── Approve modal ─────────────────────────────────────────────────────────
-  const [approveState, approveAction, approvePending] = useActionState(
-    approvePlan.bind(null, planId),
-    {}
-  );
+  const [approvePending, startApproveTransition] = useTransition();
+  const [approveError, setApproveError] = useState<string | null>(null);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [approveModalVisible, setApproveModalVisible] = useState(false);
   const [approveChecked, setApproveChecked] = useState(false);
@@ -269,17 +274,20 @@ export function PlanActionsBar({
     return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', onKey); };
   }, [approveModalOpen, closeApproveModal]);
 
-  useEffect(() => {
-    if (approveState.ok) {
-      closeApproveModal();
-      showToast('success', '✓ Plan aprobado correctamente');
-      router.refresh(); // Recarga el server component → botones cambian al estado aprobado
-    }
-    if (approveState.error) {
-      showToast('error', approveState.error);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [approveState.ok, approveState.error]);
+  const handleApproveSubmit = useCallback(() => {
+    setApproveError(null);
+    startApproveTransition(async () => {
+      const result = await approvePlan(planId);
+      if (result.ok) {
+        closeApproveModal();
+        showToast('success', '✓ Plan aprobado correctamente');
+        router.refresh();
+      } else {
+        setApproveError(result.error ?? 'Error desconocido.');
+        showToast('error', result.error ?? 'Error al aprobar el plan.');
+      }
+    });
+  }, [planId, closeApproveModal, showToast, router, startApproveTransition]);
 
   const pdfHref = `/api/plans/${planId}/pdf`;
   const patientInitials = patientName.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
@@ -290,15 +298,17 @@ export function PlanActionsBar({
       <div className='flex flex-col items-end gap-2'>
         <div className='flex flex-wrap items-center justify-end gap-2'>
 
-          {/* PDF — siempre visible */}
-          <a
-            href={pdfHref}
-            download
-            className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-all duration-150 hover:border-zinc-600 hover:bg-zinc-700 active:scale-[0.97]'
-          >
-            <IconDownload />
-            PDF
-          </a>
+          {/* PDF — solo visible cuando el plan está aprobado o enviado */}
+          {!isDraft && (
+            <a
+              href={pdfHref}
+              download
+              className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-all duration-150 hover:border-zinc-600 hover:bg-zinc-700 active:scale-[0.97]'
+            >
+              <IconDownload />
+              PDF
+            </a>
+          )}
 
           {/* Copiar enlace — aprobado y enviado */}
           {!isDraft && (
@@ -504,8 +514,8 @@ export function PlanActionsBar({
               </span>
             </label>
 
-            {approveState.error && (
-              <p className='mt-3 text-sm text-red-400'>{approveState.error}</p>
+            {approveError && (
+              <p className='mt-3 text-sm text-red-400'>{approveError}</p>
             )}
 
             <div className='mt-5 flex justify-end gap-3'>
@@ -517,22 +527,21 @@ export function PlanActionsBar({
               >
                 Cancelar
               </button>
-              <form action={approveAction}>
-                <button
-                  type='submit'
-                  disabled={!approveChecked || approvePending}
-                  className='inline-flex items-center gap-2 rounded-lg bg-[#1a7a45] px-5 py-2 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#155f38] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.97]'
-                >
-                  {approvePending ? (
-                    <>
-                      <Spinner />
-                      Aprobando…
-                    </>
-                  ) : (
-                    'Confirmar aprobación'
-                  )}
-                </button>
-              </form>
+              <button
+                type='button'
+                onClick={handleApproveSubmit}
+                disabled={!approveChecked || approvePending}
+                className='inline-flex items-center gap-2 rounded-lg bg-[#1a7a45] px-5 py-2 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#155f38] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.97]'
+              >
+                {approvePending ? (
+                  <>
+                    <Spinner />
+                    Aprobando…
+                  </>
+                ) : (
+                  'Confirmar aprobación'
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -641,26 +650,24 @@ export function PlanActionsBar({
               >
                 Cancelar
               </button>
-              <form action={emailAction}>
-                <input type='hidden' name='personal_message' value={mensaje} />
-                <button
-                  type='submit'
-                  disabled={emailPending}
-                  className='inline-flex items-center gap-2 rounded-lg bg-[#1a7a45] px-5 py-2 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#155f38] disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.97]'
-                >
-                  {emailPending ? (
-                    <>
-                      <Spinner />
-                      Enviando…
-                    </>
-                  ) : (
-                    <>
-                      <IconSend />
-                      Confirmar envío
-                    </>
-                  )}
-                </button>
-              </form>
+              <button
+                type='button'
+                onClick={handleEmailSubmit}
+                disabled={emailPending}
+                className='inline-flex items-center gap-2 rounded-lg bg-[#1a7a45] px-5 py-2 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#155f38] disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.97]'
+              >
+                {emailPending ? (
+                  <>
+                    <Spinner />
+                    Enviando…
+                  </>
+                ) : (
+                  <>
+                    <IconSend />
+                    Confirmar envío
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
