@@ -167,7 +167,10 @@ export async function approvePlan(
     .eq('id', planId)
     .eq('nutritionist_id', user.id);
 
-  if (error) return { error: 'Error al aprobar el plan. Inténtalo de nuevo.' };
+  if (error) {
+    console.error('[approvePlan] Supabase error:', JSON.stringify(error));
+    return { error: 'Error al aprobar el plan. Inténtalo de nuevo.' };
+  }
 
   revalidatePath(`/dashboard/plans/${planId}`);
   return { ok: true };
