@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 
 import { approvePlan, sendPlanToPatient } from './actions';
 
@@ -463,7 +464,7 @@ export function PlanActionsBar({
       </div>
 
       {/* ── Modal de aprobación ───────────────────────────────────────────── */}
-      {approveModalOpen && (
+      {approveModalOpen && createPortal(
         <div
           className='fixed inset-0 z-50 flex items-center justify-center p-4'
           style={{
@@ -544,11 +545,12 @@ export function PlanActionsBar({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Modal de envío por email ──────────────────────────────────────── */}
-      {emailModalOpen && (
+      {emailModalOpen && createPortal(
         <div
           className='fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4'
           role='dialog'
@@ -670,11 +672,12 @@ export function PlanActionsBar({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Toast ─────────────────────────────────────────────────────────── */}
-      {toastMount && <Toast visible={toastVisible} config={toastConfig} />}
+      {toastMount && createPortal(<Toast visible={toastVisible} config={toastConfig} />, document.body)}
     </>
   );
 }

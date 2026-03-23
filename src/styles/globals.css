@@ -109,7 +109,10 @@
 @layer utilities {
   /* Animación de entrada para las páginas del dashboard */
   .animate-page-in {
-    animation: page-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+    /* 'backwards': aplica 'from' antes de la animación (evita flash),
+       pero no congela el transform al acabar → no crea containing block
+       para position:fixed (modales, toasts, etc.) */
+    animation: page-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   }
 
   @keyframes page-in {
