@@ -1,6 +1,12 @@
 import type { NextRequest } from 'next/server';
 
 import { logAIRequest } from '@/libs/ai/logger';
+import {
+  buildShoppingListPrompt,
+  filterRecipesForPatient,
+  SHOPPING_LIST_TOOL,
+  SYSTEM_PROMPT_DIETISTA,
+} from '@/libs/ai/plan-prompts';
 import { type PseudonymizedPatient,pseudonymizePatient } from '@/libs/ai/pseudonymize';
 import {
   AnthropicResilienceError,
@@ -96,41 +102,7 @@ const DAY_TOOL: Anthropic.Tool = {
   },
 };
 
-const SHOPPING_LIST_TOOL: Anthropic.Tool = {
-  name: 'generate_shopping_list',
-  description: 'Genera la lista de la compra consolidada y categorizada para el plan semanal completo',
-  input_schema: {
-    type: 'object',
-    properties: {
-      produce: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Frutas y verduras ÚNICAMENTE (no incluir carnes, embutidos ni lácteos)',
-      },
-      protein: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Carnes, pescados, huevos, legumbres, embutidos y derivados cárnicos',
-      },
-      dairy: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Leche, yogur, queso, bebidas vegetales',
-      },
-      grains: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Pan, arroz, pasta, cereales, avena, harinas',
-      },
-      pantry: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Aceites, condimentos, especias, conservas, frutos secos, salsas',
-      },
-    },
-    required: ['produce', 'protein', 'dairy', 'grains', 'pantry'],
-  },
-};
+// SHOPPING_LIST_TOOL importado desde @/libs/ai/plan-prompts
 
 // Mapeos legibles para los valores de select del intake
 const COME_FUERA_LABELS: Record<string, string> = {
@@ -251,7 +223,7 @@ function buildDayPrompt(
   const horarioCena = intakeAnswers?.hora_cena ?? '21:00';
   const horarioMerienda = intakeAnswers?.hora_merienda ?? '17:00';
 
-  return `Eres un dietista-nutricionista experto. Genera el plan nutricional del ${DAY_NAMES[dayNum - 1]} (día ${dayNum}/7).
+  return `Genera el plan nutricional del ${DAY_NAMES[dayNum - 1]} (día ${dayNum}/7).
 
 PERFIL DEL PACIENTE:
 - Objetivo: ${patient.goal ? (GOAL_LABELS[patient.goal] ?? patient.goal) : 'mejorar salud general'}
@@ -271,30 +243,7 @@ REQUISITOS OBLIGATORIOS:
 Usa la herramienta generate_day para devolver el plan estructurado.`;
 }
 
-function buildShoppingListPrompt(days: PlanDay[]): string {
-  const allIngredients = days
-    .flatMap((d) => d.meals)
-    .flatMap((m) => m.ingredients)
-    .map((i) => `${i.name} (${i.quantity} ${i.unit})`)
-    .join('\n');
-
-  return `Eres un dietista-nutricionista experto. A partir de los ingredientes del plan semanal, genera una lista de la compra consolidada y categorizada.
-
-INGREDIENTES DEL PLAN:
-${allIngredients}
-
-REGLAS DE CATEGORIZACIÓN ESTRICTAS:
-- "produce": frutas y verduras ÚNICAMENTE (no incluir carnes, embutidos ni lácteos)
-- "protein": carnes, pescados, huevos, legumbres, embutidos y derivados cárnicos
-- "dairy": leche, yogur, queso, bebidas vegetales
-- "grains": pan, arroz, pasta, cereales, avena, harinas
-- "pantry": aceites, condimentos, especias, conservas, frutos secos, salsas
-
-Si tienes dudas sobre un alimento, prioriza la categoría "protein" para cualquier alimento de origen animal.
-
-Agrupa los ingredientes similares y suma cantidades cuando aparezcan varias veces (ej: "Pechuga de pollo 800g").
-Usa la herramienta generate_shopping_list para devolver la lista estructurada.`;
-}
+// buildShoppingListPrompt importado desde @/libs/ai/plan-prompts
 
 function validateDay(day: PlanDay): number[] {
   return day.meals
@@ -547,12 +496,13 @@ export async function POST(req: NextRequest) {
           let dayData: PlanDay | null = null;
 
           // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
-          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, nutritionistRecipes);
+          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, filterRecipesForPatient(nutritionistRecipes, pseudoPatient));
           try {
             const response = await callAnthropicWithResilience(
               () => anthropic.messages.create({
                 model: 'claude-sonnet-4-6',
                 max_tokens: 4096,
+                system: SYSTEM_PROMPT_DIETISTA,
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
                 messages: [{ role: 'user', content: dayPrompt }],
@@ -592,6 +542,7 @@ export async function POST(req: NextRequest) {
                   () => anthropic.messages.create({
                     model: 'claude-sonnet-4-6',
                     max_tokens: 4096,
+                    system: SYSTEM_PROMPT_DIETISTA,
                     tools: [DAY_TOOL],
                     tool_choice: { type: 'tool', name: 'generate_day' },
                     messages: [{ role: 'user', content: dayPrompt }],
@@ -675,13 +626,15 @@ export async function POST(req: NextRequest) {
         console.log(`[plans/generate] plan=${planId} — generando lista de la compra`);
         let shoppingList: ShoppingList = { produce: [], protein: [], dairy: [], grains: [], pantry: [] };
         try {
+          const shoppingPrompt = buildShoppingListPrompt(days);
           const shoppingResponse = await callAnthropicWithResilience(
             () => anthropic.messages.create({
               model: 'claude-sonnet-4-6',
               max_tokens: 2048,
+              system: SYSTEM_PROMPT_DIETISTA,
               tools: [SHOPPING_LIST_TOOL],
               tool_choice: { type: 'tool', name: 'generate_shopping_list' },
-              messages: [{ role: 'user', content: buildShoppingListPrompt(days) }],
+              messages: [{ role: 'user', content: shoppingPrompt }],
             }),
             'shopping_list',
           );
@@ -710,7 +663,7 @@ export async function POST(req: NextRequest) {
               planId: planId!,
               modelVersion: 'claude-sonnet-4-6',
               requestType: 'shopping_list',
-              prompt: buildShoppingListPrompt(days),
+              prompt: shoppingPrompt,
               responseSummary: JSON.stringify(shoppingToolUse.input),
               tokensInput: slInput,
               tokensOutput: slOutput,

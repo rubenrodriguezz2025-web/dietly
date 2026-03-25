@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { logAIRequest } from '@/libs/ai/logger';
+import { SYSTEM_PROMPT_DIETISTA } from '@/libs/ai/plan-prompts';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Recipe, RecipeCategory, RecipeIngredient, RecipeValuesSource } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
@@ -162,6 +163,7 @@ Usa la herramienta calculate_recipe_macros para devolver el resultado por ració
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 512,
+      system: SYSTEM_PROMPT_DIETISTA,
       tools: [calcTool],
       tool_choice: { type: 'tool', name: 'calculate_recipe_macros' },
       messages: [{ role: 'user', content: prompt }],

@@ -4,11 +4,17 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { logAIRequest } from '@/libs/ai/logger';
+import {
+  buildShoppingListPrompt,
+  computeIngredientsFingerprint,
+  SHOPPING_LIST_TOOL,
+  SYSTEM_PROMPT_DIETISTA,
+} from '@/libs/ai/plan-prompts';
 import { pseudonymizePatient } from '@/libs/ai/pseudonymize';
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import type { Meal, NutritionPlan, Patient, PlanContent, PlanDay } from '@/types/dietly';
+import type { Meal, NutritionPlan, Patient, PlanContent, PlanDay, ShoppingList } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -66,6 +72,7 @@ export async function recalculateMealMacros(
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 256,
+      system: SYSTEM_PROMPT_DIETISTA,
       tools: [calcTool],
       tool_choice: { type: 'tool', name: 'calculate_macros' },
       messages: [{ role: 'user', content: calcPrompt }],
@@ -393,7 +400,7 @@ export async function regenerateDay(
           .join('\n')}`
       : '';
 
-  const prompt = `Eres un dietista-nutricionista experto. Regenera el plan del ${DAY_NAMES[dayNumber - 1]} (día ${dayNumber}/7) porque algunas comidas tenían errores.
+  const prompt = `Regenera el plan del ${DAY_NAMES[dayNumber - 1]} (día ${dayNumber}/7) porque algunas comidas tenían errores.
 
 PERFIL DEL PACIENTE:
 - Objetivo: ${pseudoPatient.goal ?? 'mejorar salud general'}
@@ -477,6 +484,7 @@ Usa la herramienta generate_day para devolver el plan.`;
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
+      system: SYSTEM_PROMPT_DIETISTA,
       tools: [dayTool],
       tool_choice: { type: 'tool', name: 'generate_day' },
       messages: [{ role: 'user', content: prompt }],
@@ -505,12 +513,58 @@ Usa la herramienta generate_day para devolver el plan.`;
 
     const newDay = toolUse.input as PlanDay;
 
-    // Replace the day in content.days (or insert if not present)
+    // Huella de ingredientes antes y después del cambio (Optimización C)
+    const fingerprintBefore = computeIngredientsFingerprint(content.days);
     const updatedDays = content.days.filter((d) => d.day_number !== dayNumber);
     updatedDays.push(newDay);
     updatedDays.sort((a, b) => a.day_number - b.day_number);
+    const fingerprintAfter = computeIngredientsFingerprint(updatedDays);
 
-    const updatedContent: PlanContent = { ...content, days: updatedDays };
+    // Regenerar lista de la compra solo si los ingredientes cambiaron
+    let newShoppingList: ShoppingList | null = null;
+    if (fingerprintBefore !== fingerprintAfter) {
+      try {
+        const shoppingPrompt = buildShoppingListPrompt(updatedDays);
+        const shoppingResponse = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 2048,
+          system: SYSTEM_PROMPT_DIETISTA,
+          tools: [SHOPPING_LIST_TOOL],
+          tool_choice: { type: 'tool', name: 'generate_shopping_list' },
+          messages: [{ role: 'user', content: shoppingPrompt }],
+        });
+        const slToolUse = shoppingResponse.content.find((b) => b.type === 'tool_use');
+        if (slToolUse?.type === 'tool_use') {
+          newShoppingList = slToolUse.input as ShoppingList;
+          void logAIRequest({
+            nutritionistId: user.id,
+            sessionPatientId: sessionId,
+            planId,
+            modelVersion: 'claude-sonnet-4-6',
+            requestType: 'shopping_list',
+            prompt: shoppingPrompt,
+            responseSummary: JSON.stringify(slToolUse.input),
+            tokensInput: shoppingResponse.usage.input_tokens,
+            tokensOutput: shoppingResponse.usage.output_tokens,
+            costUsd:
+              Math.round(
+                (shoppingResponse.usage.input_tokens * 0.000003 +
+                  shoppingResponse.usage.output_tokens * 0.000015) *
+                  1_000_000
+              ) / 1_000_000,
+          });
+        }
+      } catch (err) {
+        // No bloqueante: si falla la lista, guardamos el día igualmente
+        console.warn('[regenerateDay] shopping list regeneration failed (non-blocking):', err instanceof Error ? err.message : err);
+      }
+    }
+
+    const updatedContent: PlanContent = {
+      ...content,
+      days: updatedDays,
+      ...(newShoppingList ? { shopping_list: newShoppingList } : {}),
+    };
 
     const { error: updateError } = await (supabaseAdminClient as any)
       .from('nutrition_plans')
