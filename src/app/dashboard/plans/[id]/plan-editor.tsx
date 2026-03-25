@@ -6,14 +6,13 @@ import type { ValidationResult } from '@/lib/validation/nutrition-validator';
 import type { PlanDay } from '@/types/dietly';
 
 import { DayEditor } from './day-editor';
-import { ValidationPanel } from './validation-panel';
+import { ValidationSuggestions } from './validation-panel';
 
 interface Props {
   days: PlanDay[];
   planId: string;
   isDraft: boolean;
   validationResult?: ValidationResult;
-  ackedBlocks?: string[];
 }
 
 // Lun=1 … Dom=7 (mismo índice que day_number en PlanDay)
@@ -114,7 +113,7 @@ function DayTabsNav({
 
 // ── PlanEditor ────────────────────────────────────────────────────────────────
 
-export function PlanEditor({ days, planId, isDraft, validationResult, ackedBlocks = [] }: Props) {
+export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
   const [dirtyDays, setDirtyDays] = useState<Set<number>>(new Set());
   const [activeDay, setActiveDay] = useState<number>(days[0]?.day_number ?? 1);
   const todayDay = jsToPlannedDay(new Date().getDay());
@@ -167,21 +166,19 @@ export function PlanEditor({ days, planId, isDraft, validationResult, ackedBlock
 
   return (
     <div className='flex flex-col gap-6'>
+      {/* Badge de sugerencias del sistema — solo en borrador, no bloqueante */}
+      {isDraft && validationResult && validationResult.issues.length > 0 && (
+        <div className='flex justify-end'>
+          <ValidationSuggestions result={validationResult} />
+        </div>
+      )}
+
       {/* Tabs de navegación */}
       <DayTabsNav
         activeDay={activeDay}
         todayDay={todayDay}
         onSelect={handleTabSelect}
       />
-
-      {/* Panel de validación clínica — solo en borrador */}
-      {isDraft && validationResult && validationResult.issues.length > 0 && (
-        <ValidationPanel
-          result={validationResult}
-          ackedBlocks={ackedBlocks}
-          planId={planId}
-        />
-      )}
 
       {days.map((day) => (
         <div

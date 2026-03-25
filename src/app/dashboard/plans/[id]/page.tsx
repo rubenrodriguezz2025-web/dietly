@@ -256,7 +256,6 @@ export default async function PlanPage({
           planId={id}
           isDraft={plan.status === 'draft'}
           validationResult={validationResult}
-          ackedBlocks={ackedBlocks}
         />
       ) : (
         !isGenerating && (
