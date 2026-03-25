@@ -23,7 +23,7 @@ export async function createAppointment(
   const time = formData.get('time') as string;
   const type = (formData.get('type') as string) || 'presencial';
   const notes = (formData.get('notes') as string) || null;
-  const meeting_url = (formData.get('meeting_url') as string).trim() || null;
+  const meeting_url = ((formData.get('meeting_url') as string | null) ?? '').trim() || null;
 
   if (!date || !time) return { error: 'La fecha y la hora son obligatorias.' };
 
