@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { logAIRequest } from '@/libs/ai/logger';
 import {
   buildShoppingListPrompt,
+  buildSystemPrompt,
   computeIngredientsFingerprint,
   SHOPPING_LIST_TOOL,
   SYSTEM_PROMPT_DIETISTA,
@@ -368,6 +369,14 @@ export async function regenerateDay(
   const patient = plan.patients as Patient;
   const content = plan.content as PlanContent;
 
+  // Cargar specialty del nutricionista para system prompt
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('specialty')
+    .eq('id', user.id)
+    .single();
+  const systemPrompt = buildSystemPrompt(profileData?.specialty as string | null);
+
   // Pseudonimizar antes de construir el prompt
   const { pseudoPatient, sessionId } = pseudonymizePatient(patient);
 
@@ -406,12 +415,7 @@ PERFIL DEL PACIENTE:
 - Calorías diarias objetivo: ${targets.calories} kcal
 - Macros objetivo: ${targets.protein_g}g proteína · ${targets.carbs_g}g carbohidratos · ${targets.fat_g}g grasa${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${pseudoPatient.preferences ? `\n- Preferencias: ${pseudoPatient.preferences}` : ''}${variety}
 
-REQUISITOS OBLIGATORIOS:
-- 4-5 comidas (desayuno, media mañana opcional, almuerzo, merienda, cena)
-- Cada comida: mínimo 2 ingredientes con cantidades exactas
-- Todas las comidas deben tener calorías > 0 e ingredientes completos
-
-Usa la herramienta generate_day para devolver el plan.`;
+Todas las comidas deben tener calorías > 0 e ingredientes completos.`;
 
   const dayTool: Anthropic.Tool = {
     name: 'generate_day',
@@ -483,7 +487,7 @@ Usa la herramienta generate_day para devolver el plan.`;
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
-      system: SYSTEM_PROMPT_DIETISTA,
+      system: systemPrompt,
       tools: [dayTool],
       tool_choice: { type: 'tool', name: 'generate_day' },
       messages: [{ role: 'user', content: prompt }],
@@ -527,7 +531,7 @@ Usa la herramienta generate_day para devolver el plan.`;
         const shoppingResponse = await anthropic.messages.create({
           model: 'claude-sonnet-4-6',
           max_tokens: 2048,
-          system: SYSTEM_PROMPT_DIETISTA,
+          system: systemPrompt,
           tools: [SHOPPING_LIST_TOOL],
           tool_choice: { type: 'tool', name: 'generate_shopping_list' },
           messages: [{ role: 'user', content: shoppingPrompt }],

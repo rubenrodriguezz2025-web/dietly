@@ -3,9 +3,9 @@ import type { NextRequest } from 'next/server';
 import { logAIRequest } from '@/libs/ai/logger';
 import {
   buildShoppingListPrompt,
+  buildSystemPrompt,
   filterRecipesForPatient,
   SHOPPING_LIST_TOOL,
-  SYSTEM_PROMPT_DIETISTA,
 } from '@/libs/ai/plan-prompts';
 import { type PseudonymizedPatient,pseudonymizePatient } from '@/libs/ai/pseudonymize';
 import {
@@ -232,15 +232,7 @@ PERFIL DEL PACIENTE:
 - Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
 - Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${recipesSection}${variety}
 
-REQUISITOS OBLIGATORIOS:
-- 4-5 comidas (desayuno, media mañana opcional, almuerzo, merienda, cena)
-- Cada comida: mínimo 2 ingredientes con cantidades exactas en gramos/ml/unidades
-- Los macros de las comidas deben sumar aproximadamente el total diario
-- Usa alimentos típicos españoles y mediterráneos variados
-- Las instrucciones de preparación deben ser prácticas y concretas
-- Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}
-
-Usa la herramienta generate_day para devolver el plan estructurado.`;
+Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}.`;
 }
 
 // buildShoppingListPrompt importado desde @/libs/ai/plan-prompts
@@ -388,6 +380,14 @@ export async function POST(req: NextRequest) {
         // A partir de aquí, todos los prompts y logs usan pseudoPatient + sessionId.
         const { pseudoPatient, sessionId } = pseudonymizePatient(patient);
 
+        // ── Perfil del nutricionista (specialty para system prompt) ──────────
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('specialty')
+          .eq('id', user.id)
+          .single();
+        const systemPrompt = buildSystemPrompt(profileData?.specialty as string | null);
+
         // ── Intake form ───────────────────────────────────────────────────────
         const { data: intakeFormData } = await supabaseAdminClient
           .from('intake_forms')
@@ -502,7 +502,7 @@ export async function POST(req: NextRequest) {
               () => anthropic.messages.create({
                 model: 'claude-sonnet-4-6',
                 max_tokens: 4096,
-                system: SYSTEM_PROMPT_DIETISTA,
+                system: systemPrompt,
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
                 messages: [{ role: 'user', content: dayPrompt }],
@@ -542,7 +542,7 @@ export async function POST(req: NextRequest) {
                   () => anthropic.messages.create({
                     model: 'claude-sonnet-4-6',
                     max_tokens: 4096,
-                    system: SYSTEM_PROMPT_DIETISTA,
+                    system: systemPrompt,
                     tools: [DAY_TOOL],
                     tool_choice: { type: 'tool', name: 'generate_day' },
                     messages: [{ role: 'user', content: dayPrompt }],
@@ -631,7 +631,7 @@ export async function POST(req: NextRequest) {
             () => anthropic.messages.create({
               model: 'claude-sonnet-4-6',
               max_tokens: 2048,
-              system: SYSTEM_PROMPT_DIETISTA,
+              system: systemPrompt,
               tools: [SHOPPING_LIST_TOOL],
               tool_choice: { type: 'tool', name: 'generate_shopping_list' },
               messages: [{ role: 'user', content: shoppingPrompt }],

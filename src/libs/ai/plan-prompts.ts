@@ -17,18 +17,82 @@ import type Anthropic from '@anthropic-ai/sdk';
 // ── Sistema compartido ────────────────────────────────────────────────────────
 
 /**
- * Prompt de sistema que define el rol del modelo en todas las llamadas de
- * generación de planes. Va en el campo `system` de `messages.create()`,
- * no en el mensaje de usuario, para evitar repetirlo en cada llamada.
- *
- * Ahorro estimado: ~40-60 tokens × número de llamadas por plan (≥ 8).
+ * Base del prompt de sistema: rol fijo que aplica a todas las llamadas de
+ * generación de planes, independientemente de la especialidad.
  */
-export const SYSTEM_PROMPT_DIETISTA =
+const BASE_SYSTEM_PROMPT =
   'Eres un dietista-nutricionista experto especializado en nutrición mediterránea española. ' +
   'Cuando calculas macronutrientes, usas valores de referencia estándar (kcal/g). ' +
   'Cuando generas planes nutricionales, creas comidas prácticas con alimentos cotidianos ' +
   'españoles, respetando siempre las restricciones dietéticas, alergias e intolerancias ' +
-  'del paciente. Tus respuestas son precisas y estructuradas según el schema solicitado.';
+  'del paciente. Tus respuestas son precisas y estructuradas según el schema solicitado.\n\n' +
+  'REQUISITOS DE FORMATO PARA PLANES DIARIOS:\n' +
+  '- 4-5 comidas (desayuno, media mañana opcional, almuerzo, merienda, cena)\n' +
+  '- Cada comida: mínimo 2 ingredientes con cantidades exactas en gramos/ml/unidades\n' +
+  '- Los macros de las comidas deben sumar aproximadamente el total diario\n' +
+  '- Usa alimentos típicos españoles y mediterráneos variados\n' +
+  '- Las instrucciones de preparación deben ser prácticas y concretas\n' +
+  '- Usa la herramienta generate_day para devolver el plan estructurado.';
+
+/**
+ * Instrucciones adicionales según la especialidad del nutricionista.
+ * Se concatenan al BASE_SYSTEM_PROMPT en `buildSystemPrompt()`.
+ */
+const SPECIALTY_CONTEXT: Record<string, string> = {
+  sports:
+    'El nutricionista es especialista en nutrición deportiva. ' +
+    'Prioriza timing de nutrientes, carbohidratos pre/post entreno, ' +
+    'proteína alta y recuperación muscular. ' +
+    'Las recetas deben ser prácticas para deportistas.',
+  deportivo:
+    'El nutricionista es especialista en nutrición deportiva. ' +
+    'Prioriza timing de nutrientes, carbohidratos pre/post entreno, ' +
+    'proteína alta y recuperación muscular. ' +
+    'Las recetas deben ser prácticas para deportistas.',
+  clinical:
+    'El nutricionista es especialista en nutrición clínica. ' +
+    'Sé conservador, menciona restricciones por patología si las hay, ' +
+    'prioriza seguridad clínica sobre velocidad de resultados.',
+  clinico:
+    'El nutricionista es especialista en nutrición clínica. ' +
+    'Sé conservador, menciona restricciones por patología si las hay, ' +
+    'prioriza seguridad clínica sobre velocidad de resultados.',
+  weight_loss:
+    'El nutricionista se especializa en pérdida de peso. ' +
+    'Prioriza saciedad, déficit calórico moderado (-300 a -500 kcal), ' +
+    'alimentos de bajo índice glucémico y alta adherencia a largo plazo.',
+  perdida_peso:
+    'El nutricionista se especializa en pérdida de peso. ' +
+    'Prioriza saciedad, déficit calórico moderado (-300 a -500 kcal), ' +
+    'alimentos de bajo índice glucémico y alta adherencia a largo plazo.',
+};
+
+const SPECIALTY_DEFAULT =
+  'Sigue los principios de la dieta mediterránea española. ' +
+  'Prioriza variedad, practicidad y alimentos de temporada.';
+
+/**
+ * Construye el prompt de sistema completo con el contexto de especialidad.
+ * Úsalo en todas las llamadas de generación de planes pasando la especialidad
+ * del perfil del nutricionista (`profiles.specialty`).
+ *
+ * Si `specialty` es null, vacío o no reconocido, aplica el prompt general.
+ */
+export function buildSystemPrompt(specialty?: string | null): string {
+  const context =
+    specialty && SPECIALTY_CONTEXT[specialty]
+      ? SPECIALTY_CONTEXT[specialty]
+      : SPECIALTY_DEFAULT;
+  return `${BASE_SYSTEM_PROMPT} ${context}`;
+}
+
+/**
+ * Prompt de sistema sin especialidad — para operaciones que no generan días
+ * completos (e.g. recálculo de macros de una comida individual).
+ *
+ * @deprecated Usa `buildSystemPrompt(specialty)` en generación de planes.
+ */
+export const SYSTEM_PROMPT_DIETISTA = buildSystemPrompt();
 
 // ── Herramienta de lista de la compra ─────────────────────────────────────────
 
