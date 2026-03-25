@@ -50,7 +50,6 @@ export default async function PlanPage({
       ? validateNutritionPlan(content, (plan.patients as unknown as ValidatorPatient) ?? {} as ValidatorPatient)
       : undefined;
 
-  const ackedBlocks: string[] = plan.validation_acked_blocks ?? [];
   const showReminderModal = approved === '1' && plan.status === 'approved' && !!plan.patients;
 
   // Obtener registro de visitas del paciente
