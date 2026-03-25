@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import Link from 'next/link';
 
 import {
   Sheet,
@@ -11,322 +10,38 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  ACTIVITY_LABELS,
-  GOAL_LABELS,
-  NutritionPlan,
-  Patient,
-  PatientProgress,
-  PLAN_STATUS_LABELS,
-  SEX_LABELS,
-} from '@/types/dietly';
+import type { NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
 import { calcTargets } from '@/utils/calc-targets';
 import { cn } from '@/utils/cn';
 
-import { CopyButton } from './copy-button';
-import { DashboardIntakeForm } from './dashboard-intake-form';
 import { sendFollowupQuestionnaire } from './followup-patient-actions';
-import { GenerateButton } from './generate-button';
-import { ProgressTab } from './progress-tab';
-import { updatePatientField } from './update-actions';
+import { PatientCuestionarioTab } from './PatientCuestionarioTab';
+import { PatientFichaTab } from './PatientFichaTab';
+import { PatientProgresoTab } from './PatientProgresoTab';
+import { PatientSeguimientosTab } from './PatientSeguimientosTab';
 
-// ── Reusable presentational helpers ──────────────────────────────────────
+// ── Constantes de las preguntas del cuestionario (solo usadas en el Sheet) ────
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
-      <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
-        {title}
-      </h2>
-      {children}
-    </div>
-  );
-}
+const INTAKE_QUESTIONS: { q: string; type: 'Hora' | 'Selección' | 'Texto libre' }[] = [
+  { q: '¿A qué hora sueles desayunar, comer y cenar?', type: 'Hora' },
+  { q: '¿Cuántas veces al día prefieres comer?', type: 'Selección' },
+  { q: '¿Hay alimentos que no te gusten o que evites?', type: 'Texto libre' },
+  { q: '¿Tienes alguna alergia o intolerancia alimentaria?', type: 'Texto libre' },
+  { q: '¿Con qué frecuencia comes fuera de casa?', type: 'Selección' },
+  { q: '¿Cuánto tiempo dedicas a cocinar habitualmente?', type: 'Selección' },
+  { q: '¿Realizas actividad física? ¿Con qué frecuencia?', type: 'Selección' },
+  { q: '¿Sigues algún tipo de dieta especial (vegana, sin gluten, etc.)?', type: 'Texto libre' },
+  { q: '¿Tienes alguna condición médica relevante que debamos tener en cuenta?', type: 'Texto libre' },
+  { q: '¿Hay algo más que quieras contarle a tu nutricionista?', type: 'Texto libre' },
+];
 
-function DataField({
-  label,
-  value,
-  tooltip,
-  estimated,
-}: {
-  label: string;
-  value: string | number | null;
-  tooltip?: string;
-  estimated?: boolean;
-}) {
-  return (
-    <div className='flex flex-col gap-0.5'>
-      <span className='text-xs text-zinc-600'>{label}</span>
-      <span className='flex items-center gap-1.5 text-sm text-zinc-200'>
-        {value != null ? (
-          <>
-            {value}
-            {estimated && (
-              <span
-                className='rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] leading-none text-zinc-500'
-                title='Valor estimado con Mifflin-St Jeor a partir de los datos del paciente'
-              >
-                ~est.
-              </span>
-            )}
-          </>
-        ) : tooltip ? (
-          <span className='group relative cursor-help'>
-            <span className='text-zinc-700'>—</span>
-            <span className='pointer-events-none absolute bottom-full left-0 z-10 mb-1.5 hidden w-max max-w-[200px] rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-[11px] leading-snug text-zinc-300 shadow-lg group-hover:block'>
-              {tooltip}
-            </span>
-          </span>
-        ) : (
-          <span className='text-zinc-700'>—</span>
-        )}
-      </span>
-    </div>
-  );
-}
-
-// ── Inline editable field ─────────────────────────────────────────────────────
-
-function InlineField({
-  label,
-  value,
-  displayValue,
-  type = 'text',
-  options,
-  patientId,
-  field,
-  suffix,
-}: {
-  label: string;
-  value: string | number | null;
-  displayValue?: string | null;
-  type?: 'text' | 'number' | 'select' | 'textarea' | 'date';
-  options?: { value: string; label: string }[];
-  patientId: string;
-  field: string;
-  suffix?: string;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const [saving, startSaving] = useTransition();
-  const [saveError, setSaveError] = useState<string | null>(null);
-
-  function startEdit() {
-    setDraft(value != null ? String(value) : '');
-    setEditing(true);
-    setSaveError(null);
-  }
-
-  function confirm() {
-    const parsed: string | number | null =
-      type === 'number' ? (draft ? Number(draft) : null) : draft.trim() || null;
-    startSaving(async () => {
-      const result = await updatePatientField(patientId, field, parsed);
-      if (result.error) {
-        setSaveError(result.error);
-      } else {
-        setEditing(false);
-      }
-    });
-  }
-
-  function cancel() {
-    setEditing(false);
-    setSaveError(null);
-  }
-
-  const shown = displayValue ?? (value != null ? `${value}${suffix ? ` ${suffix}` : ''}` : null);
-
-  if (editing) {
-    return (
-      <div className='flex flex-col gap-0.5'>
-        <span className='text-xs text-zinc-600'>{label}</span>
-        <div className='flex flex-col gap-1.5'>
-          {type === 'textarea' ? (
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              autoFocus
-              rows={3}
-              className='resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30'
-            />
-          ) : type === 'select' && options ? (
-            <select
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              autoFocus
-              className='rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none'
-            >
-              <option value=''>— Sin especificar —</option>
-              {options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type={type}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') confirm();
-                if (e.key === 'Escape') cancel();
-              }}
-              className='rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30'
-            />
-          )}
-          <div className='flex items-center gap-2'>
-            <button
-              type='button'
-              onClick={confirm}
-              disabled={saving}
-              className='flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-950/50 disabled:opacity-50'
-            >
-              {saving ? (
-                <span className='h-2.5 w-2.5 animate-spin rounded-full border-2 border-emerald-600/30 border-t-emerald-400' />
-              ) : (
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='10'
-                  height='10'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='3'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  aria-hidden='true'
-                >
-                  <polyline points='20 6 9 17 4 12' />
-                </svg>
-              )}
-              Guardar
-            </button>
-            <button
-              type='button'
-              onClick={cancel}
-              className='flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-800 hover:text-zinc-400'
-            >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='10'
-                height='10'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='3'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                aria-hidden='true'
-              >
-                <line x1='18' y1='6' x2='6' y2='18' />
-                <line x1='6' y1='6' x2='18' y2='18' />
-              </svg>
-              Cancelar
-            </button>
-          </div>
-          {saveError && <p className='text-[11px] text-red-400'>{saveError}</p>}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className='group/inline flex flex-col gap-0.5'>
-      <span className='text-xs text-zinc-600'>{label}</span>
-      <div className='flex items-center gap-1.5'>
-        <span className='text-sm text-zinc-200'>
-          {shown ?? <span className='text-zinc-700'>—</span>}
-        </span>
-        <button
-          type='button'
-          onClick={startEdit}
-          title={`Editar ${label.toLowerCase()}`}
-          aria-label={`Editar ${label.toLowerCase()}`}
-          className='rounded p-0.5 text-zinc-700 opacity-0 transition-all group-hover/inline:opacity-100 hover:text-zinc-300 focus-visible:opacity-100'
-        >
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            width='11'
-            height='11'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            aria-hidden='true'
-          >
-            <path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' />
-            <path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Cálculo client-side de TMB/TDEE ──────────────────────────────────────────
-
-const ACTIVITY_MULT: Record<string, number> = {
-  sedentary:         1.2,
-  lightly_active:    1.375,
-  moderately_active: 1.55,
-  very_active:       1.725,
-  extra_active:      1.9,
+const TYPE_BADGE: Record<string, string> = {
+  'Hora':        'bg-sky-950 text-sky-400',
+  'Selección':   'bg-violet-950 text-violet-400',
+  'Texto libre': 'bg-zinc-800 text-zinc-400',
 };
 
-function computeTMBClientSide(patient: Patient): { tmb: number | null; missingFor: string | null } {
-  if (!patient.weight_kg) return { tmb: null, missingFor: 'Falta el peso para calcular el TMB' };
-  if (!patient.height_cm) return { tmb: null, missingFor: 'Falta la altura para calcular el TMB' };
-  if (!patient.date_of_birth) return { tmb: null, missingFor: 'Falta la fecha de nacimiento para calcular el TMB' };
-
-  const age = Math.floor(
-    (Date.now() - new Date(patient.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
-  );
-  const base = 10 * patient.weight_kg + 6.25 * patient.height_cm - 5 * age;
-  const tmb = patient.sex === 'male' ? base + 5 : patient.sex === 'female' ? base - 161 : base - 78;
-  return { tmb: Math.round(tmb), missingFor: null };
-}
-
-function computeTDEEClientSide(
-  tmb: number | null,
-  activityLevel: string | null
-): { tdee: number | null; missingFor: string | null } {
-  if (!tmb) return { tdee: null, missingFor: null };
-  if (!activityLevel) return { tdee: null, missingFor: 'Falta el nivel de actividad para calcular el TDEE' };
-  const mult = ACTIVITY_MULT[activityLevel] ?? null;
-  if (!mult) return { tdee: null, missingFor: 'Nivel de actividad desconocido' };
-  return { tdee: Math.round(tmb * mult), missingFor: null };
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  draft:    'bg-amber-950 text-amber-400',
-  approved: 'bg-green-950 text-green-400',
-  sent:     'bg-blue-950 text-blue-400',
-};
-
-const INTAKE_LABELS: Record<string, string> = {
-  comidas_al_dia:         'Comidas al día',
-  hora_desayuno:          'Hora desayuno',
-  hora_almuerzo:          'Hora almuerzo',
-  hora_merienda:          'Hora merienda',
-  hora_cena:              'Hora cena',
-  alergias_intolerancias: 'Alergias e intolerancias',
-  alimentos_no_gustados:  'Alimentos que no le gustan',
-  come_fuera:             '¿Come fuera de casa?',
-  frecuencia_fuera:       'Frecuencia comer fuera',
-  cocina_en_casa:         '¿Cocina en casa?',
-  actividad_fisica:       'Actividad física',
-  objetivo_personal:      'Objetivo personal',
-  dieta_especial:         'Dieta especial',
-  condicion_medica:       'Condición médica',
-  observaciones:          'Observaciones',
-};
-
-// ── Tabs ─────────────────────────────────────────────────────────────────
+// ── Tipos ─────────────────────────────────────────────────────────────────────
 
 type FollowupFormData = {
   id: string;
@@ -352,46 +67,7 @@ type Props = {
   overdueReminder?: { id: string; remind_at: string } | null;
 };
 
-const INTAKE_QUESTIONS: { q: string; type: 'Hora' | 'Selección' | 'Texto libre' }[] = [
-  { q: '¿A qué hora sueles desayunar, comer y cenar?', type: 'Hora' },
-  { q: '¿Cuántas veces al día prefieres comer?', type: 'Selección' },
-  { q: '¿Hay alimentos que no te gusten o que evites?', type: 'Texto libre' },
-  { q: '¿Tienes alguna alergia o intolerancia alimentaria?', type: 'Texto libre' },
-  { q: '¿Con qué frecuencia comes fuera de casa?', type: 'Selección' },
-  { q: '¿Cuánto tiempo dedicas a cocinar habitualmente?', type: 'Selección' },
-  { q: '¿Realizas actividad física? ¿Con qué frecuencia?', type: 'Selección' },
-  { q: '¿Sigues algún tipo de dieta especial (vegana, sin gluten, etc.)?', type: 'Texto libre' },
-  { q: '¿Tienes alguna condición médica relevante que debamos tener en cuenta?', type: 'Texto libre' },
-  { q: '¿Hay algo más que quieras contarle a tu nutricionista?', type: 'Texto libre' },
-];
-
-const TYPE_BADGE: Record<string, string> = {
-  'Hora':        'bg-sky-950 text-sky-400',
-  'Selección':   'bg-violet-950 text-violet-400',
-  'Texto libre': 'bg-zinc-800 text-zinc-400',
-};
-
-const FOLLOWUP_QUESTIONS_PREVIEW = [
-  '¿Has podido seguir el plan esta semana? (escala 0-10)',
-  '¿Qué comidas o días te han resultado más difíciles?',
-  '¿Cómo te has sentido en general?',
-  '¿Has notado cambios en tu peso o cómo te queda la ropa?',
-  '¿Has realizado actividad física?',
-  '¿Hay alguna comida o receta que quieras cambiar?',
-  '¿Ha cambiado algo en tu rutina u horarios?',
-  '¿Tienes alguna duda o algo que quieras comentarle a tu nutricionista?',
-];
-
-const FOLLOWUP_ANSWERS_LABELS: Record<string, string> = {
-  adherencia: '¿Has podido seguir el plan?',
-  dificultades: 'Comidas o días difíciles',
-  bienestar: 'Bienestar general',
-  cambios_fisicos: 'Cambios físicos',
-  actividad: 'Actividad física',
-  cambios_recetas: 'Cambios en recetas',
-  cambios_rutina: 'Cambios en rutina',
-  dudas: 'Dudas y comentarios',
-};
+// ── Orquestador ───────────────────────────────────────────────────────────────
 
 export function PatientTabs({
   patient,
@@ -474,583 +150,59 @@ export function PatientTabs({
 
       {/* ── Ficha ── */}
       <TabsContent value='ficha' className='mt-6'>
-        <div className='flex flex-col gap-6'>
-
-          {/* Estado del cuestionario — visible en ficha principal */}
-          {intakeForm ? (
-            <div className='flex items-center gap-2 rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-4 py-2.5'>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='14'
-                height='14'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2.5'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                className='flex-shrink-0 text-emerald-500'
-                aria-hidden='true'
-              >
-                <polyline points='20 6 9 17 4 12' />
-              </svg>
-              <p className='text-[13px] text-emerald-400'>
-                Cuestionario completado —{' '}
-                <span className='text-emerald-500/70'>
-                  el plan usará toda la información del paciente
-                </span>
-              </p>
-            </div>
-          ) : intakeUrl ? (
-            <div className='rounded-xl border border-[#1a7a45]/40 bg-[#0a1f12] p-4'>
-              <div className='flex gap-3'>
-                {/* Icono de formulario */}
-                <div className='mt-0.5 flex-shrink-0'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    width='18'
-                    height='18'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='1.75'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    className='text-[#1a7a45]'
-                    aria-hidden='true'
-                  >
-                    <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' />
-                    <polyline points='14 2 14 8 20 8' />
-                    <line x1='16' y1='13' x2='8' y2='13' />
-                    <line x1='16' y1='17' x2='8' y2='17' />
-                    <polyline points='10 9 9 9 8 9' />
-                  </svg>
-                </div>
-                <div className='flex flex-col gap-2'>
-                  <p className='text-[13px] font-semibold text-zinc-200'>
-                    Personaliza el plan con más detalle
-                  </p>
-                  <p className='text-[13px] leading-relaxed text-zinc-400'>
-                    Envía un cuestionario al paciente para conocer sus horarios, preferencias
-                    y hábitos. El plan generado será mucho más preciso.
-                  </p>
-                  <div className='mt-1 flex flex-wrap items-center gap-2'>
-                    <button
-                      type='button'
-                      onClick={() => setActiveTab('cuestionario')}
-                      className='flex items-center gap-1.5 rounded-lg border border-[#1a7a45]/60 bg-[#1a7a45]/20 px-3 py-1.5 text-[12px] font-semibold text-emerald-400 transition-colors hover:border-[#1a7a45] hover:bg-[#1a7a45]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45]'
-                    >
-                      Enviar cuestionario
-                      <svg
-                        xmlns='http://www.w3.org/2000/svg'
-                        width='12'
-                        height='12'
-                        viewBox='0 0 24 24'
-                        fill='none'
-                        stroke='currentColor'
-                        strokeWidth='2.5'
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        aria-hidden='true'
-                      >
-                        <line x1='5' y1='12' x2='19' y2='12' />
-                        <polyline points='12 5 19 12 12 19' />
-                      </svg>
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => setSheetOpen(true)}
-                      className='text-[12px] text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:underline'
-                    >
-                      Ver preguntas del cuestionario →
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Grid datos + planes */}
-          <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-            {/* Left: personal + goals + clinical notes */}
-            <div className='flex flex-col gap-6 lg:col-span-2'>
-              <Section title='Datos personales'>
-                <div className='grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
-                  <InlineField
-                    label='Nombre'
-                    value={patient.name}
-                    patientId={patient.id}
-                    field='name'
-                  />
-                  <InlineField
-                    label='Email'
-                    value={patient.email}
-                    patientId={patient.id}
-                    field='email'
-                  />
-                  <InlineField
-                    label='Teléfono'
-                    value={patient.phone ?? null}
-                    patientId={patient.id}
-                    field='phone'
-                  />
-                  <InlineField
-                    label='Sexo'
-                    value={patient.sex}
-                    displayValue={patient.sex ? SEX_LABELS[patient.sex] : null}
-                    type='select'
-                    options={[
-                      { value: 'male', label: 'Hombre' },
-                      { value: 'female', label: 'Mujer' },
-                      { value: 'other', label: 'Otro' },
-                    ]}
-                    patientId={patient.id}
-                    field='sex'
-                  />
-                  <DataField label='Edad' value={age ? `${age} años` : null} />
-                  <InlineField
-                    label='Fecha de nacimiento'
-                    value={patient.date_of_birth}
-                    displayValue={
-                      patient.date_of_birth
-                        ? new Date(patient.date_of_birth).toLocaleDateString('es-ES')
-                        : null
-                    }
-                    type='date'
-                    patientId={patient.id}
-                    field='date_of_birth'
-                  />
-                  <InlineField
-                    label='Peso'
-                    value={patient.weight_kg}
-                    suffix='kg'
-                    type='number'
-                    patientId={patient.id}
-                    field='weight_kg'
-                  />
-                  <InlineField
-                    label='Altura'
-                    value={patient.height_cm}
-                    suffix='cm'
-                    type='number'
-                    patientId={patient.id}
-                    field='height_cm'
-                  />
-                  <DataField
-                    label='IMC'
-                    value={
-                      patient.weight_kg && patient.height_cm
-                        ? `${(patient.weight_kg / Math.pow(patient.height_cm / 100, 2)).toFixed(1)}`
-                        : null
-                    }
-                  />
-                </div>
-              </Section>
-
-              <Section title='Objetivos y actividad'>
-                {(() => {
-                  // Usar valor de BD si existe; si no, calcular en cliente
-                  const tmbDb = patient.tmb ?? null;
-                  const tdeeDb = patient.tdee ?? null;
-                  const { tmb: tmbCalc, missingFor: tmbMissing } = tmbDb
-                    ? { tmb: tmbDb, missingFor: null }
-                    : computeTMBClientSide(patient);
-                  const tmbEstimated = !tmbDb && tmbCalc !== null;
-
-                  const { tdee: tdeeCalc, missingFor: tdeeMissing } = tdeeDb
-                    ? { tdee: tdeeDb, missingFor: null }
-                    : computeTDEEClientSide(tmbCalc, patient.activity_level ?? null);
-                  const tdeeEstimated = !tdeeDb && tdeeCalc !== null;
-
-                  return (
-                    <div className='grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
-                      <InlineField
-                        label='Objetivo'
-                        value={patient.goal}
-                        displayValue={patient.goal ? GOAL_LABELS[patient.goal] : null}
-                        type='select'
-                        options={Object.entries(GOAL_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-                        patientId={patient.id}
-                        field='goal'
-                      />
-                      <InlineField
-                        label='Nivel de actividad'
-                        value={patient.activity_level}
-                        displayValue={
-                          patient.activity_level ? ACTIVITY_LABELS[patient.activity_level] : null
-                        }
-                        type='select'
-                        options={Object.entries(ACTIVITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-                        patientId={patient.id}
-                        field='activity_level'
-                      />
-                      <DataField
-                        label='TMB'
-                        value={tmbCalc !== null ? `${tmbCalc} kcal` : null}
-                        estimated={tmbEstimated}
-                        tooltip={tmbMissing ?? undefined}
-                      />
-                      <DataField
-                        label='TDEE'
-                        value={tdeeCalc !== null ? `${tdeeCalc} kcal` : null}
-                        estimated={tdeeEstimated}
-                        tooltip={tdeeMissing ?? undefined}
-                      />
-                    </div>
-                  );
-                })()}
-              </Section>
-
-              <Section title='Notas clínicas'>
-                <div className='flex flex-col gap-4'>
-                  <InlineField
-                    label='Restricciones dietéticas'
-                    value={patient.dietary_restrictions?.join(', ') ?? null}
-                    type='textarea'
-                    patientId={patient.id}
-                    field='dietary_restrictions'
-                  />
-                  <InlineField
-                    label='Alergias'
-                    value={patient.allergies}
-                    type='textarea'
-                    patientId={patient.id}
-                    field='allergies'
-                  />
-                  <InlineField
-                    label='Intolerancias'
-                    value={patient.intolerances}
-                    type='textarea'
-                    patientId={patient.id}
-                    field='intolerances'
-                  />
-                  <InlineField
-                    label='Preferencias alimentarias'
-                    value={patient.preferences}
-                    type='textarea'
-                    patientId={patient.id}
-                    field='preferences'
-                  />
-                  <InlineField
-                    label='Notas médicas'
-                    value={patient.medical_notes}
-                    type='textarea'
-                    patientId={patient.id}
-                    field='medical_notes'
-                  />
-                </div>
-              </Section>
-            </div>
-
-            {/* Right: nutrition plans */}
-            <div className='flex flex-col gap-4'>
-              <h2 className='text-sm font-semibold uppercase tracking-wider text-zinc-500'>
-                Planes nutricionales
-              </h2>
-              {!plans || plans.length === 0 ? (
-                <div className='flex flex-col items-center rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
-                  <p className='text-sm text-zinc-500'>Sin planes todavía.</p>
-                  <div className='mt-4'>
-                    <GenerateButton
-                      patientId={patient.id}
-                      initialTargets={patientTargets}
-                      patientWeight={patient.weight_kg ?? 70}
-                      patientGoal={patient.goal ?? 'health'}
-                      hasIntake={!!intakeForm}
-                      onGoToIntake={intakeUrl ? () => setActiveTab('cuestionario') : undefined}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className='flex flex-col gap-2'>
-                  {plans.map((plan) => (
-                    <PlanRow key={plan.id} plan={plan} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <PatientFichaTab
+          patient={patient}
+          plans={plans}
+          intakeForm={intakeForm}
+          intakeUrl={intakeUrl}
+          patientTargets={patientTargets}
+          age={age}
+          onGoToCuestionario={() => setActiveTab('cuestionario')}
+          onOpenQuestionsPreview={() => setSheetOpen(true)}
+        />
       </TabsContent>
 
       {/* ── Progreso ── */}
       <TabsContent value='progreso' className='mt-6'>
-        <ProgressTab
+        <PatientProgresoTab
           progress={progress}
           patientId={patient.id}
           patientName={patient.name}
         />
       </TabsContent>
 
-      {/* ── Seguimientos ── */}
-      <TabsContent value='seguimientos' className='mt-6'>
-        <div className='flex flex-col gap-6'>
-          {/* Estado del recordatorio */}
-          {overdueReminder && (
-            <div className='flex items-center gap-3 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3'>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='15'
-                height='15'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                className='flex-shrink-0 text-red-400'
-                aria-hidden='true'
-              >
-                <circle cx='12' cy='12' r='10' />
-                <line x1='12' y1='8' x2='12' y2='12' />
-                <line x1='12' y1='16' x2='12.01' y2='16' />
-              </svg>
-              <p className='text-sm text-red-400'>
-                Revisión vencida el{' '}
-                <span className='font-semibold'>
-                  {new Date(overdueReminder.remind_at).toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'long',
-                  })}
-                </span>
-              </p>
-            </div>
-          )}
-
-          {nextReminder && !overdueReminder && (
-            <div className='flex items-center gap-3 rounded-xl border border-amber-900/40 bg-amber-950/20 px-4 py-3'>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='15'
-                height='15'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                className='flex-shrink-0 text-amber-400'
-                aria-hidden='true'
-              >
-                <rect x='3' y='4' width='18' height='18' rx='2' ry='2' />
-                <line x1='16' y1='2' x2='16' y2='6' />
-                <line x1='8' y1='2' x2='8' y2='6' />
-                <line x1='3' y1='10' x2='21' y2='10' />
-              </svg>
-              <p className='text-sm text-amber-400'>
-                Próxima revisión programada:{' '}
-                <span className='font-semibold'>
-                  {new Date(nextReminder.remind_at).toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </span>
-              </p>
-            </div>
-          )}
-
-          {/* Enviar cuestionario de seguimiento */}
-          <Section title='Cuestionario de seguimiento'>
-            {followupSent ? (
-              <div className='flex items-center gap-2 text-sm text-emerald-400'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='14'
-                  height='14'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2.5'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  aria-hidden='true'
-                >
-                  <polyline points='20 6 9 17 4 12' />
-                </svg>
-                Cuestionario enviado correctamente
-              </div>
-            ) : (
-              <div className='flex flex-col gap-3'>
-                <p className='text-sm text-zinc-500'>
-                  Envía al paciente un cuestionario de 8 preguntas para evaluar cómo ha seguido el
-                  plan y detectar posibles ajustes.
-                </p>
-                {!patient.email && (
-                  <p className='text-xs text-amber-500'>
-                    Este paciente no tiene email registrado. Añádelo en la ficha para poder enviar el cuestionario.
-                  </p>
-                )}
-                {followupSendError && (
-                  <p className='text-sm text-red-400'>{followupSendError}</p>
-                )}
-                <div className='flex items-center gap-2'>
-                  <button
-                    type='button'
-                    disabled={!patient.email || sendingFollowup}
-                    onClick={handleSendFollowup}
-                    className='inline-flex items-center gap-1.5 rounded-lg border border-[#1a7a45]/60 bg-[#1a7a45]/20 px-3 py-1.5 text-[12px] font-semibold text-emerald-400 transition-colors hover:border-[#1a7a45] hover:bg-[#1a7a45]/30 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45]'
-                  >
-                    {sendingFollowup ? (
-                      <>
-                        <span className='h-3 w-3 animate-spin rounded-full border-2 border-emerald-600/30 border-t-emerald-400' />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        Enviar cuestionario de seguimiento
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          width='12'
-                          height='12'
-                          viewBox='0 0 24 24'
-                          fill='none'
-                          stroke='currentColor'
-                          strokeWidth='2.5'
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          aria-hidden='true'
-                        >
-                          <line x1='5' y1='12' x2='19' y2='12' />
-                          <polyline points='12 5 19 12 12 19' />
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type='button'
-                    onClick={() => setFollowupSheetOpen(true)}
-                    className='text-[12px] text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:underline'
-                  >
-                    Ver preguntas →
-                  </button>
-                </div>
-              </div>
-            )}
-          </Section>
-
-          {/* Historial de cuestionarios */}
-          {followupForms.length > 0 && (
-            <Section title='Historial de seguimientos'>
-              <div className='flex flex-col gap-3'>
-                {followupForms.map((form) => (
-                  <div
-                    key={form.id}
-                    className='rounded-xl border border-zinc-800 bg-zinc-900 p-4'
-                  >
-                    <div className='flex items-start justify-between gap-3'>
-                      <div className='flex flex-col gap-0.5'>
-                        <p className='text-sm font-medium text-zinc-200'>
-                          Cuestionario del{' '}
-                          {new Date(form.created_at).toLocaleDateString('es-ES', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                          })}
-                        </p>
-                        {form.completed_at ? (
-                          <p className='text-xs text-emerald-500'>
-                            Completado el{' '}
-                            {new Date(form.completed_at).toLocaleDateString('es-ES', {
-                              day: 'numeric',
-                              month: 'short',
-                            })}
-                          </p>
-                        ) : (
-                          <p className='text-xs text-zinc-600'>Pendiente de respuesta</p>
-                        )}
-                      </div>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${form.completed_at ? 'bg-emerald-950 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}
-                      >
-                        {form.completed_at ? 'Completado' : 'Pendiente'}
-                      </span>
-                    </div>
-
-                    {form.completed_at && form.answers && (
-                      <div className='mt-3 border-t border-zinc-800 pt-3'>
-                        <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-                          {Object.entries(form.answers).map(([key, value]) =>
-                            value !== null && value !== '' ? (
-                              <DataField
-                                key={key}
-                                label={FOLLOWUP_ANSWERS_LABELS[key] ?? key.replace(/_/g, ' ')}
-                                value={String(value)}
-                              />
-                            ) : null,
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {followupForms.length === 0 && !followupSent && (
-            <div className='rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
-              <p className='text-sm text-zinc-600'>
-                Aún no se ha enviado ningún cuestionario de seguimiento a este paciente.
-              </p>
-            </div>
-          )}
-        </div>
+      {/* ── Cuestionario ── */}
+      <TabsContent value='cuestionario' className='mt-6'>
+        <PatientCuestionarioTab
+          patient={patient}
+          intakeForm={intakeForm}
+          intakeUrl={intakeUrl}
+          intakeSheetOpen={intakeSheetOpen}
+          onIntakeSheetOpenChange={setIntakeSheetOpen}
+          onSendToPatient={() => {
+            setSheetOpen(false);
+            setActiveTab('cuestionario');
+          }}
+        />
       </TabsContent>
 
-      {/* ── Sheet: preview preguntas del cuestionario de seguimiento ── */}
-      <Sheet open={followupSheetOpen} onOpenChange={setFollowupSheetOpen}>
-        <SheetContent className='flex w-full flex-col border-zinc-800 bg-zinc-950 sm:max-w-md'>
-          <SheetHeader className='border-b border-zinc-800 pb-4'>
-            <SheetTitle className='text-zinc-100'>Preguntas del cuestionario de seguimiento</SheetTitle>
-            <SheetDescription className='text-zinc-500'>
-              8 preguntas para evaluar cómo ha seguido el plan el paciente.
-            </SheetDescription>
-          </SheetHeader>
+      {/* ── Seguimientos ── */}
+      <TabsContent value='seguimientos' className='mt-6'>
+        <PatientSeguimientosTab
+          patient={patient}
+          followupForms={followupForms}
+          nextReminder={nextReminder ?? null}
+          overdueReminder={overdueReminder ?? null}
+          followupSent={followupSent}
+          sendingFollowup={sendingFollowup}
+          followupSendError={followupSendError}
+          followupSheetOpen={followupSheetOpen}
+          onFollowupSheetOpenChange={setFollowupSheetOpen}
+          onSendFollowup={handleSendFollowup}
+        />
+      </TabsContent>
 
-          <ol className='flex flex-1 flex-col gap-4 overflow-y-auto py-5'>
-            {FOLLOWUP_QUESTIONS_PREVIEW.map((q, i) => (
-              <li key={i} className='flex gap-3'>
-                <span className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-semibold tabular-nums text-zinc-500'>
-                  {i + 1}
-                </span>
-                <p className='text-[13px] leading-snug text-zinc-200'>{q}</p>
-              </li>
-            ))}
-          </ol>
-
-          <div className='border-t border-zinc-800 pt-4'>
-            <button
-              type='button'
-              disabled={!patient.email || sendingFollowup}
-              onClick={() => {
-                setFollowupSheetOpen(false);
-                handleSendFollowup();
-              }}
-              className='flex w-full items-center justify-center gap-2 rounded-lg bg-[#1a7a45] py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#155f38] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950'
-            >
-              Enviar cuestionario →
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='13'
-                height='13'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2.5'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                aria-hidden='true'
-              >
-                <line x1='5' y1='12' x2='19' y2='12' />
-                <polyline points='12 5 19 12 12 19' />
-              </svg>
-            </button>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* ── Sheet: preview preguntas del cuestionario ── */}
+      {/* ── Sheet: preview preguntas del cuestionario de inicio ── */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className='flex w-full flex-col border-zinc-800 bg-zinc-950 sm:max-w-md'>
           <SheetHeader className='border-b border-zinc-800 pb-4'>
@@ -1078,7 +230,6 @@ export function PatientTabs({
             ))}
           </ol>
 
-          {/* Footer CTA */}
           {intakeUrl && (
             <div className='border-t border-zinc-800 pt-4'>
               <button
@@ -1110,188 +261,6 @@ export function PatientTabs({
           )}
         </SheetContent>
       </Sheet>
-
-      {/* ── Cuestionario ── */}
-      <TabsContent value='cuestionario' className='mt-6'>
-        <Section title='Cuestionario de salud (intake)'>
-          {intakeForm ? (
-            /* ── Cuestionario completado ── */
-            <div className='flex flex-col gap-4'>
-              {/* Badge de quién lo rellenó */}
-              <div className='flex flex-wrap items-center justify-between gap-3'>
-                <div className='flex items-center gap-2'>
-                  <span className='flex items-center gap-1.5 rounded-full border border-emerald-800/50 bg-emerald-950/30 px-2.5 py-1 text-xs font-medium text-emerald-400'>
-                    <span className='h-1.5 w-1.5 rounded-full bg-emerald-400' />
-                    {intakeForm.filled_by === 'nutritionist'
-                      ? 'Completado en consulta'
-                      : 'Completado por el paciente'}
-                  </span>
-                  <span className='text-xs text-zinc-600'>
-                    {new Date(intakeForm.completed_at).toLocaleDateString('es-ES', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
-                <button
-                  type='button'
-                  onClick={() => setIntakeSheetOpen(true)}
-                  className='flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200'
-                >
-                  <svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
-                    <path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' />
-                    <path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' />
-                  </svg>
-                  Editar respuestas
-                </button>
-              </div>
-
-              {/* Respuestas en grid */}
-              <div className='grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3'>
-                {Object.entries(intakeForm.answers).map(([key, value]) =>
-                  value ? (
-                    <DataField
-                      key={key}
-                      label={INTAKE_LABELS[key] ?? key.replace(/_/g, ' ')}
-                      value={String(value)}
-                    />
-                  ) : null,
-                )}
-              </div>
-            </div>
-          ) : (
-            /* ── Cuestionario pendiente ── */
-            <div className='flex flex-col gap-5'>
-              {/* Dos opciones en consulta vs remoto */}
-              <div className='flex flex-col gap-3 sm:flex-row'>
-                {/* Rellenar ahora */}
-                <button
-                  type='button'
-                  onClick={() => setIntakeSheetOpen(true)}
-                  className='group flex flex-1 flex-col items-center gap-2.5 rounded-xl border border-[#1a7a45]/40 bg-[#0a1f12] px-5 py-5 text-center transition-all duration-200 hover:border-[#1a7a45]/70 hover:bg-[#0d2716] active:scale-[0.99]'
-                >
-                  <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[#1a7a45]/20 text-emerald-400 transition-colors group-hover:bg-[#1a7a45]/30'>
-                    <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
-                      <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
-                      <circle cx='9' cy='7' r='4' />
-                      <path d='M23 21v-2a4 4 0 0 0-3-3.87' />
-                      <path d='M16 3.13a4 4 0 0 1 0 7.75' />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className='text-sm font-semibold text-zinc-100'>Rellenar ahora</p>
-                    <p className='mt-0.5 text-xs text-zinc-500'>Rellénalo tú en consulta</p>
-                  </div>
-                </button>
-
-                {/* Enviar al paciente */}
-                {intakeUrl && (
-                  <button
-                    type='button'
-                    onClick={() => {
-                      setSheetOpen(false);
-                      setActiveTab('cuestionario');
-                    }}
-                    className='group flex flex-1 flex-col items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/50 px-5 py-5 text-center transition-all duration-200 hover:border-zinc-700 hover:bg-zinc-900 active:scale-[0.99]'
-                  >
-                    <div className='flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 transition-colors group-hover:bg-zinc-700 group-hover:text-zinc-300'>
-                      <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
-                        <line x1='22' y1='2' x2='11' y2='13' />
-                        <polygon points='22 2 15 22 11 13 2 9 22 2' />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className='text-sm font-semibold text-zinc-300'>Enviar al paciente</p>
-                      <p className='mt-0.5 text-xs text-zinc-600'>Link para rellenarlo desde casa</p>
-                    </div>
-                  </button>
-                )}
-              </div>
-
-              {/* Texto explicativo */}
-              <p className='text-center text-xs text-zinc-600'>
-                Rellénalo tú en consulta o envíaselo al paciente para que lo complete antes de la cita.
-              </p>
-
-              {/* Enlace copiable (si hay intakeUrl) */}
-              {intakeUrl && (
-                <div className='flex flex-col gap-2'>
-                  <p className='text-xs text-zinc-600'>Enlace para el paciente:</p>
-                  <div className='flex items-center gap-2'>
-                    <code className='flex-1 truncate rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400'>
-                      {intakeUrl}
-                    </code>
-                    <CopyButton text={intakeUrl} />
-                  </div>
-                  {/* Aviso consentimiento IA */}
-                  <p className='text-[11px] text-zinc-700'>
-                    El link incluye la cláusula de consentimiento IA que el paciente debe aceptar.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </Section>
-      </TabsContent>
-
-      {/* ── Sheet formulario de intake (nutricionista) ── */}
-      <Sheet open={intakeSheetOpen} onOpenChange={setIntakeSheetOpen}>
-        <SheetContent
-          side='right'
-          className='flex w-full flex-col gap-0 overflow-y-auto border-zinc-800 bg-zinc-950 p-0 sm:max-w-xl'
-        >
-          <SheetHeader className='border-b border-zinc-800 px-6 py-5'>
-            <SheetTitle className='text-zinc-100'>
-              {intakeForm ? 'Editar cuestionario' : 'Rellenar cuestionario'}
-            </SheetTitle>
-            <SheetDescription className='text-zinc-500'>
-              {intakeForm
-                ? 'Actualiza las respuestas del paciente.'
-                : `Rellena el cuestionario de salud de ${patient.name} en consulta.`}
-            </SheetDescription>
-          </SheetHeader>
-          <div className='flex-1 overflow-y-auto px-6 py-5'>
-            <DashboardIntakeForm
-              patientId={patient.id}
-              initialAnswers={intakeForm?.answers ?? null}
-              onSuccess={() => setIntakeSheetOpen(false)}
-              onCancel={() => setIntakeSheetOpen(false)}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
     </Tabs>
-  );
-}
-
-// ── Plan row ──────────────────────────────────────────────────────────────
-
-function PlanRow({ plan }: { plan: NutritionPlan }) {
-  return (
-    <Link
-      href={`/dashboard/plans/${plan.id}`}
-      className='flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-colors hover:border-zinc-600 hover:bg-zinc-900'
-    >
-      <div className='flex flex-col gap-1'>
-        <span className='text-sm font-medium text-zinc-200'>
-          Semana del{' '}
-          {new Date(plan.week_start_date).toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-          })}
-        </span>
-        <span className='text-xs text-zinc-600'>
-          {new Date(plan.created_at).toLocaleDateString('es-ES')}
-        </span>
-      </div>
-      <span
-        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-          STATUS_COLORS[plan.status] ?? 'bg-zinc-800 text-zinc-400'
-        }`}
-      >
-        {PLAN_STATUS_LABELS[plan.status]}
-      </span>
-    </Link>
   );
 }
