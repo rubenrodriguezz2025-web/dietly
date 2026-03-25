@@ -25,7 +25,7 @@ export async function saveFollowupReminder(
   remindAt.setDate(remindAt.getDate() + days);
   const remindAtStr = remindAt.toISOString().split('T')[0];
 
-  const { error } = await (supabase as any).from('followup_reminders').insert({
+  const { error } = await supabase.from('followup_reminders').insert({
     patient_id: patientId,
     nutritionist_id: nutritionistId,
     remind_at: remindAtStr,
@@ -37,7 +37,7 @@ export async function saveFollowupReminder(
 
   // Enviar email al nutricionista con el recordatorio
   try {
-    const { data: profile } = await (supabase as any)
+    const { data: profile } = await supabase
       .from('profiles')
       .select('full_name')
       .eq('id', nutritionistId)

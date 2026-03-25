@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
+import type { Json } from '@/libs/supabase/types';
 
 export async function POST(req: Request) {
   let body: { token?: string; answers?: Record<string, unknown> };
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
   }
 
   // Buscar el formulario por token
-  const { data: form } = await (supabaseAdminClient as any)
+  const { data: form } = await supabaseAdminClient
     .from('followup_forms')
     .select('id, patient_id, nutritionist_id, completed_at, created_at, patients(name, email), profiles(full_name)')
     .eq('token', token)
@@ -46,9 +47,9 @@ export async function POST(req: Request) {
   const completedAt = new Date().toISOString();
 
   // Guardar respuestas y marcar como completado
-  const { error: updateError } = await (supabaseAdminClient as any)
+  const { error: updateError } = await supabaseAdminClient
     .from('followup_forms')
-    .update({ answers, completed_at: completedAt })
+    .update({ answers: answers as Record<string, Json>, completed_at: completedAt })
     .eq('id', form.id);
 
   if (updateError) {
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
 
   // Enviar email al nutricionista con las respuestas
   try {
-    const { data: nutritionistAuth } = await (supabaseAdminClient as any)
+    const { data: nutritionistAuth } = await supabaseAdminClient
       .from('profiles')
       .select('id')
       .eq('id', form.nutritionist_id)
@@ -146,7 +147,7 @@ export async function POST(req: Request) {
   // Crear nuevo recordatorio encadenado
   try {
     // Buscar el último recordatorio para este paciente para obtener el intervalo
-    const { data: lastReminder } = await (supabaseAdminClient as any)
+    const { data: lastReminder } = await supabaseAdminClient
       .from('followup_reminders')
       .select('days_interval')
       .eq('patient_id', form.patient_id)
@@ -162,7 +163,7 @@ export async function POST(req: Request) {
       nextRemindAt.setDate(nextRemindAt.getDate() + intervalDays);
       const nextRemindAtStr = nextRemindAt.toISOString().split('T')[0];
 
-      await (supabaseAdminClient as any).from('followup_reminders').insert({
+      await supabaseAdminClient.from('followup_reminders').insert({
         patient_id: form.patient_id,
         nutritionist_id: form.nutritionist_id,
         remind_at: nextRemindAtStr,

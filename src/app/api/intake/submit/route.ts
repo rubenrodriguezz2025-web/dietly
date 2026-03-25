@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
+import type { Json } from '@/libs/supabase/types';
 
 export async function POST(req: Request) {
   let body: { patient_id?: string; answers?: Record<string, unknown>; consent?: boolean };
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
   }
 
   // Obtener nombre del paciente y su nutricionista
-  const { data: paciente } = await (supabaseAdminClient as any)
+  const { data: paciente } = await supabaseAdminClient
     .from('patients')
     .select('id, name, nutritionist_id')
     .eq('id', patient_id)
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   // Comprobar si ya existe una respuesta (no permitir duplicados)
-  const { data: respuestaExistente } = await (supabaseAdminClient as any)
+  const { data: respuestaExistente } = await supabaseAdminClient
     .from('intake_forms')
     .select('id')
     .eq('patient_id', patient_id)
@@ -41,9 +42,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'El cuestionario ya fue enviado.' }, { status: 409 });
   }
 
-  const { error } = await (supabaseAdminClient as any).from('intake_forms').insert({
+  const { error } = await supabaseAdminClient.from('intake_forms').insert({
     patient_id,
-    answers,
+    answers: answers as Record<string, Json>,
     completed_at: new Date().toISOString(),
   });
 
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
       req.headers.get('x-real-ip') ??
       null;
 
-    await (supabaseAdminClient as any).from('patient_consents').insert({
+    await supabaseAdminClient.from('patient_consents').insert({
       patient_id,
       nutritionist_id: paciente.nutritionist_id,
       consent_type: 'patient_ai_consent',
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
 
   // Enviar notificación email al nutricionista — fire-and-forget
   try {
-    const { data: perfil } = await (supabaseAdminClient as any)
+    const { data: perfil } = await supabaseAdminClient
       .from('profiles')
       .select('full_name')
       .eq('id', paciente.nutritionist_id)

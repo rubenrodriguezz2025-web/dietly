@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Buscar al paciente por email (puede haber más de uno si varias clínicas lo tienen)
-  const { data: patients } = await (supabaseAdminClient as any)
+  const { data: patients } = await supabaseAdminClient
     .from('patients')
     .select('id, name, email, nutritionist_id')
     .eq('email', email.toLowerCase().trim());
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Crear una solicitud por cada registro encontrado
-  const inserts = patients.map((p: { id: string; name: string; email: string; nutritionist_id: string }) => ({
+  const inserts = patients.map((p: { id: string; name: string; email: string | null; nutritionist_id: string }) => ({
     patient_id: p.id,
     nutritionist_id: p.nutritionist_id,
     request_type,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     notes: notes ?? null,
   }));
 
-  const { error } = await (supabaseAdminClient as any)
+  const { error } = await supabaseAdminClient
     .from('data_rights_requests')
     .insert(inserts);
 

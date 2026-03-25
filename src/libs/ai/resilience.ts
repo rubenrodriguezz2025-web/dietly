@@ -194,14 +194,14 @@ export async function checkAndAlertErrorRate(): Promise<void> {
     const { supabaseAdminClient } = await import('@/libs/supabase/supabase-admin');
     const windowStart = new Date(Date.now() - 5 * 60_000).toISOString();
 
-    const { count: total } = await (supabaseAdminClient as any)
+    const { count: total } = await supabaseAdminClient
       .from('nutrition_plans')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', windowStart);
 
     if (!total || total < 3) return;
 
-    const { count: errors } = await (supabaseAdminClient as any)
+    const { count: errors } = await supabaseAdminClient
       .from('nutrition_plans')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'error')

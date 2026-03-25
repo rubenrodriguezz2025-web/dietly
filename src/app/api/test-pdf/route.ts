@@ -13,7 +13,7 @@ export async function GET() {
     )
   );
 
-  const buffer = await renderToBuffer(doc as any);
+  const buffer = await renderToBuffer(doc as unknown as React.JSX.Element);
 
   return new Response(new Uint8Array(buffer), {
     headers: {

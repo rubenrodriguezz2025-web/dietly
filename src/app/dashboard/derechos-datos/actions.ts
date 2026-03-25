@@ -18,7 +18,7 @@ export async function updateRequestStatus(
     update.responded_at = new Date().toISOString();
   }
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('data_rights_requests')
     .update(update)
     .eq('id', requestId)

@@ -15,7 +15,7 @@ export async function saveIntakeFromDashboard(
   if (!user) redirect('/login');
 
   // Verificar que el paciente pertenece a este nutricionista
-  const { data: patient } = await (supabase as any)
+  const { data: patient } = await supabase
     .from('patients')
     .select('id')
     .eq('id', patientId)
@@ -27,14 +27,14 @@ export async function saveIntakeFromDashboard(
   const now = new Date().toISOString();
 
   // Comprobar si ya existe un intake para este paciente
-  const { data: existing } = await (supabaseAdminClient as any)
+  const { data: existing } = await supabaseAdminClient
     .from('intake_forms')
     .select('id')
     .eq('patient_id', patientId)
     .maybeSingle();
 
   if (existing) {
-    const { error } = await (supabaseAdminClient as any)
+    const { error } = await supabaseAdminClient
       .from('intake_forms')
       .update({
         answers,
@@ -46,7 +46,7 @@ export async function saveIntakeFromDashboard(
 
     if (error) return { error: 'Error al guardar el cuestionario.' };
   } else {
-    const { error } = await (supabaseAdminClient as any)
+    const { error } = await supabaseAdminClient
       .from('intake_forms')
       .insert({
         patient_id: patientId,

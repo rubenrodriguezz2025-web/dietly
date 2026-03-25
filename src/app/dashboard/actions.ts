@@ -11,7 +11,7 @@ export async function markOnboardingComplete(): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  await (supabase as any)
+  await supabase
     .from('profiles')
     .update({ onboarding_completed_at: new Date().toISOString() })
     .eq('id', user.id);

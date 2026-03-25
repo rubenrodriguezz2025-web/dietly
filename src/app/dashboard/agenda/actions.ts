@@ -27,7 +27,7 @@ export async function createAppointment(
 
   if (!date || !time) return { error: 'La fecha y la hora son obligatorias.' };
 
-  const { error } = await (supabase as any).from('appointments').insert({
+  const { error } = await supabase.from('appointments').insert({
     nutritionist_id: user.id,
     patient_id,
     date,
@@ -58,7 +58,7 @@ export async function updateAppointmentStatus(formData: FormData): Promise<void>
 
   if (!id || !status) return;
 
-  await (supabase as any)
+  await supabase
     .from('appointments')
     .update({ status })
     .eq('id', id)
@@ -79,7 +79,7 @@ export async function deleteAppointment(formData: FormData): Promise<void> {
   const id = formData.get('id') as string;
   if (!id) return;
 
-  await (supabase as any)
+  await supabase
     .from('appointments')
     .delete()
     .eq('id', id)
@@ -104,7 +104,7 @@ export async function sendAppointmentReminder(
   if (!appointmentId) return { error: 'ID de cita no válido.' };
 
   // Obtener la cita con datos del paciente y del nutricionista
-  const { data: cita } = await (supabase as any)
+  const { data: cita } = await supabase
     .from('appointments')
     .select('*, patients(name, email)')
     .eq('id', appointmentId)
@@ -115,7 +115,7 @@ export async function sendAppointmentReminder(
   if (!cita.meeting_url) return { error: 'Esta cita no tiene enlace de videollamada.' };
   if (!cita.patients?.email) return { error: 'El paciente no tiene email registrado.' };
 
-  const { data: profile } = await (supabase as any)
+  const { data: profile } = await supabase
     .from('profiles')
     .select('full_name, clinic_name')
     .eq('id', user.id)

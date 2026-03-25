@@ -12,7 +12,7 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: 'No autorizado' }, { status: 401 });
 
-  const { data: plan } = await (supabase as any)
+  const { data: plan } = await supabase
     .from('nutrition_plans')
     .select('status')
     .eq('id', id)

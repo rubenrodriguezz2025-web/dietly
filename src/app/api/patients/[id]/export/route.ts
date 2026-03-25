@@ -17,7 +17,7 @@ export async function GET(
   }
 
   // Verificar que el paciente pertenece a este nutricionista
-  const { data: patient } = await (supabaseAdminClient as any)
+  const { data: patient } = await supabaseAdminClient
     .from('patients')
     .select('*')
     .eq('id', patientId)
@@ -30,31 +30,31 @@ export async function GET(
 
   // Recopilar todos los datos del paciente en paralelo
   const [plansResult, progressResult, intakeResult, consentsResult, followupResult] = await Promise.all([
-    (supabaseAdminClient as any)
+    supabaseAdminClient
       .from('nutrition_plans')
       .select('id, status, week_start_date, plan_data, generated_at, approved_at, sent_at, claude_tokens_used')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false }),
 
-    (supabaseAdminClient as any)
+    supabaseAdminClient
       .from('patient_progress')
       .select('*')
       .eq('patient_id', patientId)
       .order('recorded_at', { ascending: true }),
 
-    (supabaseAdminClient as any)
+    supabaseAdminClient
       .from('intake_forms')
       .select('answers, completed_at, created_at')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false }),
 
-    (supabaseAdminClient as any)
+    supabaseAdminClient
       .from('patient_consents')
       .select('consent_type, granted_at, revoked_at, consent_text_version, created_at')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false }),
 
-    (supabaseAdminClient as any)
+    supabaseAdminClient
       .from('followup_forms')
       .select('created_at, completed_at, answers')
       .eq('patient_id', patientId)

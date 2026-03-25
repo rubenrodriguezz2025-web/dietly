@@ -34,7 +34,7 @@ export async function recalculateMealMacros(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'No autenticado.' };
 
-  const { data: plan } = await (supabase as any)
+  const { data: plan } = await supabase
     .from('nutrition_plans')
     .select('status')
     .eq('id', planId)
@@ -126,7 +126,7 @@ export async function updateDay(
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: plan } = (await (supabase as any)
+  const { data: plan } = (await supabase
     .from('nutrition_plans')
     .select('content')
     .eq('id', planId)
@@ -140,7 +140,7 @@ export async function updateDay(
     d.day_number === dayNumber ? updatedDay : d
   );
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('nutrition_plans')
     .update({ content: { ...content, days: updatedDays } })
     .eq('id', planId)
@@ -165,15 +165,14 @@ export async function approvePlan(
 
   console.log('[approvePlan] Usuario:', user.id, 'Plan:', planId);
 
-  const { error, count } = await (supabase as any)
+  const { error, count } = await supabase
     .from('nutrition_plans')
-    .update({
-      status: 'approved',
-      approved_at: new Date().toISOString(),
-    })
+    .update(
+      { status: 'approved', approved_at: new Date().toISOString() },
+      { count: 'exact' }
+    )
     .eq('id', planId)
-    .eq('nutritionist_id', user.id)
-    .select('id', { count: 'exact', head: true });
+    .eq('nutritionist_id', user.id);
 
   if (error) {
     console.error('[approvePlan] Supabase error:', JSON.stringify(error));
@@ -203,7 +202,7 @@ export async function sendPlanToPatient(
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: plan } = (await (supabase as any)
+  const { data: plan } = (await supabase
     .from('nutrition_plans')
     .select('*, patients(*)')
     .eq('id', planId)
@@ -215,7 +214,7 @@ export async function sendPlanToPatient(
     return { error: 'Solo se pueden enviar planes aprobados.' };
   if (!plan.patients?.email) return { error: 'El paciente no tiene email registrado. Añádelo en su ficha.' };
 
-  const { data: profile } = (await (supabase as any)
+  const { data: profile } = (await supabase
     .from('profiles')
     .select('full_name, clinic_name')
     .eq('id', user.id)
@@ -284,7 +283,7 @@ export async function sendPlanToPatient(
     return { error: 'Error al enviar el email. Inténtalo de nuevo.' };
   }
 
-  await (supabase as any)
+  await supabase
     .from('nutrition_plans')
     .update({ status: 'sent', sent_at: new Date().toISOString() })
     .eq('id', planId)
@@ -307,7 +306,7 @@ export async function acknowledgeValidationBlock(
   if (!user) redirect('/login');
 
   // Añadir el código al array usando el operador de array de Postgres
-  const { error } = await (supabase as any).rpc('append_validation_ack', {
+  const { error } = await supabase.rpc('append_validation_ack', {
     p_plan_id: planId,
     p_nutritionist_id: user.id,
     p_block_code: blockCode,
@@ -315,7 +314,7 @@ export async function acknowledgeValidationBlock(
 
   if (error) {
     // Fallback manual si la función RPC no existe aún
-    const { data: plan } = await (supabase as any)
+    const { data: plan } = await supabase
       .from('nutrition_plans')
       .select('validation_acked_blocks')
       .eq('id', planId)
@@ -327,7 +326,7 @@ export async function acknowledgeValidationBlock(
     const current: string[] = plan.validation_acked_blocks ?? [];
     if (current.includes(blockCode)) return {};
 
-    const { error: updateError } = await (supabase as any)
+    const { error: updateError } = await supabase
       .from('nutrition_plans')
       .update({ validation_acked_blocks: [...current, blockCode] })
       .eq('id', planId)
@@ -357,7 +356,7 @@ export async function regenerateDay(
   if (!user) redirect('/login');
 
   // Fetch plan + patient
-  const { data: plan } = (await (supabase as any)
+  const { data: plan } = (await supabase
     .from('nutrition_plans')
     .select('*, patients(*)')
     .eq('id', planId)
@@ -566,7 +565,7 @@ Usa la herramienta generate_day para devolver el plan.`;
       ...(newShoppingList ? { shopping_list: newShoppingList } : {}),
     };
 
-    const { error: updateError } = await (supabaseAdminClient as any)
+    const { error: updateError } = await supabaseAdminClient
       .from('nutrition_plans')
       .update({ content: updatedContent })
       .eq('id', planId);

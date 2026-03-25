@@ -17,7 +17,7 @@ export async function DELETE(
   }
 
   // Verificar que el paciente pertenece a este nutricionista
-  const { data: patient } = await (supabaseAdminClient as any)
+  const { data: patient } = await supabaseAdminClient
     .from('patients')
     .select('id, name, email')
     .eq('id', patientId)
@@ -37,7 +37,7 @@ export async function DELETE(
   //   patient_consents, followup_forms, followup_reminders.
   // data_rights_requests tiene ON DELETE SET NULL (se conserva el historial de auditoría).
   // ai_request_logs NO tiene FK al paciente (pseudonimizados) — ya son datos anónimos.
-  const { error } = await (supabaseAdminClient as any)
+  const { error } = await supabaseAdminClient
     .from('patients')
     .delete()
     .eq('id', patientId);
@@ -49,7 +49,7 @@ export async function DELETE(
 
   // Marcar la solicitud RGPD como completada si se pasó request_id
   if (requestId) {
-    await (supabaseAdminClient as any)
+    await supabaseAdminClient
       .from('data_rights_requests')
       .update({ status: 'completed', responded_at: new Date().toISOString() })
       .eq('id', requestId);

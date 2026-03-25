@@ -321,7 +321,7 @@ export async function POST(req: NextRequest) {
         // ── Límite beta ───────────────────────────────────────────────────────
         // El email en beta_whitelist se almacenó en minúsculas (ver auth-actions.ts)
         const normalizedEmail = (user.email ?? '').toLowerCase().trim();
-        const { data: whitelistEntry } = await (supabaseAdminClient as any)
+        const { data: whitelistEntry } = await supabaseAdminClient
           .from('beta_whitelist')
           .select('plan_limit')
           .eq('email', normalizedEmail)
@@ -333,7 +333,7 @@ export async function POST(req: NextRequest) {
           : (whitelistEntry?.plan_limit ?? BETA_PLAN_LIMIT);
 
         if (effectiveLimit !== -1) {
-          const { count: planCount } = await (supabaseAdminClient as any)
+          const { count: planCount } = await supabaseAdminClient
             .from('nutrition_plans')
             .select('id', { count: 'exact', head: true })
             .eq('nutritionist_id', user.id);
@@ -351,7 +351,7 @@ export async function POST(req: NextRequest) {
         send({ type: 'progress', step: 'beta_ok' });
 
         // ── Paciente ──────────────────────────────────────────────────────────
-        const { data: patient } = (await (supabase as any)
+        const { data: patient } = (await supabase
           .from('patients')
           .select('*')
           .eq('id', patient_id)
@@ -389,7 +389,7 @@ export async function POST(req: NextRequest) {
         const { pseudoPatient, sessionId } = pseudonymizePatient(patient);
 
         // ── Intake form ───────────────────────────────────────────────────────
-        const { data: intakeFormData } = await (supabaseAdminClient as any)
+        const { data: intakeFormData } = await supabaseAdminClient
           .from('intake_forms')
           .select('answers')
           .eq('patient_id', patient_id)
@@ -405,7 +405,7 @@ export async function POST(req: NextRequest) {
         // No bloqueamos la generación si falla (fire-and-continue).
         let nutritionistRecipes: Recipe[] = [];
         try {
-          const { data: recipesData } = await (supabaseAdminClient as any)
+          const { data: recipesData } = await supabaseAdminClient
             .from('recipes')
             .select('*')
             .eq('nutritionist_id', user.id)
@@ -452,7 +452,7 @@ export async function POST(req: NextRequest) {
           shopping_list: { produce: [], protein: [], dairy: [], grains: [], pantry: [] },
         };
 
-        const { data: planRecord, error: createError } = await (supabaseAdminClient as any)
+        const { data: planRecord, error: createError } = await supabaseAdminClient
           .from('nutrition_plans')
           .insert({
             patient_id,
@@ -516,7 +516,7 @@ export async function POST(req: NextRequest) {
             totalTokensOutput += outputTok;
             console.log(`[plans/generate] plan=${planId} día=${dayNum} — Claude OK (in=${inputTok} out=${outputTok} stop=${response.stop_reason})`);
 
-            void (supabaseAdminClient as any).from('plan_generations').insert({
+            void supabaseAdminClient.from('plan_generations').insert({
               plan_id: planId,
               nutritionist_id: user.id,
               day_generated: dayNum,
@@ -581,7 +581,7 @@ export async function POST(req: NextRequest) {
             const isServiceUnavailable =
               err instanceof AnthropicResilienceError && err.code === 'service_unavailable';
 
-            await (supabaseAdminClient as any)
+            await supabaseAdminClient
               .from('nutrition_plans')
               .update({ status: 'error' })
               .eq('id', planId);
@@ -607,7 +607,7 @@ export async function POST(req: NextRequest) {
           }
 
           if (!dayData) {
-            await (supabaseAdminClient as any)
+            await supabaseAdminClient
               .from('nutrition_plans')
               .update({ status: 'error' })
               .eq('id', planId);
@@ -645,7 +645,7 @@ export async function POST(req: NextRequest) {
           totalTokensOutput += slOutput;
           console.log(`[plans/generate] plan=${planId} — shopping list OK (in=${slInput} out=${slOutput})`);
 
-          void (supabaseAdminClient as any).from('plan_generations').insert({
+          void supabaseAdminClient.from('plan_generations').insert({
             plan_id: planId,
             nutritionist_id: user.id,
             day_generated: 8,
@@ -700,7 +700,7 @@ export async function POST(req: NextRequest) {
         };
 
         console.log(`[plans/generate] plan=${planId} — guardando plan en Supabase (días=${days.length})`);
-        const { error: finalUpdateError } = await (supabaseAdminClient as any)
+        const { error: finalUpdateError } = await supabaseAdminClient
           .from('nutrition_plans')
           .update({
             status: 'draft',
@@ -721,7 +721,7 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         console.error('[plans/generate] error:', err);
         if (planId) {
-          await (supabaseAdminClient as any)
+          await supabaseAdminClient
             .from('nutrition_plans')
             .update({ status: 'error' })
             .eq('id', planId);

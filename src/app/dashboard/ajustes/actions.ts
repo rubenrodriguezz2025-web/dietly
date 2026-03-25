@@ -45,7 +45,7 @@ export async function uploadLogo(
   if (uploadError) return { error: uploadError.message };
 
   // Guardar la ruta en profiles
-  const { error: dbError } = await (supabase as any)
+  const { error: dbError } = await supabase
     .from('profiles')
     .update({ logo_url: path })
     .eq('id', user.id);
@@ -69,7 +69,7 @@ export async function deleteLogo(
   if (!user) return { error: 'No autorizado' };
 
   // Obtener la ruta actual
-  const { data: profile } = await (supabase as any)
+  const { data: profile } = await supabase
     .from('profiles')
     .select('logo_url')
     .eq('id', user.id)
@@ -79,7 +79,7 @@ export async function deleteLogo(
     await supabase.storage.from(BUCKET).remove([profile.logo_url as string]);
   }
 
-  await (supabase as any)
+  await supabase
     .from('profiles')
     .update({ logo_url: null })
     .eq('id', user.id);
@@ -107,7 +107,7 @@ export async function updateProfile(
 
   if (!full_name) return { error: 'El nombre es obligatorio' };
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('profiles')
     .update({ full_name, clinic_name, college_number })
     .eq('id', user.id);
@@ -151,7 +151,7 @@ export async function uploadSignature(
 
   if (uploadError) return { error: uploadError.message };
 
-  const { error: dbError } = await (supabase as any)
+  const { error: dbError } = await supabase
     .from('profiles')
     .update({ signature_url: path })
     .eq('id', user.id);
@@ -173,7 +173,7 @@ export async function deleteSignature(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'No autorizado' };
 
-  const { data: profile } = await (supabase as any)
+  const { data: profile } = await supabase
     .from('profiles')
     .select('signature_url')
     .eq('id', user.id)
@@ -183,7 +183,7 @@ export async function deleteSignature(
     await supabase.storage.from(SIG_BUCKET).remove([profile.signature_url as string]);
   }
 
-  await (supabase as any)
+  await supabase
     .from('profiles')
     .update({ signature_url: null })
     .eq('id', user.id);

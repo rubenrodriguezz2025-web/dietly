@@ -142,22 +142,21 @@ async function handlePreview() {
     return Response.json({ error: 'No autorizado' }, { status: 401 });
   }
 
-  const { data: profileData } = await (supabase as any)
+  const { data: profileData } = await supabase
     .from('profiles')
-    .select(
-      'full_name, clinic_name, logo_url, signature_url, college_number, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url'
-    )
+    .select('*')
     .eq('id', user.id)
     .single();
 
   // Determinar si tiene suscripción Pro (para logo/firma)
-  const { data: subscription } = await (supabase as any)
+  const { data: subscription } = await supabase
     .from('subscriptions')
     .select('status, prices(products(name))')
     .in('status', ['trialing', 'active'])
     .maybeSingle();
 
-  const productName: string = (subscription as any)?.prices?.products?.name ?? '';
+  const prices = subscription?.prices as unknown as { products: { name: string } | null } | null;
+  const productName: string = prices?.products?.name ?? '';
   const is_pro =
     subscription != null &&
     (productName.toLowerCase().includes('pro') ||
@@ -207,7 +206,7 @@ async function handlePreview() {
       }),
     });
 
-    const buffer = await renderToBuffer(elemento as React.ReactElement);
+    const buffer = await renderToBuffer(elemento as unknown as React.JSX.Element);
 
     return new Response(new Uint8Array(buffer), {
       headers: {

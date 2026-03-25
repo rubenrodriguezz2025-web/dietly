@@ -20,7 +20,7 @@ export async function sendFollowupQuestionnaire(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'No autenticado' };
 
-  const { data: profile } = await (supabase as any)
+  const { data: profile } = await supabase
     .from('profiles')
     .select('full_name')
     .eq('id', user.id)
@@ -32,7 +32,7 @@ export async function sendFollowupQuestionnaire(
   const token = randomUUID();
 
   // Insertar en followup_forms
-  const { error: insertError } = await (supabaseAdminClient as any).from('followup_forms').insert({
+  const { error: insertError } = await supabaseAdminClient.from('followup_forms').insert({
     patient_id: patientId,
     nutritionist_id: user.id,
     token,

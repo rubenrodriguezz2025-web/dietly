@@ -149,7 +149,7 @@ async function sincronizarSuscripcion(
       : subscription.status;
 
   await supabaseAdminClient
-    .from('profiles' as any)
+    .from('profiles')
     .update({ subscription_status: estadoParaPerfil })
     .eq('id', userId);
 

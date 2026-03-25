@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     if (!sig || !webhookSecret) return;
     event = stripeAdmin.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (error) {
-    return Response.json(`Webhook Error: ${(error as any).message}`, { status: 400 });
+    return Response.json(`Webhook Error: ${(error as Error).message}`, { status: 400 });
   }
 
   if (relevantEvents.has(event.type)) {

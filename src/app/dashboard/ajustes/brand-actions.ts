@@ -31,7 +31,7 @@ export async function updateBrandSettings(
   const font_preference = (formData.get('font_preference') as string | null) || 'clasica';
   const primary_color = (formData.get('primary_color') as string | null) || '#1a7a45';
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('profiles')
     .update({ show_macros, show_shopping_list, welcome_message, font_preference, primary_color })
     .eq('id', user.id);
@@ -48,7 +48,7 @@ export async function updateShowMacros(value: boolean): Promise<ActionResult> {
   const { supabase, user } = await getAuthUser();
   if (!user) return { error: 'No autorizado' };
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('profiles')
     .update({ show_macros: value })
     .eq('id', user.id);
@@ -64,7 +64,7 @@ export async function updateShowShoppingList(value: boolean): Promise<ActionResu
   const { supabase, user } = await getAuthUser();
   if (!user) return { error: 'No autorizado' };
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('profiles')
     .update({ show_shopping_list: value })
     .eq('id', user.id);
@@ -82,7 +82,7 @@ export async function updateWelcomeMessage(text: string): Promise<ActionResult> 
 
   const welcome_message = text.trim() || null;
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('profiles')
     .update({ welcome_message })
     .eq('id', user.id);
@@ -100,7 +100,7 @@ export async function updateFontPreference(
   const { supabase, user } = await getAuthUser();
   if (!user) return { error: 'No autorizado' };
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('profiles')
     .update({ font_preference: font })
     .eq('id', user.id);
@@ -116,7 +116,7 @@ export async function updatePrimaryColor(color: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthUser();
   if (!user) return { error: 'No autorizado' };
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('profiles')
     .update({ primary_color: color })
     .eq('id', user.id);
@@ -158,7 +158,7 @@ export async function uploadProfilePhoto(
 
   if (uploadError) return { error: uploadError.message };
 
-  const { error: dbError } = await (supabase as any)
+  const { error: dbError } = await supabase
     .from('profiles')
     .update({ profile_photo_url: path })
     .eq('id', user.id);
@@ -175,7 +175,7 @@ export async function markBrandSettingsVisited(): Promise<void> {
   const { supabase, user } = await getAuthUser();
   if (!user) return;
 
-  await (supabase as any)
+  await supabase
     .from('profiles')
     .update({ brand_settings_visited_at: new Date().toISOString() })
     .eq('id', user.id)
@@ -193,7 +193,7 @@ export async function deleteProfilePhoto(
   const { supabase, user } = await getAuthUser();
   if (!user) return { error: 'No autorizado' };
 
-  const { data: profile } = await (supabase as any)
+  const { data: profile } = await supabase
     .from('profiles')
     .select('profile_photo_url')
     .eq('id', user.id)
@@ -203,7 +203,7 @@ export async function deleteProfilePhoto(
     await supabase.storage.from(PHOTO_BUCKET).remove([profile.profile_photo_url as string]);
   }
 
-  await (supabase as any)
+  await supabase
     .from('profiles')
     .update({ profile_photo_url: null })
     .eq('id', user.id);

@@ -47,7 +47,7 @@ export async function updatePatientField(
 
   // Recalcular TMB y TDEE cuando cambia un campo biométrico
   if (['sex', 'weight_kg', 'height_cm', 'date_of_birth', 'activity_level'].includes(field)) {
-    const { data: patient } = await (supabase as any)
+    const { data: patient } = await supabase
       .from('patients')
       .select('sex, weight_kg, height_cm, date_of_birth, activity_level')
       .eq('id', patientId)
@@ -69,7 +69,7 @@ export async function updatePatientField(
     }
   }
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('patients')
     .update(update)
     .eq('id', patientId)

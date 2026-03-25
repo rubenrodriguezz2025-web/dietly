@@ -91,7 +91,7 @@ export async function createPatient(
   // (evita errores PGRST116 si el SELECT falla por timing de RLS)
   const patientId = crypto.randomUUID();
 
-  const { error } = await (supabase as any).from('patients').insert({
+  const { error } = await supabase.from('patients').insert({
     id: patientId,
     nutritionist_id: user.id,
     name,
@@ -128,7 +128,7 @@ export async function createPatient(
     reqHeaders.get('x-real-ip') ??
     null;
 
-  const { error: consentError } = await (supabase as any).from('patient_consents').insert({
+  const { error: consentError } = await supabase.from('patient_consents').insert({
     patient_id: patientId,
     nutritionist_id: user.id,
     consent_type: 'ai_processing',

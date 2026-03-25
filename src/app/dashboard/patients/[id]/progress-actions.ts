@@ -23,7 +23,7 @@ export async function addProgressEntry(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'No autenticado' };
 
-  const { error } = await (supabase as any).from('patient_progress').insert({
+  const { error } = await supabase.from('patient_progress').insert({
     patient_id: patientId,
     nutritionist_id: user.id,
     ...data,
@@ -45,7 +45,7 @@ export async function deleteProgressEntry(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'No autenticado' };
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('patient_progress')
     .delete()
     .eq('id', entryId)

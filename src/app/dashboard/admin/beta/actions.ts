@@ -28,7 +28,7 @@ export async function addBetaEmail(formData: FormData): Promise<{ error?: string
 
   if (!email) return { error: 'El email es obligatorio.' };
 
-  const { error } = await (supabaseAdminClient as any)
+  const { error } = await supabaseAdminClient
     .from('beta_whitelist')
     .insert({ email, name, notes });
 
@@ -44,7 +44,7 @@ export async function addBetaEmail(formData: FormData): Promise<{ error?: string
 export async function removeBetaEmail(id: string): Promise<{ error?: string }> {
   await assertAdmin();
 
-  const { error } = await (supabaseAdminClient as any)
+  const { error } = await supabaseAdminClient
     .from('beta_whitelist')
     .delete()
     .eq('id', id);

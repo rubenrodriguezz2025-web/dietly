@@ -23,7 +23,7 @@ export async function GET(
   }
 
   // Obtener el plan con datos del paciente
-  const { data: plan, error } = await (supabase as any)
+  const { data: plan, error } = await supabase
     .from('nutrition_plans')
     .select('*, patients(id, name, email)')
     .eq('id', id)
@@ -50,9 +50,9 @@ export async function GET(
   }
 
   // Obtener perfil del nutricionista (logo, firma, número de colegiado y ajustes de marca)
-  const { data: profileData, error: profileError } = await (supabase as any)
+  const { data: profileData, error: profileError } = await supabase
     .from('profiles')
-    .select('full_name, clinic_name, logo_url, signature_url, college_number, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url')
+    .select('*')
     .eq('id', user.id)
     .single();
 
@@ -79,14 +79,15 @@ export async function GET(
   // Verificar si el usuario tiene suscripción Pro activa
   // Plan Pro = producto Stripe cuyo nombre contiene "pro" o "profesional"
   // TODO: cuando haya price_id de Pro en variables de entorno, comparar directamente
-  const { data: subscription } = await (supabase as any)
+  const { data: subscription } = await supabase
     .from('subscriptions')
     .select('status, price_id, prices(unit_amount, products(name))')
     .eq('user_id', user.id)
     .in('status', ['trialing', 'active'])
     .maybeSingle();
 
-  const productName: string = subscription?.prices?.products?.name ?? '';
+  const prices = subscription?.prices as unknown as { products: { name: string } | null } | null;
+  const productName: string = prices?.products?.name ?? '';
   const is_pro =
     subscription != null &&
     (productName.toLowerCase().includes('pro') ||
@@ -149,7 +150,7 @@ export async function GET(
       approved_at: approved_at ?? undefined,
     });
 
-    const buffer = await renderToBuffer(elemento as any);
+    const buffer = await renderToBuffer(elemento as unknown as React.JSX.Element);
 
     const fechaStr = new Date(plan.week_start_date as string)
       .toISOString()

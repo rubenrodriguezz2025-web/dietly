@@ -60,7 +60,7 @@ export interface LogAIRequestParams {
  * principal. Los errores se reportan solo a console.error.
  */
 export async function logAIRequest(params: LogAIRequestParams): Promise<void> {
-  const { error } = await (supabaseAdminClient as any)
+  const { error } = await supabaseAdminClient
     .from('ai_request_logs')
     .insert({
       nutritionist_id:   params.nutritionistId,

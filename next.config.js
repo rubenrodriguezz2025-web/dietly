@@ -2,11 +2,7 @@
 const nextConfig = {
   serverExternalPackages: ["@react-pdf/renderer"],
 
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-
-  async redirects() {
+async redirects() {
     return [
       // Alias antiguo /dashboard/rgpd → ruta correcta
       {

@@ -17,7 +17,7 @@ export async function getRecipes(): Promise<{ recipes?: Recipe[]; error?: string
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('recipes')
     .select('*')
     .eq('nutritionist_id', user.id)
@@ -50,7 +50,7 @@ export async function createRecipe(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('recipes')
     .insert({ ...input, nutritionist_id: user.id })
     .select('*')
@@ -72,7 +72,7 @@ export async function updateRecipe(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('recipes')
     .update({ ...input, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -91,7 +91,7 @@ export async function deleteRecipe(id: string): Promise<{ error?: string }> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('recipes')
     .delete()
     .eq('id', id)
