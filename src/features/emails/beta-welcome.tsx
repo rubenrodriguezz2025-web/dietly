@@ -73,7 +73,7 @@ export function BetaWelcomeEmail({ name }: BetaWelcomeEmailProps) {
 
             {/* CTA */}
             <Section style={ctaContainerStyle}>
-              <Button href='https://dietly.es/register' style={buttonStyle}>
+              <Button href='https://dietly.es/signup' style={buttonStyle}>
                 Acceder a Dietly
               </Button>
             </Section>
