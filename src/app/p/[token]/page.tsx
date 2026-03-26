@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
+import { aggregateShoppingList } from '@/libs/shopping-list';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { PlanContent } from '@/types/dietly';
 
@@ -316,10 +317,11 @@ export default async function PaginaPaciente({
 
               <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
                 {CATEGORIAS_COMPRA.map(([clave, etiqueta, icono], idx) => {
-                  const items =
+                  const rawItems =
                     content.shopping_list[
                       clave as keyof typeof content.shopping_list
                     ];
+                  const items = rawItems?.length ? aggregateShoppingList(rawItems) : null;
                   if (!items?.length) return null;
                   return (
                     <div

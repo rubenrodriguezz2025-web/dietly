@@ -17,6 +17,25 @@ function calcAge(dob: string): number {
   return age;
 }
 
+function validateField(name: string, value: string): string {
+  if (name === 'name') {
+    if (!value.trim()) return 'El nombre es obligatorio';
+  }
+  if (name === 'email' && value.trim()) {
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+    if (!ok) return 'Introduce un email válido';
+  }
+  if (name === 'weight_kg' && value.trim()) {
+    const n = parseFloat(value);
+    if (isNaN(n) || n < 20 || n > 300) return 'El peso debe estar entre 20 y 300 kg';
+  }
+  if (name === 'height_cm' && value.trim()) {
+    const n = parseFloat(value);
+    if (isNaN(n) || n < 100 || n > 250) return 'La altura debe estar entre 100 y 250 cm';
+  }
+  return '';
+}
+
 const DIETARY_OPTIONS = [
   'Vegetariano',
   'Vegano',
@@ -37,10 +56,12 @@ const textareaClass =
 function Field({
   label,
   required,
+  error,
   children,
 }: {
   label: string;
   required?: boolean;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -52,6 +73,9 @@ function Field({
         </span>
         {children}
       </label>
+      {error && (
+        <p className='text-xs text-red-400'>{error}</p>
+      )}
     </div>
   );
 }
@@ -67,7 +91,19 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 export function NewPatientForm() {
   const [state, action, pending] = useActionState(createPatient, {});
   const [dob, setDob] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const isMinor = dob ? calcAge(dob) < 18 : false;
+
+  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+    const msg = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: msg }));
+  }
+
+  const inputClass = (fieldName: string) =>
+    errors[fieldName]
+      ? 'border-red-500 focus-visible:ring-red-500'
+      : '';
 
   return (
     <form action={action} className='flex flex-col gap-8'>
@@ -75,11 +111,25 @@ export function NewPatientForm() {
       <section className='flex flex-col gap-4'>
         <SectionTitle>Datos personales</SectionTitle>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <Field label='Nombre completo' required>
-            <Input name='name' placeholder='Ej: Ana Martínez García' required disabled={pending} />
+          <Field label='Nombre completo' required error={errors['name']}>
+            <Input
+              name='name'
+              placeholder='Ej: Ana Martínez García'
+              required
+              disabled={pending}
+              onBlur={handleBlur}
+              className={inputClass('name')}
+            />
           </Field>
-          <Field label='Email'>
-            <Input name='email' type='email' placeholder='ana@ejemplo.com' disabled={pending} />
+          <Field label='Email' error={errors['email']}>
+            <Input
+              name='email'
+              type='email'
+              placeholder='ana@ejemplo.com'
+              disabled={pending}
+              onBlur={handleBlur}
+              className={inputClass('email')}
+            />
           </Field>
           <Field label='Fecha de nacimiento'>
             <Input
@@ -105,7 +155,7 @@ export function NewPatientForm() {
       <section className='flex flex-col gap-4'>
         <SectionTitle>Datos antropométricos</SectionTitle>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <Field label='Peso (kg)'>
+          <Field label='Peso (kg)' error={errors['weight_kg']}>
             <Input
               name='weight_kg'
               type='number'
@@ -114,9 +164,11 @@ export function NewPatientForm() {
               max='300'
               placeholder='Ej: 72.5'
               disabled={pending}
+              onBlur={handleBlur}
+              className={inputClass('weight_kg')}
             />
           </Field>
-          <Field label='Altura (cm)'>
+          <Field label='Altura (cm)' error={errors['height_cm']}>
             <Input
               name='height_cm'
               type='number'
@@ -125,6 +177,8 @@ export function NewPatientForm() {
               max='250'
               placeholder='Ej: 168'
               disabled={pending}
+              onBlur={handleBlur}
+              className={inputClass('height_cm')}
             />
           </Field>
           <Field label='Nivel de actividad'>

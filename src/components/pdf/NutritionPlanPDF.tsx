@@ -6,6 +6,7 @@
 import React from 'react';
 import path from 'path';
 
+import { aggregateShoppingList } from '@/libs/shopping-list';
 import type { PlanContent, Profile } from '@/types/dietly';
 import { Document, Font, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
@@ -19,6 +20,24 @@ Font.register({
     { src: path.join(fontsDir, 'Inter-Regular.woff'), fontWeight: 400 },
     { src: path.join(fontsDir, 'Inter-Medium.woff'), fontWeight: 500 },
     { src: path.join(fontsDir, 'Inter-Bold.woff'), fontWeight: 700 },
+  ],
+});
+
+Font.register({
+  family: 'Lora',
+  fonts: [
+    { src: path.join(fontsDir, 'Lora-Regular.ttf'), fontWeight: 400 },
+    { src: path.join(fontsDir, 'Lora-Regular.ttf'), fontWeight: 500 },
+    { src: path.join(fontsDir, 'Lora-Regular.ttf'), fontWeight: 700 },
+  ],
+});
+
+Font.register({
+  family: 'Poppins',
+  fonts: [
+    { src: path.join(fontsDir, 'Poppins-Regular.ttf'), fontWeight: 400 },
+    { src: path.join(fontsDir, 'Poppins-Medium.ttf'), fontWeight: 500 },
+    { src: path.join(fontsDir, 'Poppins-Bold.ttf'), fontWeight: 700 },
   ],
 });
 
@@ -48,6 +67,12 @@ export type PropsPDF = {
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+
+function getFontFamily(pref?: FontPreference | null): string {
+  if (pref === 'clasica') return 'Lora';
+  if (pref === 'moderna') return 'Poppins';
+  return 'Inter'; // 'minimalista' o por defecto
+}
 
 function hex15(color: string): string { return color + '26'; }
 function hex10(color: string): string { return color + '1A'; }
@@ -89,7 +114,6 @@ function trunc(text: string, max: number): string {
 
 const S = StyleSheet.create({
   page: {
-    fontFamily: 'Inter',
     fontSize: 9,
     color: '#1a1a1a',
     backgroundColor: '#ffffff',
@@ -105,13 +129,11 @@ const S = StyleSheet.create({
     justifyContent: 'space-between',
   },
   bandText: {
-    fontFamily: 'Inter',
     fontWeight: 700,
     fontSize: 10,
     color: '#ffffff',
   },
   bandSub: {
-    fontFamily: 'Inter',
     fontWeight: 400,
     fontSize: 8,
     color: 'rgba(255,255,255,0.82)',
@@ -137,7 +159,6 @@ const S = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    fontFamily: 'Inter',
     fontWeight: 400,
     fontSize: 7,
     color: '#bbbbbb',
@@ -150,7 +171,6 @@ const S = StyleSheet.create({
     paddingVertical: 1.5,
   },
   pillText: {
-    fontFamily: 'Inter',
     fontWeight: 700,
     fontSize: 7,
   },
@@ -171,7 +191,6 @@ const S = StyleSheet.create({
     paddingHorizontal: 5,
   },
   ingQty: {
-    fontFamily: 'Inter',
     fontWeight: 500,
     fontSize: 7.5,
     color: '#555555',
@@ -179,7 +198,6 @@ const S = StyleSheet.create({
     flexShrink: 0,
   },
   ingName: {
-    fontFamily: 'Inter',
     fontWeight: 400,
     fontSize: 7.5,
     color: '#444444',
@@ -251,11 +269,11 @@ function MealBlock({
         {/* Fila: hora | nombre comida */}
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
           {meal.time_suggestion ? (
-            <Text style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 8, color, flexShrink: 0 }}>
+            <Text style={{ fontWeight: 500, fontSize: 8, color, flexShrink: 0 }}>
               {meal.time_suggestion}
             </Text>
           ) : null}
-          <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 10, color: '#1a1a1a', flex: 1 }}>
+          <Text style={{ fontWeight: 700, fontSize: 10, color: '#1a1a1a', flex: 1 }}>
             {meal.meal_name}
           </Text>
           {/* Macros inline a la derecha para ahorrar línea */}
@@ -281,7 +299,7 @@ function MealBlock({
 
       {/* Preparación — fuera del wrap={false} para que texto largo pueda continuar en la página siguiente */}
       {meal.preparation && meal.preparation.trim() !== '' && (
-        <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 7.5, color: '#666666', lineHeight: 1.5, marginBottom: 2 }}>
+        <Text style={{ fontWeight: 400, fontSize: 7.5, color: '#666666', lineHeight: 1.5, marginBottom: 2 }}>
           {meal.preparation}
         </Text>
       )}
@@ -304,6 +322,7 @@ function CoverPage({
   approved_at,
   color,
   showMacros,
+  fontFamily,
 }: {
   plan: PropsPDF['plan'];
   content: PlanContent;
@@ -314,24 +333,25 @@ function CoverPage({
   approved_at?: string;
   color: string;
   showMacros: boolean;
+  fontFamily: string;
 }) {
   const targets = content.week_summary?.target_macros ?? { protein_g: 0, carbs_g: 0, fat_g: 0 };
   const targetCals = content.week_summary?.target_daily_calories ?? 0;
   const nutritionistName = profile.full_name || 'Nutricionista';
 
   return (
-    <Page size="A4" style={S.page}>
+    <Page size="A4" style={[S.page, { fontFamily }]}>
       {/* Header banda — height 80 */}
       <View style={{ backgroundColor: color, height: 80, paddingHorizontal: 40, flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         {is_pro && logo_uri ? (
           <Image src={logo_uri} style={{ height: 48, maxWidth: 180, objectFit: 'contain' }} />
         ) : (
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 20, color: '#ffffff' }}>
+            <Text style={{ fontWeight: 700, fontSize: 20, color: '#ffffff' }}>
               {profile.clinic_name || nutritionistName}
             </Text>
             {profile.clinic_name ? (
-              <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 9, color: 'rgba(255,255,255,0.72)', marginTop: 3 }}>
+              <Text style={{ fontWeight: 400, fontSize: 9, color: 'rgba(255,255,255,0.72)', marginTop: 3 }}>
                 {nutritionistName}
               </Text>
             ) : null}
@@ -343,13 +363,13 @@ function CoverPage({
       <View style={{ flex: 1, paddingHorizontal: 40, paddingTop: 48, flexDirection: 'column' }}>
 
         {/* Nombre del paciente */}
-        <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 28, color: '#1a1a1a', marginBottom: 6 }}>
+        <Text style={{ fontWeight: 700, fontSize: 28, color: '#1a1a1a', marginBottom: 6 }}>
           {patient.name}
         </Text>
-        <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 11, color: '#888888', marginBottom: 4 }}>
+        <Text style={{ fontWeight: 400, fontSize: 11, color: '#888888', marginBottom: 4 }}>
           Plan nutricional personalizado
         </Text>
-        <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 9, color: '#aaaaaa', marginBottom: 32 }}>
+        <Text style={{ fontWeight: 400, fontSize: 9, color: '#aaaaaa', marginBottom: 32 }}>
           {weekLabel(plan.week_start_date)}
         </Text>
 
@@ -363,8 +383,8 @@ function CoverPage({
               { label: 'Grasas', value: `${targets.fat_g}g` },
             ].map((p) => (
               <View key={p.label} style={{ backgroundColor: hex15(color), borderWidth: 1, borderColor: color, borderRadius: 5, paddingHorizontal: 14, paddingVertical: 8 }}>
-                <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 13, color, marginBottom: 1 }}>{p.value}</Text>
-                <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8, color: '#666666' }}>{p.label}</Text>
+                <Text style={{ fontWeight: 700, fontSize: 13, color, marginBottom: 1 }}>{p.value}</Text>
+                <Text style={{ fontWeight: 400, fontSize: 8, color: '#666666' }}>{p.label}</Text>
               </View>
             ))}
           </View>
@@ -373,7 +393,7 @@ function CoverPage({
         {/* Mensaje de bienvenida */}
         {profile.welcome_message ? (
           <View style={{ borderLeftWidth: 2, borderLeftColor: color, paddingLeft: 12, paddingVertical: 6, backgroundColor: hex08(color), borderRadius: 2, marginBottom: 24 }}>
-            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 9.5, color: '#444444', lineHeight: 1.65 }}>
+            <Text style={{ fontWeight: 400, fontSize: 9.5, color: '#444444', lineHeight: 1.65 }}>
               {trunc(profile.welcome_message, 500)}
             </Text>
           </View>
@@ -398,17 +418,19 @@ function SummaryPage({
   color,
   showMacros,
   nutritionistName,
+  fontFamily,
 }: {
   content: PlanContent;
   color: string;
   showMacros: boolean;
   nutritionistName: string;
+  fontFamily: string;
 }) {
   const ws = content.week_summary;
   const days = content.days;
 
   return (
-    <Page size="A4" style={S.page}>
+    <Page size="A4" style={[S.page, { fontFamily }]}>
       <Band
         color={color}
         left={<Text style={S.bandText}>Resumen semanal</Text>}
@@ -419,22 +441,22 @@ function SummaryPage({
         {/* Tabla de días */}
         {days.length > 0 && (
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#888888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+            <Text style={{ fontWeight: 700, fontSize: 8, color: '#888888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
               Distribución por día
             </Text>
 
             {/* Cabecera tabla */}
             <View style={{ flexDirection: 'row', backgroundColor: color, borderRadius: 3, paddingHorizontal: 10, paddingVertical: 5, marginBottom: 1 }}>
-              <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#ffffff', width: 72 }}>Día</Text>
-              <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#ffffff', flex: 1, textAlign: 'right' }}>Kcal</Text>
+              <Text style={{ fontWeight: 700, fontSize: 8, color: '#ffffff', width: 72 }}>Día</Text>
+              <Text style={{ fontWeight: 700, fontSize: 8, color: '#ffffff', flex: 1, textAlign: 'right' }}>Kcal</Text>
               {showMacros && (
                 <>
-                  <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#ffffff', flex: 1, textAlign: 'right' }}>Prot.</Text>
-                  <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#ffffff', flex: 1, textAlign: 'right' }}>HC</Text>
-                  <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#ffffff', flex: 1, textAlign: 'right' }}>Grasas</Text>
+                  <Text style={{ fontWeight: 700, fontSize: 8, color: '#ffffff', flex: 1, textAlign: 'right' }}>Prot.</Text>
+                  <Text style={{ fontWeight: 700, fontSize: 8, color: '#ffffff', flex: 1, textAlign: 'right' }}>HC</Text>
+                  <Text style={{ fontWeight: 700, fontSize: 8, color: '#ffffff', flex: 1, textAlign: 'right' }}>Grasas</Text>
                 </>
               )}
-              <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#ffffff', width: 52, textAlign: 'right' }}>Comidas</Text>
+              <Text style={{ fontWeight: 700, fontSize: 8, color: '#ffffff', width: 52, textAlign: 'right' }}>Comidas</Text>
             </View>
 
             {days.map((day, i) => (
@@ -442,32 +464,32 @@ function SummaryPage({
                 key={day.day_number}
                 style={{ flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 5, backgroundColor: i % 2 === 0 ? '#f9f9f9' : '#ffffff', borderRadius: 2 }}
               >
-                <Text style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 8.5, color: '#1a1a1a', width: 72 }}>{day.day_name}</Text>
-                <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8.5, color: '#333333', flex: 1, textAlign: 'right' }}>{day.total_calories}</Text>
+                <Text style={{ fontWeight: 500, fontSize: 8.5, color: '#1a1a1a', width: 72 }}>{day.day_name}</Text>
+                <Text style={{ fontWeight: 400, fontSize: 8.5, color: '#333333', flex: 1, textAlign: 'right' }}>{day.total_calories}</Text>
                 {showMacros && (
                   <>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8.5, color: '#333333', flex: 1, textAlign: 'right' }}>{day.total_macros.protein_g}g</Text>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8.5, color: '#333333', flex: 1, textAlign: 'right' }}>{day.total_macros.carbs_g}g</Text>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8.5, color: '#333333', flex: 1, textAlign: 'right' }}>{day.total_macros.fat_g}g</Text>
+                    <Text style={{ fontWeight: 400, fontSize: 8.5, color: '#333333', flex: 1, textAlign: 'right' }}>{day.total_macros.protein_g}g</Text>
+                    <Text style={{ fontWeight: 400, fontSize: 8.5, color: '#333333', flex: 1, textAlign: 'right' }}>{day.total_macros.carbs_g}g</Text>
+                    <Text style={{ fontWeight: 400, fontSize: 8.5, color: '#333333', flex: 1, textAlign: 'right' }}>{day.total_macros.fat_g}g</Text>
                   </>
                 )}
-                <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8.5, color: '#333333', width: 52, textAlign: 'right' }}>{day.meals.length}</Text>
+                <Text style={{ fontWeight: 400, fontSize: 8.5, color: '#333333', width: 52, textAlign: 'right' }}>{day.meals.length}</Text>
               </View>
             ))}
 
             {/* Fila de promedios */}
             {ws?.weekly_averages && ws.weekly_averages.calories > 0 && (
               <View style={{ flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 5, backgroundColor: hex10(color), borderRadius: 2, marginTop: 1 }}>
-                <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8.5, color, width: 72 }}>Promedio</Text>
-                <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8.5, color, flex: 1, textAlign: 'right' }}>{ws.weekly_averages.calories}</Text>
+                <Text style={{ fontWeight: 700, fontSize: 8.5, color, width: 72 }}>Promedio</Text>
+                <Text style={{ fontWeight: 700, fontSize: 8.5, color, flex: 1, textAlign: 'right' }}>{ws.weekly_averages.calories}</Text>
                 {showMacros && (
                   <>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8.5, color, flex: 1, textAlign: 'right' }}>{ws.weekly_averages.protein_g}g</Text>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8.5, color, flex: 1, textAlign: 'right' }}>{ws.weekly_averages.carbs_g}g</Text>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8.5, color, flex: 1, textAlign: 'right' }}>{ws.weekly_averages.fat_g}g</Text>
+                    <Text style={{ fontWeight: 700, fontSize: 8.5, color, flex: 1, textAlign: 'right' }}>{ws.weekly_averages.protein_g}g</Text>
+                    <Text style={{ fontWeight: 700, fontSize: 8.5, color, flex: 1, textAlign: 'right' }}>{ws.weekly_averages.carbs_g}g</Text>
+                    <Text style={{ fontWeight: 700, fontSize: 8.5, color, flex: 1, textAlign: 'right' }}>{ws.weekly_averages.fat_g}g</Text>
                   </>
                 )}
-                <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8.5, color, width: 52, textAlign: 'right' }}>—</Text>
+                <Text style={{ fontWeight: 700, fontSize: 8.5, color, width: 52, textAlign: 'right' }}>—</Text>
               </View>
             )}
           </View>
@@ -476,7 +498,7 @@ function SummaryPage({
         {/* Objetivos nutricionales */}
         {ws && (
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color: '#888888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+            <Text style={{ fontWeight: 700, fontSize: 8, color: '#888888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
               Objetivos nutricionales diarios
             </Text>
             <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
@@ -488,8 +510,8 @@ function SummaryPage({
               ].map((item) => (
                 showMacros || item.label === 'Calorías objetivo' ? (
                   <View key={item.label} style={{ borderWidth: 0.5, borderColor: '#e5e5e5', borderRadius: 4, paddingHorizontal: 12, paddingVertical: 7, minWidth: 100 }}>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 11, color: '#1a1a1a', marginBottom: 2 }}>{item.value}</Text>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 7.5, color: '#999999' }}>{item.label}</Text>
+                    <Text style={{ fontWeight: 700, fontSize: 11, color: '#1a1a1a', marginBottom: 2 }}>{item.value}</Text>
+                    <Text style={{ fontWeight: 400, fontSize: 7.5, color: '#999999' }}>{item.label}</Text>
                   </View>
                 ) : null
               ))}
@@ -499,7 +521,7 @@ function SummaryPage({
 
         {/* Nota profesional */}
         <View style={{ borderTopWidth: 0.5, borderTopColor: '#eeeeee', paddingTop: 14 }}>
-          <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8, color: '#aaaaaa', lineHeight: 1.7 }}>
+          <Text style={{ fontWeight: 400, fontSize: 8, color: '#aaaaaa', lineHeight: 1.7 }}>
             Este plan ha sido elaborado y revisado por un profesional de la nutrición. Está diseñado
             exclusivamente para el paciente indicado. Ante cualquier duda o incidencia, contacte con su nutricionista.
           </Text>
@@ -518,14 +540,16 @@ function DayPage({
   color,
   showMacros,
   nutritionistName,
+  fontFamily,
 }: {
   day: PlanContent['days'][0];
   color: string;
   showMacros: boolean;
   nutritionistName: string;
+  fontFamily: string;
 }) {
   return (
-    <Page size="A4" style={S.page}>
+    <Page size="A4" style={[S.page, { fontFamily }]}>
       <Band
         color={color}
         left={
@@ -563,10 +587,12 @@ function ShoppingPage({
   shopping,
   color,
   nutritionistName,
+  fontFamily,
 }: {
   shopping: PlanContent['shopping_list'];
   color: string;
   nutritionistName: string;
+  fontFamily: string;
 }) {
   const categories: Array<{ key: keyof typeof shopping; label: string }> = [
     { key: 'protein', label: 'Proteínas' },
@@ -581,7 +607,7 @@ function ShoppingPage({
   const rightCats = categories.slice(3);
 
   return (
-    <Page size="A4" style={S.page}>
+    <Page size="A4" style={[S.page, { fontFamily }]}>
       <Band
         color={color}
         left={<Text style={S.bandText}>LISTA DE LA COMPRA</Text>}
@@ -591,19 +617,20 @@ function ShoppingPage({
         {[leftCats, rightCats].map((cols, colIdx) => (
           <View key={colIdx} style={{ flex: 1, flexDirection: 'column', gap: 14 }}>
             {cols.map(({ key, label }) => {
-              const items = shopping?.[key] as string[] | undefined;
+              const rawItems = shopping?.[key] as string[] | undefined;
+              const items = rawItems ? aggregateShoppingList(rawItems) : undefined;
               if (!items || items.length === 0) return null;
               return (
                 <View key={key} wrap={false}>
                   <View style={{ backgroundColor: hex10(color), paddingHorizontal: 8, paddingVertical: 4, borderRadius: 3, marginBottom: 5 }}>
-                    <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 8, color, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                    <Text style={{ fontWeight: 700, fontSize: 8, color, textTransform: 'uppercase', letterSpacing: 0.4 }}>
                       {label}
                     </Text>
                   </View>
                   {items.map((item, i) => (
                     <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 3, paddingHorizontal: 3 }}>
                       <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color, marginTop: 2.5, marginRight: 7, flexShrink: 0 }} />
-                      <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8, color: '#333333', flex: 1 }}>
+                      <Text style={{ fontWeight: 400, fontSize: 8, color: '#333333', flex: 1 }}>
                         {trunc(item, 60)}
                       </Text>
                     </View>
@@ -629,6 +656,7 @@ function SignaturePage({
   approved_at,
   color,
   nutritionistName,
+  fontFamily,
 }: {
   profile: PropsPDF['profile'];
   signature_uri?: string | null;
@@ -636,9 +664,10 @@ function SignaturePage({
   approved_at?: string;
   color: string;
   nutritionistName: string;
+  fontFamily: string;
 }) {
   return (
-    <Page size="A4" style={S.page}>
+    <Page size="A4" style={[S.page, { fontFamily }]}>
       <Band
         color={color}
         left={<Text style={S.bandText}>Información profesional</Text>}
@@ -651,12 +680,12 @@ function SignaturePage({
             <Image src={signature_uri} style={{ height: 42, maxWidth: 160, objectFit: 'contain', marginBottom: 4 }} />
           )}
 
-          <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>
+          <Text style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>
             {nutritionistName}
           </Text>
 
           {profile.clinic_name ? (
-            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 9, color: '#666666', marginTop: -2 }}>
+            <Text style={{ fontWeight: 400, fontSize: 9, color: '#666666', marginTop: -2 }}>
               {profile.clinic_name}
             </Text>
           ) : null}
@@ -664,21 +693,21 @@ function SignaturePage({
           {profile.college_number ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
               <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: color }} />
-              <Text style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 9, color: '#333333' }}>
+              <Text style={{ fontWeight: 500, fontSize: 9, color: '#333333' }}>
                 Nº Colegiado: {profile.college_number}
               </Text>
             </View>
           ) : null}
 
           {approved_at ? (
-            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8, color: '#aaaaaa', marginTop: 2 }}>
+            <Text style={{ fontWeight: 400, fontSize: 8, color: '#aaaaaa', marginTop: 2 }}>
               Plan aprobado el {approved_at}
             </Text>
           ) : null}
 
           {/* Disclaimer profesional */}
           <View style={{ borderTopWidth: 0.5, borderTopColor: '#eeeeee', marginTop: 20, paddingTop: 14 }}>
-            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 8, color: '#aaaaaa', lineHeight: 1.75 }}>
+            <Text style={{ fontWeight: 400, fontSize: 8, color: '#aaaaaa', lineHeight: 1.75 }}>
               Este plan nutricional ha sido elaborado y revisado por un profesional de la nutrición titulado y colegiado.
               Está diseñado exclusivamente para el paciente indicado y no debe compartirse ni utilizarse como guía general.
               Ante cualquier duda, consulte directamente con su nutricionista. La información contenida en este documento
@@ -688,10 +717,10 @@ function SignaturePage({
 
           {/* Transparencia IA */}
           <View style={{ borderTopWidth: 0.5, borderTopColor: '#eeeeee', marginTop: 12, paddingTop: 12 }}>
-            <Text style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 7, color: '#cccccc', letterSpacing: 0.5, marginBottom: 4 }}>
+            <Text style={{ fontWeight: 700, fontSize: 7, color: '#cccccc', letterSpacing: 0.5, marginBottom: 4 }}>
               ELABORACIÓN DEL PLAN
             </Text>
-            <Text style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: 7.5, color: '#aaaaaa', lineHeight: 1.7 }}>
+            <Text style={{ fontWeight: 400, fontSize: 7.5, color: '#aaaaaa', lineHeight: 1.7 }}>
               {'El borrador de este plan fue generado mediante herramientas digitales de asistencia y fue revisado y aprobado por '}
               <Text style={{ fontWeight: 500, color: '#888888' }}>{nutritionistName}</Text>
               {profile.college_number ? `, nº colegiado ${profile.college_number}` : ''}
@@ -725,6 +754,7 @@ export function NutritionPlanPDF({
   const showMacros = profile.show_macros !== false;
   const showShoppingList = profile.show_shopping_list !== false;
   const nutritionistName = profile.full_name || 'Nutricionista';
+  const fontFamily = getFontFamily(profile.font_preference);
 
   return (
     <Document
@@ -743,6 +773,7 @@ export function NutritionPlanPDF({
         approved_at={approved_at}
         color={color}
         showMacros={showMacros}
+        fontFamily={fontFamily}
       />
 
       {/* Pág 2: Resumen semanal */}
@@ -751,6 +782,7 @@ export function NutritionPlanPDF({
         color={color}
         showMacros={showMacros}
         nutritionistName={nutritionistName}
+        fontFamily={fontFamily}
       />
 
       {/* Págs 3-9: Un día por página — solo si tiene comidas */}
@@ -761,6 +793,7 @@ export function NutritionPlanPDF({
           color={color}
           showMacros={showMacros}
           nutritionistName={nutritionistName}
+          fontFamily={fontFamily}
         />
       ))}
 
@@ -771,6 +804,7 @@ export function NutritionPlanPDF({
           shopping={content.shopping_list}
           color={color}
           nutritionistName={nutritionistName}
+          fontFamily={fontFamily}
         />
       )}
 
@@ -782,6 +816,7 @@ export function NutritionPlanPDF({
         approved_at={approved_at}
         color={color}
         nutritionistName={nutritionistName}
+        fontFamily={fontFamily}
       />
     </Document>
   );
