@@ -58,42 +58,54 @@ Ya incluye: auth, Stripe webhooks, sincronización Stripe↔Supabase, React Emai
 
 ---
 
-## Schema de base de datos (tablas principales)
+## Schema de base de datos (tablas reales — 22 tablas)
+
+> Tipos generados automáticamente en `src/libs/supabase/types.ts` con `npm run generate-types`.
 
 ### `profiles` (extensión de auth.users)
 ```sql
 id uuid references auth.users
 full_name text
-specialty text  -- 'weight_loss' | 'sports' | 'clinical' | 'general'
+specialty specialty_type  -- 'weight_loss' | 'sports' | 'clinical' | 'general'
 clinic_name text
 logo_url text
-primary_color text  -- hex, para PDF branding
-subscription_tier text  -- 'basic' | 'professional'
-stripe_customer_id text
+primary_color text  -- hex, default '#1a7a45', para PDF branding
+college_number text  -- nº colegiado
+signature_url text
+subscription_status text  -- synced from Stripe webhook
+onboarding_completed_at timestamptz  -- NULL = onboarding pendiente
+show_macros boolean
+show_shopping_list boolean
+welcome_message text
+font_preference text  -- 'clasica' | 'moderna' | 'minimalista'
+profile_photo_url text
+brand_settings_visited_at timestamptz
+ai_literacy_acknowledged_at timestamptz  -- RGPD Art. 22 LSSI
 created_at timestamptz
+updated_at timestamptz
 ```
 
 ### `patients`
 ```sql
 id uuid
 nutritionist_id uuid references profiles(id)
-full_name text
+name text
 email text
-birth_date date
+phone text
+date_of_birth date
 sex text  -- 'male' | 'female'
 weight_kg numeric
 height_cm numeric
-activity_level text  -- 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
-goal text  -- 'lose_weight' | 'gain_muscle' | 'maintain' | 'eat_healthy' | 'sports_performance'
+activity_level activity_level_type  -- 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extra_active'
+goal patient_goal_type  -- 'weight_loss' | 'weight_gain' | 'maintenance' | 'muscle_gain' | 'health'
 dietary_restrictions text[]  -- ['gluten_free', 'lactose_free', 'vegan', 'vegetarian', ...]
 allergies text[]
 intolerances text[]
-preferences text  -- texto libre: "no le gusta el pescado azul"
-medical_notes text  -- texto libre: "hipertensión controlada"
-target_calories int
-target_protein_g int
-target_carbs_g int
-target_fat_g int
+preferences text  -- texto libre
+medical_notes text  -- texto libre
+tmb numeric  -- tasa metabólica basal (Mifflin-St Jeor)
+tdee numeric  -- gasto energético total
+intake_token uuid  -- token público para cuestionario
 created_at timestamptz
 updated_at timestamptz
 ```
@@ -103,27 +115,51 @@ updated_at timestamptz
 id uuid
 patient_id uuid references patients(id)
 nutritionist_id uuid references profiles(id)
-title text  -- "Plan semanal mayo 2026"
-status text  -- 'generating' | 'draft' | 'approved' | 'sent'
-plan_data jsonb  -- el plan completo en JSON (ver structure.md)
-pdf_url text  -- Supabase Storage signed URL
-generated_at timestamptz
-approved_at timestamptz
+status plan_status_type  -- 'generating' | 'draft' | 'approved' | 'sent' | 'error'
+content jsonb  -- el plan completo en JSON (ver estructura abajo)
+week_start_date date
+patient_token uuid  -- token público para vista paciente /p/[token]
 sent_at timestamptz
-claude_tokens_used int  -- para monitorizar costes
+approved_at timestamptz
+approved_by uuid  -- audit trail
+generated_at timestamptz
+ai_model text
+validation_acked_blocks text[]  -- alertas reconocidas antes de aprobar
+created_at timestamptz
+updated_at timestamptz
 ```
 
-### `plan_generations` (log de costes IA)
+### `plan_generations` (log de costes IA por día)
 ```sql
 id uuid
 plan_id uuid references nutrition_plans(id)
 nutritionist_id uuid references profiles(id)
-day_generated int  -- 1-7, se genera día por día
-tokens_input int
-tokens_output int
-cost_usd numeric
+day_number int  -- 1-7
+status generation_status_type  -- 'pending' | 'generating' | 'completed' | 'failed'
+content jsonb
+error text
 created_at timestamptz
+updated_at timestamptz
 ```
+
+### Tablas adicionales implementadas
+
+| Tabla | Migración | Propósito |
+|-------|-----------|-----------|
+| `appointments` | 003 | Agenda del nutricionista (presencial/online) |
+| `intake_forms` | 004 | Cuestionarios de pacientes (filled_by: patient/nutritionist) |
+| `patient_progress` | 010 | Seguimiento antropométrico (peso, grasa, cintura) |
+| `beta_whitelist` | 011 | Lista de acceso beta con plan_limit |
+| `ai_request_logs` | 016 | Log de llamadas a Anthropic (pseudonymized, sin PII) |
+| `patient_consents` | 017/024 | Consentimiento RGPD Art. 9 (ai_processing) |
+| `data_rights_requests` | 018 | Solicitudes ARCO (acceso, rectificación, supresión...) |
+| `audit_logs` | 020 | Audit trail RGPD con triggers automáticos (5 años retención) |
+| `followup_forms` | 021 | Formularios de seguimiento |
+| `followup_reminders` | 021 | Recordatorios de seguimiento |
+| `plan_access_attempts` | 022 | Rate limiting por IP (10 intentos/15 min) |
+| `recipes` | 026 | Recetario personal del nutricionista |
+| `plan_views` | 027 | Lectura de recepción (first_opened, open_count) |
+| `customers` / `products` / `prices` / `subscriptions` | init | Stripe sync (del boilerplate) |
 
 ---
 
@@ -334,19 +370,278 @@ NEXT_PUBLIC_APP_URL=
 
 ---
 
-## Estado actual del proyecto
+## Migraciones de base de datos
+
+Total: **32 migraciones** en `supabase/migrations/`.
+
+| # | Archivo | Descripción |
+|---|---------|-------------|
+| init | `20240115041359_init.sql` | Schema Stripe del boilerplate (customers, products, prices, subscriptions) |
+| 001 | `001_initial_schema.sql` | Schema core: profiles, patients, nutrition_plans, plan_generations + enums + RLS |
+| 002 | `002_subscription_status.sql` | Campo subscription_status en profiles (sync Stripe) |
+| 003 | `003_appointments.sql` | Tabla appointments (agenda nutricionista) |
+| 004 | `004_intake_forms.sql` | intake_token en patients + tabla intake_forms |
+| 005 | `005_plan_status_enum.sql` | Añade 'generating' y 'error' a plan_status_type |
+| 006 | `006_logo_url.sql` | Campo logo_url + bucket Storage nutritionist-logos |
+| 007 | `007_appointments_meeting_url.sql` | Campo meeting_url en appointments |
+| 008 | `008_professional_identity.sql` | college_number, signature_url + bucket nutritionist-signatures |
+| 009 | `009_onboarding.sql` | Campo onboarding_completed_at en profiles |
+| 010 | `010_patient_progress.sql` | Tabla patient_progress (seguimiento antropométrico) |
+| 011 | `011_beta_access.sql` | Tabla beta_whitelist |
+| 014 | `014_brand_settings.sql` | Campos de branding: show_macros, show_shopping_list, welcome_message, font_preference |
+| 015 | `015_brand_visited.sql` | Campo brand_settings_visited_at |
+| 016 | `016_ai_request_logs.sql` | Tabla ai_request_logs (audit IA, pseudonymized) |
+| 017 | `017_patient_consents.sql` | Tabla patient_consents (RGPD Art. 9) |
+| 018 | `018_data_rights_requests.sql` | Tabla data_rights_requests (ARCO) |
+| 019 | `019_plan_validation_acked.sql` | Campo validation_acked_blocks en nutrition_plans |
+| 020 | `020_audit_logs.sql` | Tabla audit_logs + trigger fn_audit_log() en 4 tablas |
+| 021 | `021_rls_hardening.sql` | Hardening RLS + RPC get_plan_by_patient_token + followup_forms/reminders |
+| 022 | `022_plan_rate_limit.sql` | Tabla plan_access_attempts (rate limiting) |
+| 023 | `023_ai_literacy.sql` | Campo ai_literacy_acknowledged_at (RGPD Art. 22) |
+| 024 | `024_patient_consents.sql` | Recreación idempotente de patient_consents |
+| 025 | `025_fix_audit_trigger.sql` | Fix BEGIN/EXCEPTION en fn_audit_log() |
+| 026a | `026_patient_phone.sql` | Campo phone en patients |
+| 026b | `026_recipes.sql` | Tabla recipes (recetario personal) |
+| 027 | `027_plan_views.sql` | Tabla plan_views (lectura de recepción) |
+| 028 | `028_intake_filled_by.sql` | Campos filled_by + filled_at en intake_forms |
+| 029 | `029_fix_audit_trigger_safe.sql` | Fix nested exceptions en fn_audit_log() |
+| 030 | `030_dietary_restrictions_array.sql` | Conversión dietary_restrictions de text a text[] |
+| 031 | `031_profiles_primary_color.sql` | Campo primary_color en profiles (default '#1a7a45') |
+
+---
+
+## Rutas de la aplicación
+
+### Dashboard (protegido — requiere auth)
+| Ruta | Descripción |
+|------|-------------|
+| `/dashboard` | Panel principal con pacientes y métricas |
+| `/dashboard/patients/new` | Crear paciente |
+| `/dashboard/patients/[id]` | Ficha de paciente (tabs: Ficha, Cuestionario, Progreso, Seguimientos) |
+| `/dashboard/plans/[id]` | Editor de plan nutricional (día a día, macros, comidas) |
+| `/dashboard/agenda` | Agenda de citas (presencial/online) |
+| `/dashboard/recetas` | Recetario personal del nutricionista |
+| `/dashboard/ajustes` | Configuración: perfil, marca, logo, firma |
+| `/dashboard/derechos-datos` | Panel RGPD: solicitudes ARCO |
+| `/dashboard/admin/beta` | Panel admin: métricas beta, whitelist, costes en € |
+
+### Rutas públicas del paciente
+| Ruta | Descripción |
+|------|-------------|
+| `/p/[token]` | Vista del plan nutricional (sin login) |
+| `/p/intake/[token]` | Cuestionario de intake |
+| `/p/seguimiento/[token]` | Formulario de seguimiento |
+
+### API routes (14 endpoints)
+| Ruta | Método | Descripción |
+|------|--------|-------------|
+| `/api/plans/generate` | POST | Genera plan con Claude API (754 líneas, día por día) |
+| `/api/plans/[id]/status` | GET | Poll estado de generación |
+| `/api/plans/[id]/pdf` | POST | Genera PDF con @react-pdf/renderer |
+| `/api/pdf/preview` | POST | Preview del PDF |
+| `/api/intake/submit` | POST | Envío de cuestionario paciente |
+| `/api/followup/submit` | POST | Envío de seguimiento |
+| `/api/patients/[id]/delete` | DELETE | Borrar paciente (RGPD Art. 17) |
+| `/api/patients/[id]/export` | GET | Exportar datos paciente (RGPD Art. 20) |
+| `/api/data-rights` | POST | Solicitudes ARCO |
+| `/api/stripe/checkout` | POST | Crear sesión Stripe |
+| `/api/stripe/portal` | POST | Portal de facturación |
+| `/api/stripe/webhook` | POST | Webhook Stripe |
+| `/api/health` | GET | Health check |
+| `/api/e2e-setup` | POST | Setup tests E2E |
+
+### Marketing y legal
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Landing page |
+| `/pricing` | Página de precios |
+| `/login` / `/signup` | Auth |
+| `/forgot-password` / `/reset-password` | Recuperación |
+| `/onboarding` | Onboarding post-registro |
+| `/legal/terminos` | Términos y Condiciones |
+| `/legal/privacidad` | Política de Privacidad |
+
+---
+
+## Funcionalidades implementadas
+
+### Semana 1 — Auth y estructura
+- ✅ Auth email/password con Supabase (login, signup, forgot/reset password)
+- ✅ Onboarding post-registro (nombre, especialidad, clínica, logo, colores)
+- ✅ RLS en todas las tablas
+- ✅ Dashboard con sidebar navigation
+- ✅ Stripe checkout + webhook sync (subscription_status)
+- ✅ Banner de upgrade para plan básico
+
+### Semana 2 — Pacientes
+- ✅ CRUD completo de pacientes con validación Zod
+- ✅ Ficha del paciente con tabs (Ficha, Cuestionario, Progreso, Seguimientos)
+- ✅ Cuestionario de intake público (`/p/intake/[token]`) + pre-fill desde dashboard
+- ✅ Formulario de seguimiento público (`/p/seguimiento/[token]`)
+- ✅ Seguimiento antropométrico con gráficos (Recharts)
+- ✅ Recordatorios de seguimiento (followup_reminders)
+- ✅ Consentimiento RGPD del paciente (ai_processing)
+- ✅ Campo `filled_by` en intake (patient vs nutritionist)
+- ✅ Campo `phone` en pacientes
+- ✅ Conversión `dietary_restrictions` de text a text[]
+
+### Semana 3 — Generación IA
+- ✅ Generación de planes día por día (7 llamadas a Claude API)
+- ✅ Modelo: `claude-sonnet-4-5` con Structured Outputs (JSON garantizado)
+- ✅ Pseudonymización de PII antes de enviar a Anthropic
+- ✅ Log de tokens y costes en `ai_request_logs` y `plan_generations`
+- ✅ Validación clínica con 19 checks (nutrition-validator.ts)
+- ✅ Editor de plan: editar comidas, macros, ingredientes por día
+- ✅ Aprobar plan con acknowledgement de alertas bloqueantes
+- ✅ Regenerar día individual
+- ✅ AI literacy acknowledgement (RGPD Art. 22)
+- ✅ Resilience: reintentos, timeouts, error handling
+
+### Semana 4 — PDF, email, beta
+- ✅ PDF con @react-pdf/renderer server-side en Vercel (funciona)
+- ✅ 3 fuentes: Inter (minimalista), Lora (clásica), Poppins (moderna)
+- ✅ PDF personalizado: logo, firma, foto, color primario, nº colegiado
+- ✅ show_macros / show_shopping_list configurables
+- ✅ Vista pública del plan `/p/[token]` con navegador de días
+- ✅ Envío de plan por email (Resend + PDF adjunto)
+- ✅ Email de bienvenida beta automático al añadir a whitelist
+- ✅ Panel admin beta (`/dashboard/admin/beta`): métricas, costes en €, whitelist
+- ✅ Lectura de recepción (`plan_views`: first_opened, last_opened, open_count)
+- ✅ Recetario personal (`/dashboard/recetas`): CRUD de recetas propias
+- ✅ Agenda de citas (`/dashboard/agenda`): presencial/online, meeting_url
+- ✅ Panel de derechos de datos (`/dashboard/derechos-datos`): solicitudes ARCO
+- ✅ Audit logs automáticos con triggers en patients, plans, consents, intake
+- ✅ Rate limiting en acceso a planes (10 intentos/15 min por IP)
+- ✅ Cookie banner en marketing
+
+### Optimizaciones de rendimiento
+- ✅ **System prompt optimizado**: instrucciones fijas movidas a system prompt (reduce tokens ~20-30%)
+- ✅ **Pre-filtrado de recetas**: recetas del nutricionista pre-filtradas antes de generar
+- ✅ **Caché lista de compra por fingerprint**: no regenera si ingredientes no cambian
+- ✅ **ignoreBuildErrors eliminado** de next.config.js (build estricto)
+- ✅ **90+ `as any` corregidos** en rutas críticas (type safety)
+- ✅ **Types.ts actualizado**: 22 tablas del schema generadas con `supabase gen types`
+
+---
+
+## Estructura de código
+
+```
+src/
+├── app/
+│   ├── (auth)/           # Login, signup, forgot/reset password
+│   ├── (marketing)/      # Landing, legal, cookie banner
+│   ├── dashboard/        # Panel principal (protegido)
+│   │   ├── patients/     # CRUD pacientes + ficha con tabs
+│   │   ├── plans/        # Editor de plan + acciones
+│   │   ├── agenda/       # Agenda de citas
+│   │   ├── recetas/      # Recetario personal
+│   │   ├── ajustes/      # Configuración perfil + marca
+│   │   ├── derechos-datos/ # Panel RGPD
+│   │   └── admin/beta/   # Panel admin beta
+│   ├── p/                # Rutas públicas paciente (plan, intake, seguimiento)
+│   ├── plan/             # Vista de plan legacy
+│   ├── api/              # 14 API routes
+│   └── onboarding/       # Onboarding post-registro
+├── components/
+│   ├── ui/               # shadcn/ui (button, input, tabs, toast, sheet, etc.)
+│   ├── pdf/              # NutritionPlanPDF.tsx (823 líneas)
+│   └── patients/         # ConsentForm.tsx
+├── features/
+│   ├── account/          # Controladores: user, session, subscription
+│   ├── pricing/          # Componentes + acciones de checkout
+│   └── emails/           # Templates: welcome.tsx, beta-welcome.tsx
+├── lib/
+│   ├── auth/             # intake-tokens.ts, plan-tokens.ts (HMAC-SHA256)
+│   └── validation/       # nutrition-validator.ts (19 checks clínicos)
+├── libs/
+│   ├── ai/               # plan-prompts.ts, pseudonymize.ts, resilience.ts, logger.ts
+│   ├── anthropic/        # client.ts (singleton SDK)
+│   ├── supabase/         # server-client, middleware-client, admin, types.ts
+│   ├── stripe/           # stripe-admin.ts
+│   ├── resend/           # resend-client.ts
+│   └── shopping-list.ts  # Agregación lista de compra por categoría
+├── types/
+│   └── dietly.ts         # Tipos compartidos del dominio
+└── utils/                # cn.ts, calc-targets.ts, get-env-var.ts, etc.
+```
+
+---
+
+## Herramientas de desarrollo
+
+### Claude Code
+- **Modelo por defecto**: Sonnet (rápido para tareas del día a día)
+- **Opus** (`/model opus`): para auditorías complejas, refactors grandes, revisión legal
+- **Skills de marketing** instaladas en `.agents/skills/` (37 skills)
+- **Skills de UI/UX** en `.claude/skills/`: animate, colorize, frontend-design, polish
+- **Contexto de marketing**: `.agents/product-marketing-context.md`
+- **Lock file**: `skills-lock.json` (4 skills de pbakaus/impeccable)
+
+### Scripts npm
+```bash
+npm run dev              # Next.js con Turbopack
+npm run build            # Build de producción (estricto, sin ignoreBuildErrors)
+npm run lint             # ESLint
+npm run email:dev        # Preview emails en localhost:3001
+npm run generate-types   # Regenerar types.ts desde Supabase
+npm run migration:up     # Aplicar migraciones + regenerar types
+npm run test:e2e         # Playwright E2E tests
+npm run stripe:listen    # Escuchar webhooks Stripe en local
+```
+
+### Testing
+- **E2E**: Playwright configurado (`playwright.config.ts`, `e2e/pdf.spec.ts`)
+- **RLS**: `npm run test:rls` (tests de Row Level Security)
+
+---
+
+## Documentación adicional
+
+| Archivo | Contenido |
+|---------|-----------|
+| `architecture.md` | Diagramas de flujo y decisiones técnicas |
+| `OPTIMIZATION.md` | Auditoría de código (25 marzo 2026): 171 archivos, 26.611 LOC |
+| `AUDITORIA_EXPERTOS.md` | Auditoría de 4 agentes: clínica, seguridad, UX, arquitectura |
+| `BUGS.md` | Lista de bugs conocidos |
+| `MVP_FEATURES.md` | Checklist de features MVP |
+
+---
 
 ## Estado actual del proyecto
 
-**Semana**: 0 (setup inicial)
-**Estado**: Listo para arrancar desarrollo
+**Semana**: 4 (PDF + PWA + beta)
+**Estado**: MVP funcional desplegado en Vercel. Beta privada en marcha.
 
-**Decisiones tomadas en investigación previa:**
+**Completado:**
+- ✅ Semana 1: Auth, onboarding, Stripe, dashboard base
+- ✅ Semana 2: CRUD pacientes, intake, seguimiento, progreso, RGPD
+- ✅ Semana 3: Generación IA día por día, editor de plan, validación clínica
+- ✅ Semana 4: PDF server-side, email, beta admin, recetario, plan_views
+- ✅ Auditoría de optimización (OPTIMIZATION.md)
+- ✅ Auditoría de expertos (AUDITORIA_EXPERTOS.md)
+- ✅ 90+ `as any` corregidos, ignoreBuildErrors eliminado
+- ✅ 32 migraciones aplicadas
+
+**Decisiones tomadas:**
 - ✅ Análisis competitivo completo (Nutrium, NutriAdmin, Dietopro, INDYA)
-- ✅ Legal verificado — producto viable, añadir T&Cs con cláusula RGPD encargado del tratamiento
+- ✅ Legal verificado — producto viable
 - ✅ GTM definido — lista de espera + LinkedIn outreach + CODiNuCoVa
-- ✅ App paciente → PWA en Semana 5 (no app nativa)
+- ✅ PWA paciente en /p/[token] (no app nativa)
+- ✅ @react-pdf/renderer funciona server-side en Vercel
+- ✅ Fuentes locales en /public/fonts/ (Inter, Lora, Poppins, Merriweather)
 
-**Próximo paso**: Fork del boilerplate → test de @react-pdf/renderer en Vercel → schema de DB
+**Deuda técnica conocida (ver OPTIMIZATION.md):**
+- `/src/lib/` y `/src/libs/` deberían consolidarse
+- 52 archivos > 200 líneas (top: landing 883, PDF 788, generate 754)
+- 92 queries Supabase sin capa de abstracción
+- 0 Suspense boundaries en dashboard
+- Sin tracking de micronutrientes (señalado en auditoría clínica)
+
+**Próximos pasos:**
+- PWA completa con manifest.json + service worker
+- Cláusula Art. 28.3 RGPD completa en T&Cs (antes de escalar)
+- Plantilla de consentimiento informado descargable
+- Bloqueo de menores < 14 años (auditoría clínica)
 
 Consultar `architecture.md` para diagramas de flujo y decisiones técnicas detalladas.
