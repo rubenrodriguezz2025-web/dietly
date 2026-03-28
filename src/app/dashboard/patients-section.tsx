@@ -242,6 +242,19 @@ export function PatientsSection({ patients }: { patients: PatientWithMeta[] }) {
 
 // ── Patient row ────────────────────────────────────────────────────────────────
 
+function tiempoRelativo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'ahora';
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `hace ${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `hace ${days}d`;
+  if (days < 30) return `hace ${Math.floor(days / 7)} sem`;
+  return `hace ${Math.floor(days / 30)} mes${Math.floor(days / 30) > 1 ? 'es' : ''}`;
+}
+
 function PatientRow({ patient }: { patient: PatientWithMeta }) {
   const initials = patient.name
     .split(' ')
@@ -292,9 +305,19 @@ function PatientRow({ patient }: { patient: PatientWithMeta }) {
             </span>
           )}
         </div>
-        {patient.email && (
-          <div className='truncate text-sm text-zinc-500'>{patient.email}</div>
-        )}
+        <div className='flex items-center gap-2 text-sm text-zinc-500'>
+          {patient.email && (
+            <span className='truncate'>{patient.email}</span>
+          )}
+          {latestPlan && (
+            <>
+              {patient.email && <span className='text-zinc-700'>·</span>}
+              <span className='flex-shrink-0 text-xs text-zinc-600'>
+                {tiempoRelativo(latestPlan.created_at)}
+              </span>
+            </>
+          )}
+        </div>
       </div>
       <div className='hidden items-center gap-2 sm:flex'>
         {patient.goal && (

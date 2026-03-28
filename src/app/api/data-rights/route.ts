@@ -4,7 +4,32 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 const VALID_TYPES = ['access', 'rectification', 'erasure', 'restriction', 'portability', 'objection'];
 
+// Rate limiting simple por IP — 3 solicitudes por hora
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const RATE_LIMIT_MAX = 3;
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: 'Demasiadas solicitudes. Inténtalo de nuevo en una hora.' },
+      { status: 429 }
+    );
+  }
+
   let body: { name?: string; email?: string; request_type?: string; notes?: string };
 
   try {

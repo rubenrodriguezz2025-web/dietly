@@ -7,6 +7,8 @@ import { aggregateShoppingList } from '@/libs/shopping-list';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { PlanContent } from '@/types/dietly';
 
+import { BotonCompartir } from './boton-compartir';
+import { ListaCompraInteractiva } from './lista-compra';
 import { NavegadorDias } from './navegador-dias';
 
 // ── Fuente ────────────────────────────────────────────────────────────────────
@@ -58,6 +60,9 @@ export async function generateMetadata({
       capable: true,
       statusBarStyle: 'black-translucent',
       title: 'Mi Plan',
+    },
+    icons: {
+      apple: '/apple-touch-icon.png',
     },
   };
 }
@@ -219,12 +224,20 @@ export default async function PaginaPaciente({
             style={{ background: 'rgba(255,255,255,0.03)' }}
           />
 
-          <h1 className='text-2xl font-extrabold leading-tight text-white'>
-            {nombrePaciente}
-          </h1>
-          <p className='mt-1 text-sm font-medium text-white/50'>
-            Plan nutricional · semana del {fechaSemana}
-          </p>
+          <div className='flex items-start justify-between gap-3'>
+            <div>
+              <h1 className='text-2xl font-extrabold leading-tight text-white'>
+                {nombrePaciente}
+              </h1>
+              <p className='mt-1 text-sm font-medium text-white/50'>
+                Plan nutricional · semana del {fechaSemana}
+              </p>
+            </div>
+            <BotonCompartir
+              titulo={`Plan nutricional de ${nombrePaciente}`}
+              texto='Mira mi plan nutricional personalizado'
+            />
+          </div>
 
           {/* Objetivos diarios — píldoras de color (solo si show_macros) */}
           {showMacros && (
@@ -304,59 +317,14 @@ export default async function PaginaPaciente({
             ))}
           </div>
 
-          {/* Lista de la compra */}
+          {/* Lista de la compra — interactiva con checkboxes (localStorage) */}
           {content.shopping_list && (
-            <section className='anim-compra mt-10'>
-              <div className='mb-4 flex items-center gap-3'>
-                <div className='h-px flex-1 bg-zinc-200' />
-                <h2 className='text-xs font-bold uppercase tracking-widest text-zinc-400'>
-                  Lista de la compra
-                </h2>
-                <div className='h-px flex-1 bg-zinc-200' />
-              </div>
-
-              <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
-                {CATEGORIAS_COMPRA.map(([clave, etiqueta, icono], idx) => {
-                  const rawItems =
-                    content.shopping_list[
-                      clave as keyof typeof content.shopping_list
-                    ];
-                  const items = rawItems?.length ? aggregateShoppingList(rawItems) : null;
-                  if (!items?.length) return null;
-                  return (
-                    <div
-                      key={clave}
-                      className={
-                        idx > 0 ? 'border-t border-zinc-100' : ''
-                      }
-                    >
-                      <div className='flex items-center gap-2 px-4 py-3'>
-                        <span className='text-base'>{icono}</span>
-                        <span className='text-xs font-bold uppercase tracking-wider text-zinc-500'>
-                          {etiqueta}
-                        </span>
-                      </div>
-                      <ul className='px-4 pb-3 pt-0'>
-                        {items.map((item, i) => (
-                          <li
-                            key={i}
-                            className='flex items-start gap-2.5 py-1.5'
-                          >
-                            <span
-                              className='mt-[5px] h-1.5 w-1.5 flex-shrink-0 rounded-full'
-                              style={{ background: '#16a34a' }}
-                            />
-                            <span className='text-sm leading-snug text-zinc-700'>
-                              {item}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+            <ListaCompraInteractiva
+              shoppingList={content.shopping_list as Record<string, string[]>}
+              categorias={CATEGORIAS_COMPRA}
+              planId={plan.id}
+              aggregateFn={aggregateShoppingList}
+            />
           )}
 
           {/* Pie — transparencia IA (CLAUDE.md: el copy SIEMPRE menciona revisión profesional) */}
