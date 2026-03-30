@@ -64,6 +64,12 @@ export type CalcTargets = {
   fat_pct: number;
   /** true si el TDEE se estimó con Mifflin-St Jeor; false si proviene de la BD. */
   estimated: boolean;
+  /** Tasa Metabólica Basal (Mifflin-St Jeor), kcal/día. Null si faltan datos del paciente. */
+  tmb: number | null;
+  /** TDEE efectivo antes del ajuste por objetivo, kcal/día. */
+  tdee: number;
+  /** Ajuste calórico aplicado al TDEE (negativo = déficit, positivo = superávit), kcal/día. */
+  calorie_balance: number;
 };
 
 /** Error lanzado cuando calcTargets no puede producir un resultado válido. */
@@ -139,29 +145,36 @@ function calcCalorieAdj(goal: PatientGoal, bmi: number | null): number {
 // ── Función principal ─────────────────────────────────────────────────────────
 
 export function calcTargets(patient: Patient, overrides?: MacroOverrides): CalcTargets {
-  // ── TDEE ───────────────────────────────────────────────────────────────────
-  // Usar TDEE precalculado de la DB si existe; si no, calcular con Mifflin-St Jeor.
-  let tdee = patient.tdee;
+  // ── TMB + TDEE ─────────────────────────────────────────────────────────────
+  // TMB se calcula siempre que haya datos (para mostrar en la UI de transparencia).
+  // TDEE: usar el precalculado de la BD si existe; si no, TMB × factor de actividad.
+  const actFactor = ACTIVITY_FACTORS[patient.activity_level ?? ''] ?? 1.375;
+  let computedTmb: number | null = null;
 
-  if (!tdee && patient.weight_kg && patient.height_cm && patient.date_of_birth) {
+  if (patient.weight_kg && patient.height_cm && patient.date_of_birth) {
     const age = Math.floor(
       (Date.now() - new Date(patient.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
     );
     const base = 10 * patient.weight_kg + 6.25 * patient.height_cm - 5 * age;
 
-    let tmb: number;
     if (patient.sex === 'male') {
-      tmb = base + 5;
+      computedTmb = Math.round(base + 5);
     } else if (patient.sex === 'female') {
-      tmb = base - 161;
+      computedTmb = Math.round(base - 161);
     } else {
       // Sexo 'other' o null: promedio de las dos ecuaciones (conservador y no binario).
       // (base + 5 + base − 161) / 2 = base − 78
-      tmb = base - 78;
+      computedTmb = Math.round(base - 78);
     }
+  }
 
-    const actFactor = ACTIVITY_FACTORS[patient.activity_level ?? ''] ?? 1.375;
-    tdee = Math.round(tmb * actFactor);
+  // TMB para display: la calculada, o derivada del TDEE de la BD si faltan datos.
+  const tmb: number | null =
+    computedTmb ?? (patient.tdee ? Math.round(patient.tdee / actFactor) : null);
+
+  let tdee = patient.tdee;
+  if (!tdee && computedTmb !== null) {
+    tdee = Math.round(computedTmb * actFactor);
   }
 
   // Sin TDEE: datos insuficientes — falla explícitamente en lugar de usar un valor ficticio.
@@ -234,5 +247,17 @@ export function calcTargets(patient: Patient, overrides?: MacroOverrides): CalcT
   // para coherencia en la UI (el nutricionista puede verificar protein_g / weight_kg).
   const protein_per_kg = Math.round((protein_g / weight) * 100) / 100;
 
-  return { calories, protein_g, carbs_g, fat_g, protein_per_kg, carbs_pct, fat_pct, estimated };
+  return {
+    calories,
+    protein_g,
+    carbs_g,
+    fat_g,
+    protein_per_kg,
+    carbs_pct,
+    fat_pct,
+    estimated,
+    tmb,
+    tdee: baseTdee,
+    calorie_balance: adj,
+  };
 }

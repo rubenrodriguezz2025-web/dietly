@@ -7,6 +7,7 @@ import { NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
 import { CalcTargets, calcTargets,CalcTargetsError } from '@/utils/calc-targets';
 
 import { GenerateButton } from './generate-button';
+import { MacroTransparencyCard } from './macro-transparency-card';
 import { PatientTabs } from './patient-tabs';
 
 export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
@@ -214,6 +215,11 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
           />
         </div>
       </div>
+
+      {/* Objetivos nutricionales calculados */}
+      {initialTargets && (
+        <MacroTransparencyCard patient={patient} targets={initialTargets} />
+      )}
 
       {/* Tabs: Ficha | Progreso | Cuestionario */}
       {targetsError && (
