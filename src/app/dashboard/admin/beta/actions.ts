@@ -43,7 +43,10 @@ export async function addBetaEmail(formData: FormData): Promise<{ error?: string
 
   // Enviar email de bienvenida beta (no bloquea si falla)
   try {
-    const html = await render(createElement(BetaWelcomeEmail, { name }));
+    const signupUrl =
+      `https://dietly.es/signup?email=${encodeURIComponent(email)}` +
+      `&utm_source=beta_email&utm_medium=email&utm_campaign=beta_onboarding`;
+    const html = await render(createElement(BetaWelcomeEmail, { name, signupUrl }));
     await resendClient.emails.send({
       from: 'Rubén de Dietly <hola@dietly.es>',
       to: email,

@@ -12,15 +12,16 @@ import {
 
 interface BetaWelcomeEmailProps {
   name?: string | null;
+  signupUrl: string;
 }
 
-export function BetaWelcomeEmail({ name }: BetaWelcomeEmailProps) {
+export function BetaWelcomeEmail({ name, signupUrl }: BetaWelcomeEmailProps) {
   const saludo = name ? `Hola ${name},` : 'Hola,';
 
   return (
     <Html lang='es'>
       <Head />
-      <Preview>Ya tienes acceso a Dietly — bienvenido/a a la beta 🎉</Preview>
+      <Preview>Ya tienes acceso a Dietly — te cuento cómo empezar 🎉</Preview>
       <Body style={bodyStyle}>
         {/* Header */}
         <Container style={containerStyle}>
@@ -33,67 +34,68 @@ export function BetaWelcomeEmail({ name }: BetaWelcomeEmailProps) {
             <Text style={greetingStyle}>{saludo}</Text>
 
             <Text style={textStyle}>
-              Has sido seleccionado/a como uno de los primeros beta users de Dietly. Nos alegra
-              mucho tenerte con nosotros.
+              Eres uno de los primeros nutricionistas en probar Dietly y eso no es casualidad —
+              gracias por confiar en el proyecto desde el principio.
             </Text>
 
             <Text style={textStyle}>
-              Durante los próximos <strong>3 meses tienes acceso completo y gratuito</strong> a
-              todas las funcionalidades: generación de planes nutricionales, PDF con tu branding y
-              app web para tus pacientes.
+              Tienes <strong>acceso completo y gratuito durante 3 meses</strong>. Sin tarjeta, sin
+              compromiso. Lo único que te pido a cambio es que me cuentes qué funciona y qué no.
             </Text>
 
-            <Text style={textStyle}>Para empezar, sigue estos pasos:</Text>
+            <Text style={textStyle}>Para empezar:</Text>
 
             {/* Pasos */}
             <Section style={stepsContainerStyle}>
               <Section style={stepStyle}>
                 <Text style={stepNumberStyle}>1</Text>
                 <Text style={stepTextStyle}>
-                  Ve a <strong>dietly.es</strong>
+                  Haz clic en el botón de abajo — <strong>tu email ya viene relleno</strong>
                 </Text>
               </Section>
               <Section style={stepStyle}>
                 <Text style={stepNumberStyle}>2</Text>
-                <Text style={stepTextStyle}>
-                  Haz clic en <strong>&quot;Registrarse&quot;</strong>
-                </Text>
+                <Text style={stepTextStyle}>Crea tu primer paciente</Text>
               </Section>
               <Section style={stepStyle}>
                 <Text style={stepNumberStyle}>3</Text>
-                <Text style={stepTextStyle}>Usa este email para crear tu cuenta</Text>
+                <Text style={stepTextStyle}>
+                  Pulsa <strong>&quot;Generar plan&quot;</strong> — en 2 minutos tienes el borrador
+                  listo
+                </Text>
               </Section>
               <Section style={stepStyle}>
                 <Text style={stepNumberStyle}>4</Text>
-                <Text style={stepTextStyle}>
-                  Ya tienes <strong>acceso completo — 3 meses gratis</strong>
-                </Text>
+                <Text style={stepTextStyle}>Revísalo, apruébalo y envíaselo a tu paciente</Text>
               </Section>
             </Section>
 
             {/* CTA */}
             <Section style={ctaContainerStyle}>
-              <Button href='https://dietly.es/signup' style={buttonStyle}>
-                Acceder a Dietly
+              <Button href={signupUrl} style={buttonStyle}>
+                Acceder a Dietly →
               </Button>
             </Section>
 
             <Hr style={hrStyle} />
 
+            <Text style={textStyle}>
+              Si algo no funciona o tienes cualquier duda, escríbeme directamente por WhatsApp —
+              respondo yo personalmente.
+            </Text>
+
             {/* Firma */}
             <Text style={signatureStyle}>
-              Un saludo,
-              <br />
               <strong>Rubén</strong>
               <br />
               Fundador de Dietly
             </Text>
 
-            {/* PS */}
+            {/* PD */}
             <Text style={psStyle}>
               <em>
-                PS: Si tienes cualquier duda escríbeme directamente respondiendo a este email o por
-                Instagram.
+                PD: Si ves algo que mejorarías o que te falta, dímelo. Tu feedback en estas primeras
+                semanas vale más que cualquier encuesta.
               </em>
             </Text>
           </Section>
