@@ -179,10 +179,6 @@ export function PatientTabs({
           intakeUrl={intakeUrl}
           intakeSheetOpen={intakeSheetOpen}
           onIntakeSheetOpenChange={setIntakeSheetOpen}
-          onSendToPatient={() => {
-            setSheetOpen(false);
-            setActiveTab('cuestionario');
-          }}
         />
       </TabsContent>
 

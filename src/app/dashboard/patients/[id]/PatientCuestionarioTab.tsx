@@ -12,6 +12,7 @@ import type { Patient } from '@/types/dietly';
 import { CopyButton } from './copy-button';
 import { DashboardIntakeForm } from './dashboard-intake-form';
 import { DataField, Section } from './patient-shared';
+import { SendIntakeEmailButton } from './send-intake-email-button';
 
 const INTAKE_LABELS: Record<string, string> = {
   comidas_al_dia:         'Comidas al día',
@@ -37,7 +38,6 @@ export type PatientCuestionarioTabProps = {
   intakeUrl: string | null;
   intakeSheetOpen: boolean;
   onIntakeSheetOpenChange: (open: boolean) => void;
-  onSendToPatient: () => void;
 };
 
 export function PatientCuestionarioTab({
@@ -46,7 +46,6 @@ export function PatientCuestionarioTab({
   intakeUrl,
   intakeSheetOpen,
   onIntakeSheetOpenChange,
-  onSendToPatient,
 }: PatientCuestionarioTabProps) {
   return (
     <>
@@ -119,25 +118,11 @@ export function PatientCuestionarioTab({
                 </div>
               </button>
 
-              {/* Enviar al paciente */}
-              {intakeUrl && (
-                <button
-                  type='button'
-                  onClick={onSendToPatient}
-                  className='group flex flex-1 flex-col items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/50 px-5 py-5 text-center transition-all duration-200 hover:border-zinc-700 hover:bg-zinc-900 active:scale-[0.99]'
-                >
-                  <div className='flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 transition-colors group-hover:bg-zinc-700 group-hover:text-zinc-300'>
-                    <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
-                      <line x1='22' y1='2' x2='11' y2='13' />
-                      <polygon points='22 2 15 22 11 13 2 9 22 2' />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className='text-sm font-semibold text-zinc-300'>Enviar al paciente</p>
-                    <p className='mt-0.5 text-xs text-zinc-600'>Link para rellenarlo desde casa</p>
-                  </div>
-                </button>
-              )}
+              {/* Enviar al paciente por email */}
+              <SendIntakeEmailButton
+                patientId={patient.id}
+                patientEmail={patient.email ?? null}
+              />
             </div>
 
             <p className='text-center text-xs text-zinc-600'>
