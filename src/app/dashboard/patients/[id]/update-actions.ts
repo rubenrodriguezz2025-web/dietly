@@ -61,7 +61,10 @@ export async function updatePatientField(
           (Date.now() - new Date(p.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25),
         );
         const base = 10 * p.weight_kg + 6.25 * p.height_cm - 5 * age;
-        const tmb = p.sex === 'male' ? base + 5 : base - 161;
+        let tmb: number;
+        if (p.sex === 'male') tmb = base + 5;
+        else if (p.sex === 'female') tmb = base - 161;
+        else tmb = base - 78; // 'other': promedio de ambas ecuaciones, conservador y no binario
         update.tmb = Math.round(tmb);
         const factor = ACTIVITY_FACTORS[p.activity_level as ActivityLevel];
         if (factor) update.tdee = Math.round(Math.round(tmb) * factor);

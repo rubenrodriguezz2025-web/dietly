@@ -25,7 +25,10 @@ function calculateTMB(
   );
   // Mifflin-St Jeor
   const base = 10 * weight_kg + 6.25 * height_cm - 5 * age;
-  return sex === 'male' ? base + 5 : base - 161;
+  if (sex === 'male') return base + 5;
+  if (sex === 'female') return base - 161;
+  // 'other': promedio de ambas ecuaciones (base − 78), conservador y no binario
+  return base - 78;
 }
 
 export async function createPatient(
