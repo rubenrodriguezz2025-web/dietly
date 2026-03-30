@@ -4,10 +4,11 @@ import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 import Link from 'next/link';
 import { IoLogoFacebook, IoLogoInstagram, IoLogoTwitter } from 'react-icons/io5';
 
+import { ConsentAnalytics } from '@/components/consent-analytics';
+import { CookieBanner, CookiePreferencesLink } from '@/components/cookie-banner';
 import { Logo } from '@/components/logo';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
-import { Analytics } from '@vercel/analytics/react';
 
 import { Navigation } from './navigation';
 
@@ -43,7 +44,8 @@ export default function RootLayout({ children }: PropsWithChildren) {
           <Footer />
         </div>
         <Toaster />
-        <Analytics />
+        <ConsentAnalytics />
+        <CookieBanner />
       </body>
     </html>
   );
@@ -114,6 +116,10 @@ function Footer() {
             {' '}<a href='/legal/privacidad' className='transition-colors hover:text-zinc-300'>Privacidad</a>
             {' · '}
             <a href='/legal/terminos' className='transition-colors hover:text-zinc-300'>Términos</a>
+            {' · '}
+            <a href='/politica-cookies' className='transition-colors hover:text-zinc-300'>Cookies</a>
+            {' · '}
+            <CookiePreferencesLink />
           </span>
         </div>
       </div>
