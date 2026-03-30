@@ -315,14 +315,13 @@ El Art. 28.3 exige que el contrato responsable→encargado especifique **explíc
 - ❌ Integración con wearables (Strava, Apple Health)
 - ❌ Chat en tiempo real con paciente
 
-### PWA para el paciente (Semana 5 — obligatorio)
-En lugar de app nativa, construir una **Progressive Web App** para que el paciente vea su plan:
+### PWA para el paciente ✅ IMPLEMENTADA
 - URL única por plan: `/p/[token]` — sin login requerido para el paciente
 - El paciente recibe el link por email y puede "añadir a pantalla de inicio" desde Safari/Chrome
-- Muestra: plan semanal con kcal/macros **visibles por comida** (el pain #1 de Nutrium), recetas con fotos, lista de compra
-- Stack: página Next.js con `manifest.json` + `service-worker` básico → se comporta como app
-- Coste de desarrollo: 1-2 días, no semanas de app nativa
-- **No es opcional** — los testimonios de Dietopro confirman que la app del paciente es lo que más ayuda a conseguir clientes nuevos
+- Muestra: plan semanal con kcal/macros por comida, lista de compra interactiva, botón compartir (WhatsApp/email)
+- Dark mode automático (detecta preferencia del sistema), swipe entre días en móvil
+- `public/manifest.json` + `public/sw.js` con estrategia network-first para planes, cache-first para assets estáticos
+- Archivos: `pwa-shell.tsx`, `visor-dias.tsx`, `navegador-dias.tsx`, `lista-compra.tsx`, `boton-compartir.tsx`
 
 ---
 
@@ -367,6 +366,8 @@ NEXT_PUBLIC_APP_URL=
 5. **Grupos Facebook/WhatsApp** de nutricionistas españoles — post auténtico buscando 10 beta testers.
 
 **No hacer en fase early**: Google Ads, SEO, Product Hunt (mercado anglosajón, demasiado lento).
+
+> **Análisis competitivo**: 12 softwares analizados en `.agents/product-marketing-context.md`. Competidores principales: Nutrium (Portugal, sin IA), NutriAdmin (España/UK, UX anticuada), Dietopro (España, IA básica), INDYA (España, foco en seguimiento). Ventaja diferencial de Dietly: IA generativa real + PDF branding desde básico + PWA con macros por comida + precio para autónomos españoles.
 
 ---
 
@@ -432,10 +433,10 @@ Total: **32 migraciones** en `supabase/migrations/`.
 | `/p/intake/[token]` | Cuestionario de intake |
 | `/p/seguimiento/[token]` | Formulario de seguimiento |
 
-### API routes (14 endpoints)
+### API routes (17 endpoints)
 | Ruta | Método | Descripción |
 |------|--------|-------------|
-| `/api/plans/generate` | POST | Genera plan con Claude API (754 líneas, día por día) |
+| `/api/plans/generate` | POST | Genera plan con Claude API (día por día, SSE stream) |
 | `/api/plans/[id]/status` | GET | Poll estado de generación |
 | `/api/plans/[id]/pdf` | POST | Genera PDF con @react-pdf/renderer |
 | `/api/pdf/preview` | POST | Preview del PDF |
@@ -447,8 +448,11 @@ Total: **32 migraciones** en `supabase/migrations/`.
 | `/api/stripe/checkout` | POST | Crear sesión Stripe |
 | `/api/stripe/portal` | POST | Portal de facturación |
 | `/api/stripe/webhook` | POST | Webhook Stripe |
+| `/api/webhooks` | POST | Webhooks generales |
 | `/api/health` | GET | Health check |
 | `/api/e2e-setup` | POST | Setup tests E2E |
+| `/api/test-pdf` | POST | Test endpoint PDF (dev) |
+| `/api/test-stream` | GET | Test SSE stream (dev) |
 
 ### Marketing y legal
 | Ruta | Descripción |
@@ -505,14 +509,23 @@ Total: **32 migraciones** en `supabase/migrations/`.
 - ✅ Vista pública del plan `/p/[token]` con navegador de días
 - ✅ Envío de plan por email (Resend + PDF adjunto)
 - ✅ Email de bienvenida beta automático al añadir a whitelist
-- ✅ Panel admin beta (`/dashboard/admin/beta`): métricas, costes en €, whitelist
+- ✅ Panel admin beta (`/dashboard/admin/beta`): métricas por usuario (planes, tokens, coste €), whitelist
 - ✅ Lectura de recepción (`plan_views`: first_opened, last_opened, open_count)
 - ✅ Recetario personal (`/dashboard/recetas`): CRUD de recetas propias
 - ✅ Agenda de citas (`/dashboard/agenda`): presencial/online, meeting_url
 - ✅ Panel de derechos de datos (`/dashboard/derechos-datos`): solicitudes ARCO
 - ✅ Audit logs automáticos con triggers en patients, plans, consents, intake
 - ✅ Rate limiting en acceso a planes (10 intentos/15 min por IP)
-- ✅ Cookie banner en marketing
+- ✅ Cookie banner RGPD compliant: opt-in explícito, Vercel Analytics condicional
+
+### Post-semana 4 — UX, transparencia clínica y calidad
+- ✅ **PWA completa**: manifest.json + sw.js, dark mode automático, swipe entre días en móvil
+- ✅ **Suspense skeletons reutilizables**: `src/components/skeletons/` + loading.tsx en dashboard, patients/[id], plans/[id], agenda
+- ✅ **MacroTransparencyCard**: tarjeta colapsable en ficha de paciente con TMB/TDEE/objetivo calórico/balance y distribución de macros por objetivo
+- ✅ **CalcTargets extendido**: campos `tmb`, `tdee`, `calorie_balance` para transparencia en UI
+- ✅ **Corrección clínica TMB**: bug sexo 'other' corregido en new/actions.ts y update-actions.ts (usaba fórmula femenina, ahora usa promedio no binario base−78)
+- ✅ **Revisión día a día con progreso visual** en generación de planes
+- ✅ **Email beta mejorado**: copy renovado + pre-fill de email en URL de signup
 
 ### Optimizaciones de rendimiento
 - ✅ **System prompt optimizado**: instrucciones fijas movidas a system prompt (reduce tokens ~20-30%)
@@ -541,11 +554,12 @@ src/
 │   │   └── admin/beta/   # Panel admin beta
 │   ├── p/                # Rutas públicas paciente (plan, intake, seguimiento)
 │   ├── plan/             # Vista de plan legacy
-│   ├── api/              # 14 API routes
+│   ├── api/              # 17 API routes
 │   └── onboarding/       # Onboarding post-registro
 ├── components/
 │   ├── ui/               # shadcn/ui (button, input, tabs, toast, sheet, etc.)
 │   ├── pdf/              # NutritionPlanPDF.tsx (823 líneas)
+│   ├── skeletons/        # dashboard-skeleton, patient-detail-skeleton, plan-viewer-skeleton
 │   └── patients/         # ConsentForm.tsx
 ├── features/
 │   ├── account/          # Controladores: user, session, subscription
@@ -575,7 +589,8 @@ src/
 - **Opus** (`/model opus`): para auditorías complejas, refactors grandes, revisión legal
 - **Skills de marketing** instaladas en `.agents/skills/` (37 skills)
 - **Skills de UI/UX** en `.claude/skills/`: animate, colorize, frontend-design, polish
-- **Contexto de marketing**: `.agents/product-marketing-context.md`
+- **Skills adicionales**: nano-banana-2-skill (fotos de comida con IA), gsap-skills (animaciones GSAP)
+- **Análisis competitivo**: `.agents/product-marketing-context.md` — 12 softwares analizados (Nutrium, NutriAdmin, Dietopro, INDYA y 8 más)
 - **Lock file**: `skills-lock.json` (4 skills de pbakaus/impeccable)
 
 ### Scripts npm
@@ -610,38 +625,41 @@ npm run stripe:listen    # Escuchar webhooks Stripe en local
 
 ## Estado actual del proyecto
 
-**Semana**: 4 (PDF + PWA + beta)
-**Estado**: MVP funcional desplegado en Vercel. Beta privada en marcha.
+**Semana**: 5 (post-launch beta)
+**Estado**: MVP funcional desplegado en Vercel. Beta privada activa, objetivo 8 usuarios beta.
 
 **Completado:**
 - ✅ Semana 1: Auth, onboarding, Stripe, dashboard base
 - ✅ Semana 2: CRUD pacientes, intake, seguimiento, progreso, RGPD
 - ✅ Semana 3: Generación IA día por día, editor de plan, validación clínica
 - ✅ Semana 4: PDF server-side, email, beta admin, recetario, plan_views
+- ✅ Post-semana 4: PWA completa, Suspense skeletons, MacroTransparencyCard, corrección clínica TMB
 - ✅ Auditoría de optimización (OPTIMIZATION.md)
 - ✅ Auditoría de expertos (AUDITORIA_EXPERTOS.md)
 - ✅ 90+ `as any` corregidos, ignoreBuildErrors eliminado
 - ✅ 32 migraciones aplicadas
 
 **Decisiones tomadas:**
-- ✅ Análisis competitivo completo (Nutrium, NutriAdmin, Dietopro, INDYA)
+- ✅ Análisis competitivo completo: 12 softwares analizados (ver `.agents/product-marketing-context.md`)
 - ✅ Legal verificado — producto viable
 - ✅ GTM definido — lista de espera + LinkedIn outreach + CODiNuCoVa
-- ✅ PWA paciente en /p/[token] (no app nativa)
+- ✅ PWA paciente en /p/[token] completamente implementada (manifest.json + sw.js + dark mode + swipe)
 - ✅ @react-pdf/renderer funciona server-side en Vercel
 - ✅ Fuentes locales en /public/fonts/ (Inter, Lora, Poppins, Merriweather)
+- ✅ Bloqueo de menores < 18 años implementado (con mensaje de consentimiento parental)
 
 **Deuda técnica conocida (ver OPTIMIZATION.md):**
 - `/src/lib/` y `/src/libs/` deberían consolidarse
 - 52 archivos > 200 líneas (top: landing 883, PDF 788, generate 754)
 - 92 queries Supabase sin capa de abstracción
-- 0 Suspense boundaries en dashboard
 - Sin tracking de micronutrientes (señalado en auditoría clínica)
 
-**Próximos pasos:**
-- PWA completa con manifest.json + service worker
-- Cláusula Art. 28.3 RGPD completa en T&Cs (antes de escalar)
-- Plantilla de consentimiento informado descargable
-- Bloqueo de menores < 14 años (auditoría clínica)
+**Próximos pasos (por prioridad):**
+1. **Intercambio de platos** — el nutricionista puede sustituir una comida del plan por otra equivalente calórica/nutricionalmente (prioridad máxima, feature más demandada)
+2. **Cláusula Art. 28.3 RGPD completa** en T&Cs (antes de escalar a 10+ clientes)
+3. **Plantilla de consentimiento informado descargable** para que el nutricionista la entregue al paciente
+4. **Fotos de comida con Nano Banana 2** (post-beta — skill instalada)
+5. **BEDCA integrada** — base de datos española de composición de alimentos (post-beta)
+6. **Rebranding a sabea.es / sabea.com** — nombre alternativo en evaluación (dominios pendientes de decisión)
 
 Consultar `architecture.md` para diagramas de flujo y decisiones técnicas detalladas.
