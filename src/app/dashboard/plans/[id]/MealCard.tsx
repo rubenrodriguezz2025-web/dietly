@@ -168,7 +168,12 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
 
           {/* Badge transparencia IA */}
           <div className='flex items-center justify-between gap-2'>
-            <span className='text-[10px] italic text-zinc-700'>~ Estimación IA</span>
+            <span className='group relative cursor-default text-[10px] italic text-zinc-700'>
+              ~ Estimación IA
+              <span className='pointer-events-none absolute bottom-full left-0 z-10 mb-1 w-64 rounded-lg border border-zinc-800 bg-zinc-950 p-2.5 text-[10px] not-italic leading-relaxed text-zinc-400 opacity-0 shadow-xl transition-opacity group-hover:opacity-100'>
+                Valores calculados por IA basándose en bases de datos nutricionales de referencia internacional. Revisados y aprobados por el nutricionista. Próximamente verificados con base de datos BEDCA oficial.
+              </span>
+            </span>
             {isDraft && (
               <button
                 type='button'

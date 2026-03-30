@@ -97,6 +97,10 @@ const DAY_TOOL: Anthropic.Tool = {
         },
         minItems: 4,
       },
+      day_theme: {
+        type: 'string',
+        description: 'Tema culinario atractivo del día, ej: Mediterráneo, Atlántico, Oriental ligero',
+      },
     },
     required: ['day_number', 'day_name', 'total_calories', 'total_macros', 'meals'],
   },
@@ -232,7 +236,9 @@ PERFIL DEL PACIENTE:
 - Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
 - Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${recipesSection}${variety}
 
-Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}.`;
+Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}.
+
+Asigna un tema culinario atractivo a este día (campo day_theme), ej: "Mediterráneo", "Atlántico", "Oriental ligero", "De la huerta", "Proteico". El tema debe reflejar el perfil de ingredientes predominante del día.`;
 }
 
 // buildShoppingListPrompt importado desde @/libs/ai/plan-prompts

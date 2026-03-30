@@ -40,6 +40,7 @@ export type DayStatus = 'pending' | 'approved' | 'regenerating';
 export type PlanDay = {
   day_number: number;
   day_name: string;
+  day_theme?: string;
   total_calories: number;
   total_macros: { protein_g: number; carbs_g: number; fat_g: number };
   meals: Meal[];

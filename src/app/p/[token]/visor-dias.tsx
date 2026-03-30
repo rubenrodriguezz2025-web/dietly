@@ -140,9 +140,16 @@ export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props)
             className='flex flex-1 items-center justify-between'
             style={{ animation: `pwa-slide-${animDir} 0.28s ease both` }}
           >
-            <h2 className='text-xl font-extrabold' style={{ color: 'var(--text)' }}>
-              {diaData.day_name}
-            </h2>
+            <div className='flex flex-col'>
+              <h2 className='text-xl font-extrabold' style={{ color: 'var(--text)' }}>
+                {diaData.day_name}
+              </h2>
+              {diaData.day_theme && (
+                <span className='text-xs' style={{ color: 'var(--text-muted)' }}>
+                  {diaData.day_theme}
+                </span>
+              )}
+            </div>
             {showMacros && (
               <div
                 className='flex items-center gap-1.5 rounded-full px-3 py-1.5'

@@ -30,7 +30,12 @@ export function DayHeader({
       {/* Cabecera del día */}
       <div className='flex items-center justify-between border-b border-zinc-800 px-5 py-4'>
         <div>
-          <h3 className='font-semibold text-zinc-100'>{day.day_name}</h3>
+          <div className='flex items-center gap-2'>
+            <h3 className='font-semibold text-zinc-100'>{day.day_name}</h3>
+            {day.day_theme && (
+              <span className='text-xs text-zinc-500'>· {day.day_theme}</span>
+            )}
+          </div>
           <div className='mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-zinc-600'>
             <EditableNumber
               value={day.total_calories}

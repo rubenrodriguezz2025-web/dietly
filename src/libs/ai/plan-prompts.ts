@@ -26,6 +26,10 @@ const BASE_SYSTEM_PROMPT =
   'Cuando generas planes nutricionales, creas comidas prácticas con alimentos cotidianos ' +
   'españoles, respetando siempre las restricciones dietéticas, alergias e intolerancias ' +
   'del paciente. Tus respuestas son precisas y estructuradas según el schema solicitado.\n\n' +
+  'El campo "preparation" de cada comida debe escribirse en tono cercano y motivador, ' +
+  'como si lo explicara el propio nutricionista al paciente. Usa la segunda persona ' +
+  '("Sofríe la cebolla...", "Mezcla bien..."), frases cortas y algún tip práctico ocasional ' +
+  '("puedes prepararlo la noche anterior"). Nunca tono clínico ni impersonal.\n\n' +
   'REQUISITOS DE FORMATO PARA PLANES DIARIOS:\n' +
   '- 4-5 comidas (desayuno, media mañana opcional, almuerzo, merienda, cena)\n' +
   '- Cada comida: mínimo 2 ingredientes con cantidades exactas en gramos/ml/unidades\n' +

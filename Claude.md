@@ -32,7 +32,7 @@ El nutricionista introduce los datos del paciente → la IA genera el plan nutri
 Frontend:    Next.js 15 (App Router)
 Auth + DB:   Supabase (PostgreSQL + Row Level Security)
 Pagos:       Stripe (suscripciones mensuales)
-IA:          Anthropic Claude API (claude-sonnet-4-5)
+IA:          Anthropic Claude API (claude-sonnet-4-6)
 PDF:         @react-pdf/renderer
 Email:       Resend + React Email
 UI:          shadcn/ui + Tailwind CSS
@@ -225,7 +225,7 @@ El Art. 28.3 exige que el contrato responsable→encargado especifique **explíc
 
 ## Generación de planes con IA
 
-**Modelo**: `claude-sonnet-4-5` con Structured Outputs (JSON garantizado)
+**Modelo**: `claude-sonnet-4-6` con Structured Outputs (JSON garantizado)
 **Estrategia**: generar **día por día** (7 llamadas separadas), no el plan completo de golpe
 **Estimación de coste**: ~$0.10-0.50 por plan completo
 
@@ -289,7 +289,7 @@ El Art. 28.3 exige que el contrato responsable→encargado especifique **explíc
 - Usar `@supabase/ssr` para cookies en App Router
 
 ### IA y Claude API
-- Usar `claude-sonnet-4-5` siempre (no cambiar sin consenso)
+- Usar `claude-sonnet-4-6` siempre (no cambiar sin consenso)
 - Structured Outputs con Pydantic/Zod para JSON garantizado
 - Generar día por día (7 llamadas), no el plan completo
 - Siempre capturar `tokens_used` y guardar en `plan_generations`
@@ -487,7 +487,7 @@ Total: **32 migraciones** en `supabase/migrations/`.
 
 ### Semana 3 — Generación IA
 - ✅ Generación de planes día por día (7 llamadas a Claude API)
-- ✅ Modelo: `claude-sonnet-4-5` con Structured Outputs (JSON garantizado)
+- ✅ Modelo: `claude-sonnet-4-6` con Structured Outputs (JSON garantizado)
 - ✅ Pseudonymización de PII antes de enviar a Anthropic
 - ✅ Log de tokens y costes en `ai_request_logs` y `plan_generations`
 - ✅ Validación clínica con 19 checks (nutrition-validator.ts)
