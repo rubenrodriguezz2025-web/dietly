@@ -29,7 +29,7 @@ export function PatientWelcomeEmail({
     <Html lang='es'>
       <Head />
       <Preview>
-        {nutritionistName} te ha dado de alta en Dietly — rellena tu cuestionario inicial
+        {from} te ha registrado para recibir tu plan nutricional personalizado
       </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
@@ -43,35 +43,28 @@ export function PatientWelcomeEmail({
             <Text style={greetingStyle}>Hola {patientName},</Text>
 
             <Text style={textStyle}>
-              <strong>{from}</strong> te ha registrado en Dietly para prepararte un plan
-              nutricional personalizado.
+              <strong>{from}</strong> te ha dado de alta para prepararte un plan nutricional
+              personalizado.
             </Text>
 
             <Text style={textStyle}>
-              Para que tu nutricionista pueda diseñar el plan más adecuado para ti, necesitamos
-              que rellenes un breve cuestionario sobre tus hábitos, preferencias y objetivos.
-              Solo te llevará unos minutos.
+              Para que pueda diseñar el plan más adecuado para ti, rellena este breve cuestionario
+              sobre tus hábitos y objetivos. Solo te llevará unos minutos.
             </Text>
 
             {/* CTA */}
             <Section style={ctaContainerStyle}>
               <Button href={intakeUrl} style={buttonStyle}>
-                Rellenar mi cuestionario →
+                Rellenar cuestionario
               </Button>
             </Section>
-
-            <Text style={noteStyle}>
-              Si el botón no funciona, copia y pega este enlace en tu navegador:
-              <br />
-              <span style={linkStyle}>{intakeUrl}</span>
-            </Text>
 
             <Hr style={hrStyle} />
 
             <Text style={footerStyle}>
-              Este mensaje ha sido enviado por <strong>{nutritionistName}</strong> a través de
-              Dietly. Si tienes cualquier duda sobre tu plan nutricional, contacta directamente
-              con tu nutricionista.
+              Mensaje enviado por <strong>{nutritionistName}</strong> a través de Dietly.
+              Si tienes dudas sobre tu plan nutricional, contacta directamente con tu
+              nutricionista.
             </Text>
           </Section>
         </Container>
@@ -144,18 +137,6 @@ const buttonStyle: React.CSSProperties = {
   fontWeight: '600',
   padding: '14px 32px',
   textDecoration: 'none',
-};
-
-const noteStyle: React.CSSProperties = {
-  color: '#7a8094',
-  fontSize: '12px',
-  lineHeight: '1.6',
-  margin: '0 0 16px',
-};
-
-const linkStyle: React.CSSProperties = {
-  color: '#4ade80',
-  wordBreak: 'break-all',
 };
 
 const hrStyle: React.CSSProperties = {

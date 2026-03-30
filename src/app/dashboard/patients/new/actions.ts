@@ -209,20 +209,25 @@ export async function createPatient(
         intakeUrlPrefix: intakeUrl.slice(0, 60),
       });
 
-      const html = await render(
-        createElement(PatientWelcomeEmail, {
-          patientName: name,
-          nutritionistName,
-          clinicName,
-          intakeUrl,
-        })
-      );
+      const emailElement = createElement(PatientWelcomeEmail, {
+        patientName: name,
+        nutritionistName,
+        clinicName,
+        intakeUrl,
+      });
+
+      const [html, text] = await Promise.all([
+        render(emailElement),
+        render(emailElement, { plainText: true }),
+      ]);
 
       const sendResult = await resendClient.emails.send({
         from: 'Dietly <hola@dietly.es>',
+        replyTo: 'hola@dietly.es',
         to: email,
         subject: `${nutritionistName} te ha registrado en Dietly`,
         html,
+        text,
       });
 
       console.log('[createPatient:email] Respuesta de Resend', {
