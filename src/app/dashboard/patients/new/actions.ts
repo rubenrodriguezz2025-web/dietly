@@ -156,6 +156,13 @@ export async function createPatient(
   }
 
   // Enviar email de bienvenida al paciente (no bloquea si falla)
+  console.log('[createPatient:email] Iniciando envío de bienvenida', {
+    hasEmail: !!email,
+    patientId,
+    resendKeyExists: !!process.env.RESEND_API_KEY,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL ?? '(vacío)',
+  });
+
   if (email) {
     try {
       const [profileResult, patientTokenResult] = await Promise.all([
@@ -170,6 +177,13 @@ export async function createPatient(
           .eq('id', patientId)
           .single(),
       ]);
+
+      console.log('[createPatient:email] Datos obtenidos', {
+        profileOk: !!profileResult.data,
+        profileError: profileResult.error?.message ?? null,
+        intakeTokenOk: !!patientTokenResult.data?.intake_token,
+        intakeTokenError: patientTokenResult.error?.message ?? null,
+      });
 
       const nutritionistName = profileResult.data?.full_name ?? 'Tu nutricionista';
       const clinicName = profileResult.data?.clinic_name ?? null;
@@ -189,6 +203,12 @@ export async function createPatient(
         intakeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/patients/${patientId}`;
       }
 
+      console.log('[createPatient:email] Enviando a Resend', {
+        to: email,
+        from: 'hola@dietly.es',
+        intakeUrlPrefix: intakeUrl.slice(0, 60),
+      });
+
       const html = await render(
         createElement(PatientWelcomeEmail, {
           patientName: name,
@@ -198,14 +218,19 @@ export async function createPatient(
         })
       );
 
-      await resendClient.emails.send({
-        from: 'Dietly <noreply@dietly.es>',
+      const sendResult = await resendClient.emails.send({
+        from: 'Dietly <hola@dietly.es>',
         to: email,
         subject: `${nutritionistName} te ha registrado en Dietly`,
         html,
       });
+
+      console.log('[createPatient:email] Respuesta de Resend', {
+        id: sendResult.data?.id ?? null,
+        error: sendResult.error ?? null,
+      });
     } catch (emailError) {
-      console.error('[createPatient] Error al enviar email de bienvenida al paciente:', emailError);
+      console.error('[createPatient:email] Excepción al enviar email de bienvenida:', emailError);
     }
   }
 
