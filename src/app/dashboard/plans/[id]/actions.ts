@@ -207,7 +207,7 @@ export async function approvePlan(
     ]);
 
     const patientToken = planForEmail.data?.patient_token ?? null;
-    const patient = planForEmail.data?.patients as { email: string | null; name: string } | null;
+    const patient = planForEmail.data?.patients as unknown as { email: string | null; name: string } | null;
     const patientEmail = patient?.email ?? null;
     const patientName = patient?.name ?? '';
 
