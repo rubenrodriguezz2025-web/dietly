@@ -119,6 +119,7 @@ export default async function PlanPage({
             hasEmail={!!plan.patients?.email}
             approvedDaysCount={content?.days?.filter((d) => d.day_status === 'approved').length ?? 0}
             totalDaysCount={content?.days?.length ?? 7}
+            sentAt={plan.sent_at ?? null}
           />
         )}
       </div>

@@ -1,8 +1,10 @@
 'use server';
 
+import { createElement } from 'react';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+import { PlanReadyEmail } from '@/features/emails/plan-ready';
 import { logAIRequest } from '@/libs/ai/logger';
 import {
   buildShoppingListPrompt,
@@ -18,6 +20,7 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 import type { Meal, NutritionPlan, Patient, PlanContent, PlanDay, ShoppingList } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
+import { render } from '@react-email/components';
 
 // ── Recalculate meal macros ───────────────────────────────────────────────────
 
@@ -186,6 +189,65 @@ export async function approvePlan(
   }
 
   revalidatePath(`/dashboard/plans/${planId}`);
+
+  // ── Notificación automática al paciente ──────────────────────────────────
+  // No bloquea el flujo de aprobación si falla
+  try {
+    const [planResult, profileResult] = await Promise.all([
+      supabaseAdminClient
+        .from('nutrition_plans')
+        .select('patient_token, patients(email, name)')
+        .eq('id', planId)
+        .single(),
+      supabaseAdminClient
+        .from('profiles')
+        .select('full_name, clinic_name')
+        .eq('id', user.id)
+        .single(),
+    ]);
+
+    const patientEmail = (planResult.data?.patients as { email: string | null; name: string } | null)?.email;
+    const patientName  = (planResult.data?.patients as { email: string | null; name: string } | null)?.name ?? '';
+    const patientToken = planResult.data?.patient_token as string | null;
+
+    if (patientEmail && patientToken) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+      const planUrl = `${appUrl}/p/${patientToken}`;
+      const nutritionistName = profileResult.data?.full_name ?? 'Tu nutricionista';
+      const clinicName = profileResult.data?.clinic_name ?? null;
+
+      const emailElement = createElement(PlanReadyEmail, {
+        patientName,
+        nutritionistName,
+        clinicName,
+        planUrl,
+      });
+
+      const [html, text] = await Promise.all([
+        render(emailElement),
+        render(emailElement, { plainText: true }),
+      ]);
+
+      const sendResult = await resendClient.emails.send({
+        from: 'Dietly <hola@dietly.es>',
+        replyTo: 'hola@dietly.es',
+        to: patientEmail,
+        subject: `Tu plan nutricional personalizado está listo – ${clinicName ?? nutritionistName}`,
+        html,
+        text,
+      });
+
+      if (!sendResult.error) {
+        await supabaseAdminClient
+          .from('nutrition_plans')
+          .update({ sent_at: new Date().toISOString() })
+          .eq('id', planId);
+      }
+    }
+  } catch (err) {
+    console.error('[approvePlan] Error en notificación automática:', err);
+  }
+
   return { ok: true };
 }
 

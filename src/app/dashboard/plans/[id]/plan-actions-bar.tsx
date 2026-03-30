@@ -113,6 +113,7 @@ interface Props {
   hasEmail: boolean;
   approvedDaysCount?: number;
   totalDaysCount?: number;
+  sentAt?: string | null;
 }
 
 // ── PlanActionsBar ────────────────────────────────────────────────────────────
@@ -127,10 +128,13 @@ export function PlanActionsBar({
   hasEmail,
   approvedDaysCount = 0,
   totalDaysCount = 7,
+  sentAt,
 }: Props) {
   const router = useRouter();
   const isDraft = status === 'draft';
   const isSent = status === 'sent';
+  // Auto-notificado al aprobar (sent_at set pero status todavía 'approved')
+  const autoNotified = !!sentAt && status === 'approved';
 
   // ── Toast ─────────────────────────────────────────────────────────────────
   const [toastMount, setToastMount] = useState(false);
@@ -371,7 +375,7 @@ export function PlanActionsBar({
                 className='inline-flex items-center gap-2 rounded-lg bg-[#1a7a45] px-4 py-2 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#155f38] active:scale-[0.97]'
               >
                 <IconSend />
-                {isSent ? 'Reenviar al paciente' : 'Enviar al paciente'}
+                {isSent || autoNotified ? 'Reenviar por email (con PDF)' : 'Enviar al paciente'}
               </button>
             ) : (
               <button
@@ -379,7 +383,7 @@ export function PlanActionsBar({
                 title='El paciente no tiene email. Añádelo en su ficha.'
                 className='inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-[#1a7a45] px-4 py-2 text-sm font-semibold text-white opacity-40'
               >
-                {isSent ? 'Reenviar al paciente' : 'Enviar al paciente'}
+                {isSent || autoNotified ? 'Reenviar por email (con PDF)' : 'Enviar al paciente'}
               </button>
             )
           )}
@@ -391,6 +395,11 @@ export function PlanActionsBar({
         )}
         {emailState.ok && (
           <p className='text-xs text-emerald-500'>✓ Email enviado correctamente</p>
+        )}
+        {autoNotified && !emailState.ok && !emailState.error && (
+          <p className='max-w-xs text-right text-[11px] text-zinc-600'>
+            El paciente ya fue notificado automáticamente al aprobar el plan. Este botón reenvía el plan con el PDF adjunto.
+          </p>
         )}
         {!hasEmail && !isDraft && (
           <p className='text-xs text-zinc-600'>
