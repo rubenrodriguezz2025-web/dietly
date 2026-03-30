@@ -3,6 +3,7 @@
 import type { PlanDay } from '@/types/dietly';
 
 import { EditableNumber, PencilIcon, XIcon } from './day-editor-shared';
+import { DayStatusBadge } from './day-status-badge';
 import { RegenerateDayButton } from './regenerate-day-button';
 
 export type DayHeaderProps = {
@@ -80,6 +81,13 @@ export function DayHeader({
               />
             </>
           )}
+          <DayStatusBadge
+            planId={planId}
+            dayNumber={day.day_number}
+            dayName={day.day_name}
+            status={day.day_status}
+            isDraft={isDraft}
+          />
         </div>
       </div>
 

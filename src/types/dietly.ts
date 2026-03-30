@@ -35,12 +35,16 @@ export type Meal = {
   notes: string;
 };
 
+export type DayStatus = 'pending' | 'approved' | 'regenerating';
+
 export type PlanDay = {
   day_number: number;
   day_name: string;
   total_calories: number;
   total_macros: { protein_g: number; carbs_g: number; fat_g: number };
   meals: Meal[];
+  day_status?: DayStatus;
+  approved_at?: string | null;
 };
 
 export type ShoppingList = {

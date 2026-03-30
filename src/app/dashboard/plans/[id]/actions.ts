@@ -340,6 +340,58 @@ export async function acknowledgeValidationBlock(
   return {};
 }
 
+// ── Approve single day ────────────────────────────────────────────────────────
+
+export async function approveSingleDay(
+  planId: string,
+  dayNumber: number
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'No autenticado.' };
+
+  const { data: plan } = (await supabase
+    .from('nutrition_plans')
+    .select('content, status')
+    .eq('id', planId)
+    .eq('nutritionist_id', user.id)
+    .single()) as { data: { content: PlanContent; status: string } | null };
+
+  if (!plan) return { error: 'Plan no encontrado.' };
+  if (plan.status !== 'draft') return { error: 'Solo se pueden revisar días en planes en borrador.' };
+
+  const content = plan.content as PlanContent;
+  const now = new Date().toISOString();
+
+  const updatedDays = content.days.map((d) =>
+    d.day_number === dayNumber
+      ? { ...d, day_status: 'approved' as const, approved_at: now }
+      : d
+  );
+
+  const allApproved = updatedDays.every((d) => d.day_status === 'approved');
+  const updatedContent: PlanContent = { ...content, days: updatedDays };
+
+  const updatePayload: Record<string, unknown> = { content: updatedContent };
+  if (allApproved) {
+    updatePayload.status = 'approved';
+    updatePayload.approved_at = now;
+  }
+
+  const { error } = await supabase
+    .from('nutrition_plans')
+    .update(updatePayload)
+    .eq('id', planId)
+    .eq('nutritionist_id', user.id);
+
+  if (error) return { error: 'Error al guardar la revisión.' };
+
+  revalidatePath(`/dashboard/plans/${planId}`);
+  return { ok: true };
+}
+
 // ── Regenerate day ────────────────────────────────────────────────────────────
 
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];

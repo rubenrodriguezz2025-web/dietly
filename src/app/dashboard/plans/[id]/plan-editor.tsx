@@ -118,6 +118,9 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
   const [activeDay, setActiveDay] = useState<number>(days[0]?.day_number ?? 1);
   const todayDay = jsToPlannedDay(new Date().getDay());
 
+  const approvedCount = days.filter((d) => d.day_status === 'approved').length;
+  const totalDays = days.length;
+
   function handleDirty(dayNumber: number) {
     setDirtyDays((prev) => new Set(prev).add(dayNumber));
   }
@@ -166,6 +169,24 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
 
   return (
     <div className='flex flex-col gap-6'>
+      {/* Progreso de revisión por día — solo en borrador */}
+      {isDraft && (
+        <div className='flex items-center gap-3'>
+          <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800'>
+            <div
+              className='h-full rounded-full bg-[#1a7a45] transition-all duration-500'
+              style={{ width: totalDays > 0 ? `${(approvedCount / totalDays) * 100}%` : '0%' }}
+            />
+          </div>
+          <span className='flex-shrink-0 text-xs tabular-nums text-zinc-500'>
+            <span className={approvedCount === totalDays ? 'text-emerald-400' : 'text-zinc-300'}>
+              {approvedCount}
+            </span>
+            /{totalDays} días revisados
+          </span>
+        </div>
+      )}
+
       {/* Badge de sugerencias del sistema — solo en borrador, no bloqueante */}
       {isDraft && validationResult && validationResult.issues.length > 0 && (
         <div className='flex justify-end'>

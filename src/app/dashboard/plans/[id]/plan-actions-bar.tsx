@@ -111,6 +111,8 @@ interface Props {
   patientEmail: string;
   planTitle: string;
   hasEmail: boolean;
+  approvedDaysCount?: number;
+  totalDaysCount?: number;
 }
 
 // ── PlanActionsBar ────────────────────────────────────────────────────────────
@@ -123,6 +125,8 @@ export function PlanActionsBar({
   patientEmail,
   planTitle,
   hasEmail,
+  approvedDaysCount = 0,
+  totalDaysCount = 7,
 }: Props) {
   const router = useRouter();
   const isDraft = status === 'draft';
@@ -499,6 +503,35 @@ export function PlanActionsBar({
             <p className='mb-5 text-sm text-zinc-500'>
               Una vez aprobado, el plan quedará registrado con tu firma profesional y podrás enviarlo al paciente.
             </p>
+
+            {/* Progreso de revisión por día */}
+            {totalDaysCount > 0 && approvedDaysCount < totalDaysCount && (
+              <div className='mb-4 rounded-xl border border-amber-900/40 bg-amber-950/20 px-4 py-3'>
+                <div className='mb-2 flex items-center justify-between text-xs'>
+                  <span className='font-medium text-amber-400'>Revisión día a día</span>
+                  <span className='tabular-nums text-zinc-500'>
+                    {approvedDaysCount}/{totalDaysCount} días marcados
+                  </span>
+                </div>
+                <div className='h-1 overflow-hidden rounded-full bg-zinc-800'>
+                  <div
+                    className='h-full rounded-full bg-amber-500 transition-all duration-300'
+                    style={{ width: `${(approvedDaysCount / totalDaysCount) * 100}%` }}
+                  />
+                </div>
+                <p className='mt-2 text-xs text-zinc-600'>
+                  Puedes marcar cada día como revisado individualmente antes de aprobar el plan completo.
+                </p>
+              </div>
+            )}
+            {totalDaysCount > 0 && approvedDaysCount === totalDaysCount && (
+              <div className='mb-4 flex items-center gap-2 rounded-xl border border-[#1a7a45]/30 bg-[#1a7a45]/10 px-4 py-3'>
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#22c55e' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                  <polyline points='20 6 9 17 4 12' />
+                </svg>
+                <span className='text-xs font-medium text-emerald-400'>Todos los días revisados día a día</span>
+              </div>
+            )}
 
             {/* Checkbox de responsabilidad profesional */}
             <label className='flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:border-zinc-700'>

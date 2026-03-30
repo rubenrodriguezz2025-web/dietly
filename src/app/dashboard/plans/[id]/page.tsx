@@ -117,6 +117,8 @@ export default async function PlanPage({
             patientEmail={plan.patients?.email ?? ''}
             planTitle={`Semana del ${new Date(plan.week_start_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`}
             hasEmail={!!plan.patients?.email}
+            approvedDaysCount={content?.days?.filter((d) => d.day_status === 'approved').length ?? 0}
+            totalDaysCount={content?.days?.length ?? 7}
           />
         )}
       </div>
