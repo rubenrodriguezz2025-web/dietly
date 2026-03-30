@@ -206,8 +206,12 @@ export async function approvePlan(
         .single(),
     ]);
 
-    const patientEmail = (planResult.data?.patients as { email: string | null; name: string } | null)?.email;
-    const patientName  = (planResult.data?.patients as { email: string | null; name: string } | null)?.name ?? '';
+    const patientsRaw = planResult.data?.patients;
+    const patientData = Array.isArray(patientsRaw)
+      ? (patientsRaw[0] as { email: string | null; name: string } | undefined)
+      : (patientsRaw as { email: string | null; name: string } | null);
+    const patientEmail = patientData?.email ?? null;
+    const patientName  = patientData?.name ?? '';
     const patientToken = planResult.data?.patient_token as string | null;
 
     if (patientEmail && patientToken) {
