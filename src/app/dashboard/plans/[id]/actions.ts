@@ -193,7 +193,7 @@ export async function approvePlan(
   // ── Notificación automática al paciente ──────────────────────────────────
   // No bloquea el flujo de aprobación si falla
   try {
-    const [planResult, profileResult] = await Promise.all([
+    const [planForEmail, profileResult] = await Promise.all([
       supabaseAdminClient
         .from('nutrition_plans')
         .select('patient_token, patients(email, name)')
@@ -206,13 +206,10 @@ export async function approvePlan(
         .single(),
     ]);
 
-    const patientsRaw = planResult.data?.patients;
-    const patientData = Array.isArray(patientsRaw)
-      ? (patientsRaw[0] as { email: string | null; name: string } | undefined)
-      : (patientsRaw as { email: string | null; name: string } | null);
-    const patientEmail = patientData?.email ?? null;
-    const patientName  = patientData?.name ?? '';
-    const patientToken = planResult.data?.patient_token as string | null;
+    const patientToken = planForEmail.data?.patient_token ?? null;
+    const patient = planForEmail.data?.patients as { email: string | null; name: string } | null;
+    const patientEmail = patient?.email ?? null;
+    const patientName = patient?.name ?? '';
 
     if (patientEmail && patientToken) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
