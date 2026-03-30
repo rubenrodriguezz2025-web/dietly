@@ -1,10 +1,16 @@
 'use server';
 
+import { createElement } from 'react';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
+import { PatientWelcomeEmail } from '@/features/emails/patient-welcome';
+import { generateIntakeAccessToken } from '@/lib/auth/intake-tokens';
+import { resendClient } from '@/libs/resend/resend-client';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { ActivityLevel } from '@/types/dietly';
+import { render } from '@react-email/components';
 
 const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   sedentary: 1.2,
@@ -147,6 +153,60 @@ export async function createPatient(
       message: consentError.message,
       patient_id: patientId,
     });
+  }
+
+  // Enviar email de bienvenida al paciente (no bloquea si falla)
+  if (email) {
+    try {
+      const [profileResult, patientTokenResult] = await Promise.all([
+        supabaseAdminClient
+          .from('profiles')
+          .select('full_name, clinic_name')
+          .eq('id', user.id)
+          .single(),
+        supabaseAdminClient
+          .from('patients')
+          .select('intake_token')
+          .eq('id', patientId)
+          .single(),
+      ]);
+
+      const nutritionistName = profileResult.data?.full_name ?? 'Tu nutricionista';
+      const clinicName = profileResult.data?.clinic_name ?? null;
+      const intakeToken = patientTokenResult.data?.intake_token as string | null;
+
+      let intakeUrl: string;
+      if (intakeToken) {
+        try {
+          const { url } = await generateIntakeAccessToken(intakeToken);
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+          intakeUrl = `${appUrl}${url}`;
+        } catch {
+          // PLAN_TOKEN_SECRET no configurado en dev — usar URL sin firma
+          intakeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/p/intake/${intakeToken}`;
+        }
+      } else {
+        intakeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/patients/${patientId}`;
+      }
+
+      const html = await render(
+        createElement(PatientWelcomeEmail, {
+          patientName: name,
+          nutritionistName,
+          clinicName,
+          intakeUrl,
+        })
+      );
+
+      await resendClient.emails.send({
+        from: 'Dietly <noreply@dietly.es>',
+        to: email,
+        subject: `${nutritionistName} te ha registrado en Dietly`,
+        html,
+      });
+    } catch (emailError) {
+      console.error('[createPatient] Error al enviar email de bienvenida al paciente:', emailError);
+    }
   }
 
   redirect(`/dashboard/patients/${patientId}`);
