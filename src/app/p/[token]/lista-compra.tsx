@@ -11,10 +11,8 @@ type Props = {
 
 export function ListaCompraInteractiva({ shoppingList, categorias, planId, aggregateFn }: Props) {
   const storageKey = `dietly-compra-${planId}`;
-
   const [checked, setChecked] = useState<Record<string, boolean>>({});
 
-  // Cargar estado del localStorage al montar
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -49,29 +47,41 @@ export function ListaCompraInteractiva({ shoppingList, categorias, planId, aggre
   return (
     <section className='anim-compra mt-10'>
       <div className='mb-4 flex items-center gap-3'>
-        <div className='h-px flex-1 bg-zinc-200' />
-        <h2 className='text-xs font-bold uppercase tracking-widest text-zinc-400'>
+        <div className='h-px flex-1' style={{ background: 'var(--border)' }} />
+        <h2
+          className='text-xs font-bold uppercase tracking-widest'
+          style={{ color: 'var(--text-muted)' }}
+        >
           Lista de la compra
         </h2>
-        <div className='h-px flex-1 bg-zinc-200' />
+        <div className='h-px flex-1' style={{ background: 'var(--border)' }} />
       </div>
 
-      {/* Progreso */}
+      {/* Barra de progreso */}
       {totalItems > 0 && checkedCount > 0 && (
         <div className='mb-3 flex items-center gap-2'>
-          <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100'>
+          <div
+            className='h-1.5 flex-1 overflow-hidden rounded-full'
+            style={{ background: 'var(--chip-off)' }}
+          >
             <div
               className='h-full rounded-full bg-emerald-500 transition-all duration-300'
               style={{ width: `${(checkedCount / totalItems) * 100}%` }}
             />
           </div>
-          <span className='text-xs font-medium tabular-nums text-zinc-400'>
+          <span
+            className='text-xs font-medium tabular-nums'
+            style={{ color: 'var(--text-muted)' }}
+          >
             {checkedCount}/{totalItems}
           </span>
         </div>
       )}
 
-      <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
+      <div
+        className='overflow-hidden rounded-2xl shadow-sm'
+        style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+      >
         {categorias.map(([clave, etiqueta, icono], idx) => {
           const rawItems = shoppingList[clave];
           const items = rawItems?.length ? aggregateFn(rawItems) : null;
@@ -79,11 +89,14 @@ export function ListaCompraInteractiva({ shoppingList, categorias, planId, aggre
           return (
             <div
               key={clave}
-              className={idx > 0 ? 'border-t border-zinc-100' : ''}
+              style={idx > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
             >
               <div className='flex items-center gap-2 px-4 py-3'>
                 <span className='text-base'>{icono}</span>
-                <span className='text-xs font-bold uppercase tracking-wider text-zinc-500'>
+                <span
+                  className='text-xs font-bold uppercase tracking-wider'
+                  style={{ color: 'var(--text-muted)' }}
+                >
                   {etiqueta}
                 </span>
               </div>
@@ -99,11 +112,12 @@ export function ListaCompraInteractiva({ shoppingList, categorias, planId, aggre
                         className='flex w-full items-start gap-2.5 text-left'
                       >
                         <span
-                          className={`mt-[3px] flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border transition-colors ${
+                          className='mt-[3px] flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border transition-colors'
+                          style={
                             isChecked
-                              ? 'border-emerald-500 bg-emerald-500'
-                              : 'border-zinc-300 bg-white'
-                          }`}
+                              ? { borderColor: '#10b981', background: '#10b981' }
+                              : { borderColor: 'var(--text-muted)', background: 'var(--card)', opacity: 0.6 }
+                          }
                         >
                           {isChecked && (
                             <svg
@@ -121,11 +135,12 @@ export function ListaCompraInteractiva({ shoppingList, categorias, planId, aggre
                           )}
                         </span>
                         <span
-                          className={`text-sm leading-snug transition-colors ${
-                            isChecked
-                              ? 'text-zinc-400 line-through'
-                              : 'text-zinc-700'
-                          }`}
+                          className='text-sm leading-snug transition-colors'
+                          style={{
+                            color: isChecked ? 'var(--text-muted)' : 'var(--text)',
+                            textDecoration: isChecked ? 'line-through' : 'none',
+                            opacity: isChecked ? 0.6 : 1,
+                          }}
                         >
                           {item}
                         </span>
