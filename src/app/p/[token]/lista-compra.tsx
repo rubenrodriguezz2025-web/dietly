@@ -6,10 +6,9 @@ type Props = {
   shoppingList: Record<string, string[]>;
   categorias: Array<[string, string, string]>;
   planId: string;
-  aggregateFn: (items: string[]) => string[];
 };
 
-export function ListaCompraInteractiva({ shoppingList, categorias, planId, aggregateFn }: Props) {
+export function ListaCompraInteractiva({ shoppingList, categorias, planId }: Props) {
   const storageKey = `dietly-compra-${planId}`;
   const [checked, setChecked] = useState<Record<string, boolean>>({});
 
@@ -39,7 +38,7 @@ export function ListaCompraInteractiva({ shoppingList, categorias, planId, aggre
 
   const totalItems = categorias.reduce((acc, [clave]) => {
     const raw = shoppingList[clave];
-    return acc + (raw?.length ? aggregateFn(raw).length : 0);
+    return acc + (raw?.length ?? 0);
   }, 0);
 
   const checkedCount = Object.values(checked).filter(Boolean).length;
@@ -83,8 +82,7 @@ export function ListaCompraInteractiva({ shoppingList, categorias, planId, aggre
         style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
       >
         {categorias.map(([clave, etiqueta, icono], idx) => {
-          const rawItems = shoppingList[clave];
-          const items = rawItems?.length ? aggregateFn(rawItems) : null;
+          const items = shoppingList[clave]?.length ? shoppingList[clave] : null;
           if (!items?.length) return null;
           return (
             <div

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
@@ -126,7 +126,6 @@ export async function generateMetadata({
     title: `${nombrePaciente} — Plan nutricional de ${nombreDN}`,
     description: 'Tu plan nutricional personalizado',
     manifest: '/manifest.json',
-    themeColor: primaryColor,
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent',
@@ -137,6 +136,12 @@ export async function generateMetadata({
     },
   };
 }
+
+// ── Viewport (themeColor no puede ir en metadata) ─────────────────────────────
+
+export const viewport: Viewport = {
+  themeColor: '#1a7a45',
+};
 
 // ── Página ────────────────────────────────────────────────────────────────────
 
@@ -214,6 +219,17 @@ export default async function PaginaPaciente({
     nombreDN = profileBrand?.full_name ?? null;
     colegiado = profileBrand?.college_number ?? null;
     if (profileBrand?.primary_color) primaryColor = profileBrand.primary_color;
+  }
+
+  // Pre-agregar la lista de la compra en el servidor para no pasar funciones al cliente
+  const rawShoppingList = content.shopping_list as Record<string, string[]> | undefined;
+  const aggregatedShoppingList: Record<string, string[]> = {};
+  if (rawShoppingList) {
+    for (const [key, items] of Object.entries(rawShoppingList)) {
+      if (Array.isArray(items) && items.length > 0) {
+        aggregatedShoppingList[key] = aggregateShoppingList(items);
+      }
+    }
   }
 
   const aprobadoEl = plan.approved_at
@@ -326,10 +342,9 @@ export default async function PaginaPaciente({
           {/* Lista de la compra interactiva */}
           {content.shopping_list && (
             <ListaCompraInteractiva
-              shoppingList={content.shopping_list as Record<string, string[]>}
+              shoppingList={aggregatedShoppingList}
               categorias={CATEGORIAS_COMPRA}
               planId={plan.id}
-              aggregateFn={aggregateShoppingList}
             />
           )}
 
