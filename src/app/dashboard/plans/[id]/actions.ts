@@ -3,6 +3,7 @@
 import { createElement } from 'react';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { after } from 'next/server';
 
 import { PlanReadyEmail } from '@/features/emails/plan-ready';
 import { logAIRequest } from '@/libs/ai/logger';
@@ -249,8 +250,9 @@ export async function approvePlan(
     console.error('[approvePlan] Error en notificación automática:', err);
   }
 
-  // ── Generación de fotos de platos (fire-and-forget, no bloquea) ─────────────
-  void (async () => {
+  // ── Generación de fotos de platos (after — se ejecuta tras enviar respuesta) ──
+  // after() garantiza ejecución post-respuesta en Vercel (Next.js 15.1+)
+  after(async () => {
     try {
       const { data: planParaFotos } = await supabaseAdminClient
         .from('nutrition_plans')
@@ -265,39 +267,32 @@ export async function approvePlan(
       if (!appUrl) return;
 
       let globalIndex = 0;
-      const meals: { mealName: string; ingredients: string[] }[] = [];
 
       for (const day of contenido.days) {
         for (const meal of day.meals) {
           if (globalIndex >= 10) break;
-          meals.push({
-            mealName: meal.meal_name,
-            ingredients: meal.ingredients.map((i) => i.name),
-          });
-          globalIndex++;
+          const idx = globalIndex++;
+          try {
+            await fetch(`${appUrl}/api/meal-image`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                planId,
+                mealIndex: idx,
+                mealName: meal.meal_name,
+                ingredients: meal.ingredients.map((i) => i.name),
+              }),
+            });
+          } catch {
+            // Fallo individual no cancela el resto
+          }
         }
         if (globalIndex >= 10) break;
       }
-
-      // Escalonar las peticiones 300 ms entre cada una para evitar rate-limit
-      for (let idx = 0; idx < meals.length; idx++) {
-        setTimeout(() => {
-          fetch(`${appUrl}/api/meal-image`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              planId,
-              mealIndex: idx,
-              mealName: meals[idx].mealName,
-              ingredients: meals[idx].ingredients,
-            }),
-          }).catch(() => {});
-        }, idx * 300);
-      }
     } catch (err) {
-      console.error('[approvePlan] Error iniciando fotos:', err);
+      console.error('[approvePlan] Error generando fotos:', err);
     }
-  })();
+  });
 
   return { ok: true };
 }

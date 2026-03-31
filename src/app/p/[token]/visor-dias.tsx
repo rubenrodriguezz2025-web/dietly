@@ -341,9 +341,25 @@ function TarjetaComida({
   imageUrl?: string | null;
 }) {
   const [imgLoaded, setImgLoaded] = useState(false);
-  const [imgError, setImgError] = useState(false);
+  // retryKey cambia al hacer onError — fuerza un reintento tras 8 s (race condition
+  // con la generación de Gemini: la imagen puede no estar lista cuando se abre la PWA)
+  const [retryKey, setRetryKey] = useState(0);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const acento = ACENTO_TIPO[comida.meal_type] ?? { borde: '#16a34a', etiqueta: '#15803d' };
-  const showImg = !!imageUrl && !imgError;
+
+  const handleImgError = () => {
+    if (retryKey >= 3) return; // máx 3 reintentos (≈ 24 s en total)
+    retryTimer.current = setTimeout(() => {
+      setImgLoaded(false);
+      setRetryKey((k) => k + 1);
+    }, 8000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+    };
+  }, []);
 
   return (
     <article
@@ -357,10 +373,10 @@ function TarjetaComida({
       {/* Banda de color por tipo */}
       <div className='h-[3px] w-full' style={{ background: acento.borde }} />
 
-      {/* Foto del plato */}
-      {showImg && (
+      {/* Foto del plato — placeholder siempre visible hasta que cargue */}
+      {imageUrl && (
         <div className='relative w-full overflow-hidden' style={{ aspectRatio: '16/9' }}>
-          {/* Placeholder mientras carga */}
+          {/* Placeholder mientras carga o no existe aún */}
           {!imgLoaded && (
             <div
               className='absolute inset-0 flex items-center justify-center'
@@ -386,11 +402,12 @@ function TarjetaComida({
           )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={imageUrl}
+            key={retryKey}
+            src={`${imageUrl}?v=${retryKey}`}
             alt={comida.meal_name}
             loading='lazy'
             onLoad={() => setImgLoaded(true)}
-            onError={() => setImgError(true)}
+            onError={handleImgError}
             className='h-full w-full object-cover'
             style={{
               opacity: imgLoaded ? 1 : 0,

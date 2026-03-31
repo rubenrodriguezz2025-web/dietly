@@ -21,11 +21,12 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as MealImageRequest;
     const { planId, mealIndex, mealName, ingredients } = body;
 
-    if (!planId || typeof mealIndex !== 'number' || !mealName) {
+    const idx = typeof mealIndex === 'string' ? parseInt(mealIndex, 10) : mealIndex;
+    if (!planId || typeof idx !== 'number' || isNaN(idx) || !mealName) {
       return NextResponse.json({ url: null }, { status: 400 });
     }
 
-    const storagePath = `${planId}/${mealIndex}.png`;
+    const storagePath = `${planId}/${idx}.png`;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 
     // Comprobar si ya existe la imagen
