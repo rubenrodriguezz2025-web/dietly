@@ -5,7 +5,7 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { FollowupForm } from './followup-form';
 
 export const metadata: Metadata = {
-  title: 'Cuestionario de seguimiento · Dietly',
+  title: 'Cuestionario de seguimiento',
   description: 'Responde a tu cuestionario de seguimiento nutricional.',
 };
 

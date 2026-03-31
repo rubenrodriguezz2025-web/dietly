@@ -69,7 +69,7 @@ export function PlanReadyEmail({
 
             <Text style={footerStyle}>
               Plan preparado por <strong>{nutritionistName}</strong>
-              {clinicName ? ` · ${clinicName}` : ''} a través de Dietly.
+              {clinicName ? ` · ${clinicName}` : ''}.
               Si tienes dudas sobre tu plan, contacta directamente con tu nutricionista.
             </Text>
           </Section>

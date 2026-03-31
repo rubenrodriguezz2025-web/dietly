@@ -438,23 +438,15 @@ function FooterTransparenciaIA({
       </div>
 
       <p className='text-[12px] leading-relaxed' style={{ color: 'var(--text-muted)' }}>
-        Este plan nutricional fue elaborado con asistencia de inteligencia artificial (Claude,
-        Anthropic) y revisado y aprobado
-        {nombreDN ? (
-          <>
-            {' '}por{' '}
-            <span className='font-semibold' style={{ color: 'var(--text)' }}>
-              {nombreDN}
-            </span>
-            {colegiado ? (
-              <span style={{ color: 'var(--text-muted)' }}>, nº colegiado {colegiado}</span>
-            ) : null}
-          </>
-        ) : (
-          ' por tu nutricionista'
-        )}
+        Este plan ha sido preparado y aprobado por{' '}
+        <span className='font-semibold' style={{ color: 'var(--text)' }}>
+          {nombreDN ?? 'tu nutricionista'}
+        </span>
+        {colegiado ? (
+          <span>, nº colegiado {colegiado}</span>
+        ) : null}
         {aprobadoEl ? (
-          <span style={{ color: 'var(--text-muted)' }}>, el {aprobadoEl}</span>
+          <span>, el {aprobadoEl}</span>
         ) : null}
         {'.'}
       </p>

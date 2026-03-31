@@ -6,7 +6,7 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { IntakeForm } from './intake-form';
 
 export const metadata: Metadata = {
-  title: 'Cuestionario de salud · Dietly',
+  title: 'Cuestionario de salud',
   description: 'Rellena este formulario antes de tu primera consulta.',
 };
 
@@ -93,7 +93,7 @@ export default async function PaginaIntake({
       {/* Cabecera */}
       <header className='border-b border-zinc-200 bg-white px-4 py-4'>
         <div className='mx-auto max-w-lg'>
-          <p className='text-xs font-semibold text-green-600'>Dietly</p>
+          <p className='text-xs font-semibold text-green-600'>Cuestionario nutricional</p>
           <h1 className='text-lg font-bold text-zinc-900'>Cuestionario de salud</h1>
           <p className='text-sm text-zinc-500'>Hola, {paciente.name}. Rellénalo antes de tu consulta.</p>
         </div>

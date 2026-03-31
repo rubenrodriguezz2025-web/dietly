@@ -62,7 +62,8 @@ export function PatientWelcomeEmail({
             <Hr style={hrStyle} />
 
             <Text style={footerStyle}>
-              Mensaje enviado por <strong>{nutritionistName}</strong> a través de Dietly.
+              Mensaje enviado por <strong>{nutritionistName}</strong>
+              {clinicName ? ` · ${clinicName}` : ''}.
               Si tienes dudas sobre tu plan nutricional, contacta directamente con tu
               nutricionista.
             </Text>
