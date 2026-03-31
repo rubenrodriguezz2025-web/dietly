@@ -9,6 +9,7 @@ import type { PlanContent } from '@/types/dietly';
 
 import { BannerInstalar } from './banner-instalar';
 import { BienvenidaPwa } from './bienvenida-pwa';
+import { ConsentimientoView } from './consentimiento-view';
 import { ListaCompraInteractiva } from './lista-compra';
 import { PwaShell } from './pwa-shell';
 import { VisorDias } from './visor-dias';
@@ -186,7 +187,7 @@ export default async function PaginaPaciente({
 
   const { data: plan } = await (supabaseAdminClient as any)
     .from('nutrition_plans')
-    .select('*, patients(name, nutritionist_id)')
+    .select('*, patients(id, name, nutritionist_id)')
     .eq('patient_token', token)
     .in('status', ['approved', 'sent'])
     .single();
@@ -229,26 +230,46 @@ export default async function PaginaPaciente({
     }
   })();
 
-  const pacienteData = plan.patients as { name: string; nutritionist_id: string } | null;
+  const pacienteData = plan.patients as {
+    id: string;
+    name: string;
+    nutritionist_id: string;
+  } | null;
 
-  // Ajustes de marca del nutricionista
+  // Ajustes de marca + verificación de consentimiento previo (en paralelo)
   let showMacros = true;
   let nombreDN: string | null = null;
   let colegiado: string | null = null;
   let clinicName: string | null = null;
   let primaryColor = '#1a7a45';
+  let consentAlreadyGiven = false;
 
   if (pacienteData?.nutritionist_id) {
-    const { data: profileBrand } = await (supabaseAdminClient as any)
-      .from('profiles')
-      .select('show_macros, full_name, college_number, primary_color, clinic_name')
-      .eq('id', pacienteData.nutritionist_id)
-      .single();
+    const [profileResult, consentResult] = await Promise.all([
+      (supabaseAdminClient as any)
+        .from('profiles')
+        .select('show_macros, full_name, college_number, primary_color, clinic_name')
+        .eq('id', pacienteData.nutritionist_id)
+        .single(),
+      pacienteData?.id
+        ? (supabaseAdminClient as any)
+            .from('patient_consents')
+            .select('id')
+            .eq('patient_id', pacienteData.id)
+            .eq('consent_type', 'plan_view_acceptance')
+            .is('revoked_at', null)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    const profileBrand = profileResult.data;
     if (profileBrand?.show_macros === false) showMacros = false;
     nombreDN = profileBrand?.full_name ?? null;
     colegiado = profileBrand?.college_number ?? null;
     clinicName = profileBrand?.clinic_name ?? null;
     if (profileBrand?.primary_color) primaryColor = profileBrand.primary_color;
+
+    consentAlreadyGiven = !!consentResult.data;
   }
 
   // Pre-agregar la lista de la compra en el servidor para no pasar funciones al cliente
@@ -311,6 +332,17 @@ export default async function PaginaPaciente({
             aprobadoEl={aprobadoEl}
           />
         </main>
+
+        {/* Firma digital RGPD — bloquea el plan hasta que el paciente acepta */}
+        {!consentAlreadyGiven && pacienteData?.id && (
+          <ConsentimientoView
+            planId={plan.id as string}
+            patientId={pacienteData.id}
+            nutritionistId={pacienteData.nutritionist_id}
+            primaryColor={primaryColor}
+            nombreDN={nombreDN ?? 'tu nutricionista'}
+          />
+        )}
 
         {/* Bienvenida primera visita */}
         <BienvenidaPwa
