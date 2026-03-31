@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 30;
 
@@ -11,15 +12,13 @@ interface MealImageRequest {
   ingredients: string[];
 }
 
-interface ImagenPrediction {
-  bytesBase64Encoded?: string;
-  mimeType?: string;
+interface GeminiPart {
+  inlineData?: { data: string; mimeType: string };
+  text?: string;
 }
 
 export async function POST(req: NextRequest) {
   console.log('[meal-image] GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
-  console.log('[meal-image] NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log('[meal-image] SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   try {
     const body = (await req.json()) as MealImageRequest;
@@ -39,7 +38,7 @@ export async function POST(req: NextRequest) {
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/meal-images/${storagePath}`;
     try {
       const headRes = await fetch(publicUrl, { method: 'HEAD' });
-      console.log('[meal-image] HEAD check:', headRes.status, publicUrl);
+      console.log('[meal-image] HEAD check:', headRes.status);
       if (headRes.ok) {
         return NextResponse.json({ url: publicUrl });
       }
@@ -49,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error('[meal-image] GEMINI_API_KEY no configurada — añádela en Vercel Environment Variables');
+      console.error('[meal-image] GEMINI_API_KEY no configurada');
       return NextResponse.json({ url: null, error: 'GEMINI_API_KEY no configurada' });
     }
 
@@ -60,41 +59,31 @@ export async function POST(req: NextRequest) {
       `Bright natural light, top-down view, white ceramic plate, clean minimalist background. ` +
       `Appetizing and fresh. No text, no labels, no watermarks.`;
 
-    console.log('[meal-image] Llamando a Gemini para:', mealName);
+    console.log('[meal-image] Generando imagen para:', mealName);
 
-    const imagenRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          instances: [{ prompt }],
-          parameters: { sampleCount: 1 },
-        }),
-        signal: AbortSignal.timeout(25000),
-      }
-    );
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
-    if (!imagenRes.ok) {
-      const imagenError = await imagenRes.text();
-      console.error('[meal-image] Imagen3 status:', imagenRes.status, imagenError);
-      return NextResponse.json({ url: null, error: `Imagen3 ${imagenRes.status}: ${imagenError}` });
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseModalities: ['IMAGE', 'TEXT'],
+      } as never,
+    });
+
+    const parts = (result.response.candidates?.[0]?.content?.parts ?? []) as GeminiPart[];
+    console.log('[meal-image] Parts recibidas:', parts.length);
+
+    const imagePart = parts.find((p) => p.inlineData?.mimeType?.startsWith('image/'));
+    const base64 = imagePart?.inlineData?.data;
+
+    if (!base64) {
+      const debug = parts.map((p) => ({ hasInlineData: !!p.inlineData, mimeType: p.inlineData?.mimeType, hasText: !!p.text }));
+      console.error('[meal-image] No se generó imagen. Parts:', JSON.stringify(debug));
+      return NextResponse.json({ url: null, error: 'No image generated', debug });
     }
 
-    const imagenData = (await imagenRes.json()) as {
-      predictions?: ImagenPrediction[];
-    };
-
-    console.log('[meal-image] Imagen3 predictions:', imagenData?.predictions?.length ?? 0);
-
-    const prediction = imagenData?.predictions?.[0];
-
-    if (!prediction?.bytesBase64Encoded) {
-      console.error('[meal-image] Imagen3 no devolvió imagen. Data:', JSON.stringify(imagenData));
-      return NextResponse.json({ url: null, error: 'Imagen3 no devolvió imagen' });
-    }
-
-    const imageBuffer = Buffer.from(prediction.bytesBase64Encoded, 'base64');
+    const imageBuffer = Buffer.from(base64, 'base64');
     console.log('[meal-image] Imagen generada, tamaño (bytes):', imageBuffer.length);
 
     const { error: uploadError } = await supabaseAdminClient.storage
@@ -105,7 +94,7 @@ export async function POST(req: NextRequest) {
       });
 
     if (uploadError) {
-      console.error('[meal-image] Error subiendo a Storage:', uploadError.message, uploadError);
+      console.error('[meal-image] Error subiendo a Storage:', uploadError.message);
       return NextResponse.json({ url: null, error: `Storage upload: ${uploadError.message}` });
     }
 
