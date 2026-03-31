@@ -104,12 +104,17 @@ export async function updateProfile(
   const full_name = (formData.get('full_name') as string).trim();
   const clinic_name = (formData.get('clinic_name') as string).trim() || null;
   const college_number = (formData.get('college_number') as string).trim() || null;
+  const whatsapp_raw = (formData.get('whatsapp_number') as string).trim();
+  // Solo dígitos, espacios y + (ej: "+34 600 000 000")
+  const whatsapp_number = whatsapp_raw
+    ? whatsapp_raw.replace(/[^\d\s+]/g, '') || null
+    : null;
 
   if (!full_name) return { error: 'El nombre es obligatorio' };
 
   const { error } = await supabase
     .from('profiles')
-    .update({ full_name, clinic_name, college_number })
+    .update({ full_name, clinic_name, college_number, whatsapp_number })
     .eq('id', user.id);
 
   if (error) return { error: error.message };

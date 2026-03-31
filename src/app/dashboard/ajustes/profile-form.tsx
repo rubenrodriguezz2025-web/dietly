@@ -11,10 +11,12 @@ export function ProfileForm({
   fullName,
   clinicName,
   collegeNumber,
+  whatsappNumber,
 }: {
   fullName: string;
   clinicName: string | null;
   collegeNumber: string | null;
+  whatsappNumber: string | null;
 }) {
   const [state, action, pending] = useActionState(updateProfile, initial);
 
@@ -83,6 +85,24 @@ export function ProfileForm({
           className='h-10 rounded-lg border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
         />
         <p className='text-xs text-zinc-600'>Aparecerá en el pie de cada página del PDF.</p>
+      </div>
+
+      <div className='flex flex-col gap-1.5'>
+        <label htmlFor='whatsapp_number' className='text-sm font-medium text-zinc-300'>
+          Número de WhatsApp{' '}
+          <span className='font-normal text-zinc-600'>(opcional)</span>
+        </label>
+        <input
+          id='whatsapp_number'
+          name='whatsapp_number'
+          defaultValue={whatsappNumber ?? ''}
+          disabled={pending}
+          placeholder='+34 600 000 000'
+          className='h-10 rounded-lg border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
+        />
+        <p className='text-xs text-zinc-600'>
+          Aparecerá como botón flotante en el plan del paciente para que pueda contactarte.
+        </p>
       </div>
 
       {state.error && <p className='text-sm text-red-400'>{state.error}</p>}

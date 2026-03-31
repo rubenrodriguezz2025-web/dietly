@@ -9,6 +9,7 @@ import type { PlanContent } from '@/types/dietly';
 
 import { BannerInstalar } from './banner-instalar';
 import { BienvenidaPwa } from './bienvenida-pwa';
+import { BotonWhatsApp } from './boton-whatsapp';
 import { ConsentimientoView } from './consentimiento-view';
 import { ListaCompraInteractiva } from './lista-compra';
 import { PwaShell } from './pwa-shell';
@@ -242,13 +243,14 @@ export default async function PaginaPaciente({
   let colegiado: string | null = null;
   let clinicName: string | null = null;
   let primaryColor = '#1a7a45';
+  let whatsappNumber: string | null = null;
   let consentAlreadyGiven = false;
 
   if (pacienteData?.nutritionist_id) {
     const [profileResult, consentResult] = await Promise.all([
       (supabaseAdminClient as any)
         .from('profiles')
-        .select('show_macros, full_name, college_number, primary_color, clinic_name')
+        .select('show_macros, full_name, college_number, primary_color, clinic_name, whatsapp_number')
         .eq('id', pacienteData.nutritionist_id)
         .single(),
       pacienteData?.id
@@ -268,6 +270,7 @@ export default async function PaginaPaciente({
     colegiado = profileBrand?.college_number ?? null;
     clinicName = profileBrand?.clinic_name ?? null;
     if (profileBrand?.primary_color) primaryColor = profileBrand.primary_color;
+    whatsappNumber = profileBrand?.whatsapp_number ?? null;
 
     consentAlreadyGiven = !!consentResult.data;
   }
@@ -351,6 +354,14 @@ export default async function PaginaPaciente({
           clinicName={clinicName}
           primaryColor={primaryColor}
         />
+
+        {/* Botón flotante WhatsApp (solo si el nutricionista tiene número configurado) */}
+        {whatsappNumber && (
+          <BotonWhatsApp
+            whatsappNumber={whatsappNumber}
+            nombrePaciente={pacienteData?.name ?? 'Paciente'}
+          />
+        )}
 
         {/* Banner instalar PWA (visitas de vuelta) */}
         <BannerInstalar planId={plan.id as string} />

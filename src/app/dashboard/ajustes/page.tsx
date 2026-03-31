@@ -21,7 +21,7 @@ export default async function AjustesPage() {
   const { data: profile } = await (supabase as any)
     .from('profiles')
     .select(
-      'full_name, clinic_name, logo_url, college_number, signature_url, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url, brand_settings_visited_at'
+      'full_name, clinic_name, logo_url, college_number, signature_url, primary_color, show_macros, show_shopping_list, welcome_message, font_preference, profile_photo_url, brand_settings_visited_at, whatsapp_number'
     )
     .eq('id', user.id)
     .single();
@@ -114,6 +114,7 @@ export default async function AjustesPage() {
           fullName={profile?.full_name ?? ''}
           clinicName={profile?.clinic_name ?? null}
           collegeNumber={profile?.college_number ?? null}
+          whatsappNumber={profile?.whatsapp_number ?? null}
         />
       </section>
 
