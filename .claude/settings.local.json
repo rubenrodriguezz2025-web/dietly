@@ -77,7 +77,22 @@
       "Bash(curl -fsSL \"https://github.com/google/fonts/raw/main/apache/lato/Lato-Regular.ttf\" -o \"public/fonts/Lato-Regular.ttf\")",
       "Bash(curl -fsSL \"https://github.com/google/fonts/raw/main/apache/lato/Lato-Bold.ttf\" -o \"public/fonts/Lato-Bold.ttf\")",
       "Bash(curl -I \"https://github.com/google/fonts/raw/main/ofl/lora/Lora%5Bwght%5D.ttf\")",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "Bash(claude mcp:*)",
+      "mcp__glance__session_start",
+      "mcp__glance__browser_navigate",
+      "mcp__glance__browser_screenshot",
+      "mcp__glance__browser_type",
+      "mcp__glance__browser_click",
+      "Bash(npx:*)",
+      "mcp__glance__browser_console_messages",
+      "mcp__glance__browser_network_requests",
+      "mcp__glance__browser_evaluate",
+      "mcp__glance__session_end",
+      "mcp__glance__browser_scroll",
+      "mcp__glance__browser_snapshot",
+      "Bash(head -200 /c/Users/Rubén/dietly/src/app/\\\\\\(marketing\\\\\\)/page.tsx)",
+      "Bash(wc -l /c/Users/Rubén/dietly/src/app/\\\\\\(marketing\\\\\\)/page.tsx)"
     ]
   }
 }

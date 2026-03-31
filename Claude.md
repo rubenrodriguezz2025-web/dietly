@@ -347,6 +347,9 @@ RESEND_API_KEY=
 
 # App
 NEXT_PUBLIC_APP_URL=
+
+# Seguridad tokens
+PLAN_TOKEN_SECRET=          # HMAC-SHA256 para tokens /p/[token]
 ```
 
 ---
@@ -373,7 +376,7 @@ NEXT_PUBLIC_APP_URL=
 
 ## Migraciones de base de datos
 
-Total: **32 migraciones** en `supabase/migrations/`.
+Total: **34 migraciones** en `supabase/migrations/`.
 
 | # | Archivo | Descripción |
 |---|---------|-------------|
@@ -408,6 +411,8 @@ Total: **32 migraciones** en `supabase/migrations/`.
 | 029 | `029_fix_audit_trigger_safe.sql` | Fix nested exceptions en fn_audit_log() |
 | 030 | `030_dietary_restrictions_array.sql` | Conversión dietary_restrictions de text a text[] |
 | 031 | `031_profiles_primary_color.sql` | Campo primary_color en profiles (default '#1a7a45') |
+| 032 | `032_plan_views_rls.sql` | RLS en plan_views (A-01) |
+| 033 | `033_pdf_cache.sql` | Columna pdf_generated_at en nutrition_plans (caché PDF) |
 
 ---
 
@@ -618,6 +623,7 @@ npm run stripe:listen    # Escuchar webhooks Stripe en local
 | `architecture.md` | Diagramas de flujo y decisiones técnicas |
 | `OPTIMIZATION.md` | Auditoría de código (25 marzo 2026): 171 archivos, 26.611 LOC |
 | `AUDITORIA_EXPERTOS.md` | Auditoría de 4 agentes: clínica, seguridad, UX, arquitectura |
+| `AUDIT_COMPLETO.md` | Auditoría completa (35 hallazgos, 1 abril 2026) |
 | `BUGS.md` | Lista de bugs conocidos |
 | `MVP_FEATURES.md` | Checklist de features MVP |
 
@@ -637,7 +643,8 @@ npm run stripe:listen    # Escuchar webhooks Stripe en local
 - ✅ Auditoría de optimización (OPTIMIZATION.md)
 - ✅ Auditoría de expertos (AUDITORIA_EXPERTOS.md)
 - ✅ 90+ `as any` corregidos, ignoreBuildErrors eliminado
-- ✅ 32 migraciones aplicadas
+- ✅ 34 migraciones aplicadas
+- ✅ Auditoría completa 1 abril 2026 (seguridad, rendimiento, validación, UX)
 
 **Decisiones tomadas:**
 - ✅ Análisis competitivo completo: 12 softwares analizados (ver `.agents/product-marketing-context.md`)
@@ -648,11 +655,14 @@ npm run stripe:listen    # Escuchar webhooks Stripe en local
 - ✅ Fuentes locales en /public/fonts/ (Inter, Lora, Poppins, Merriweather)
 - ✅ Bloqueo de menores < 18 años implementado (con mensaje de consentimiento parental)
 
-**Deuda técnica conocida (ver OPTIMIZATION.md):**
+**Deuda técnica conocida (ver OPTIMIZATION.md y AUDIT_COMPLETO.md):**
+- ~46 `as any` restantes (reducidos desde 90+)
 - `/src/lib/` y `/src/libs/` deberían consolidarse
 - 52 archivos > 200 líneas (top: landing 883, PDF 788, generate 754)
 - 92 queries Supabase sin capa de abstracción
 - Sin tracking de micronutrientes (señalado en auditoría clínica)
+- Detección plan Pro hardcoded por nombre Stripe (TODO: comparar por price_id)
+- Art. 28.3 T&Cs incompleta (suficiente para beta, no para escalar)
 
 **Próximos pasos (por prioridad):**
 1. **Intercambio de platos** — el nutricionista puede sustituir una comida del plan por otra equivalente calórica/nutricionalmente (prioridad máxima, feature más demandada)
@@ -663,3 +673,52 @@ npm run stripe:listen    # Escuchar webhooks Stripe en local
 6. **Rebranding a sabea.es / sabea.com** — nombre alternativo en evaluación (dominios pendientes de decisión)
 
 Consultar `architecture.md` para diagramas de flujo y decisiones técnicas detalladas.
+
+---
+
+## Sesión 1 abril 2026 — Auditoría y fixes
+
+Auditoría completa ejecutada en 4 sprints (ver `AUDIT_COMPLETO.md` para los 35 hallazgos originales).
+
+### Migraciones ejecutadas
+- `032_plan_views_rls.sql` ✅ — RLS en plan_views (A-01)
+- `033_pdf_cache.sql` ✅ — columna `pdf_generated_at` en nutrition_plans
+
+### Variables de entorno añadidas
+- `PLAN_TOKEN_SECRET` — HMAC-SHA256 para tokens `/p/[token]` (Vercel + .env.local)
+
+### Bucket Storage creado
+- `plan-pdfs` (privado) — caché de PDFs generados
+
+### Sprint 1 — Seguridad (commit `460e344`)
+- C-03: `/api/health` no expone API keys
+- C-02: XSS sanitizado en emails (`escapeHtml`)
+- C-04: HMAC-SHA256 en tokens `/p/[token]` (plan-tokens.ts)
+- A-01: RLS en `plan_views` (migración 032)
+- A-06: Auth en `/api/meal-image`
+- M-03: Endpoints test bloqueados en producción
+- A-05: Headers HSTS + CSP en `next.config.js`
+
+### Sprint 2 — Rendimiento (commit `ab4b7c4`)
+- C-01: `force-dynamic` eliminado del root layout
+- C-05: `error.tsx` creados (global, dashboard, PWA)
+- A-10: Storage downloads en `Promise.all` (PDF paralelo)
+- A-12: Caché PDF con `pdf_generated_at` (migración 033)
+
+### Sprint 3 — Validación y protección (commit `f54e40f`)
+- A-02: Zod en 5 rutas API críticas (generate, pdf, intake, followup, data-rights)
+- A-03 + A-07: Rate limiting real (10 planes/día Básico, 30/día Pro)
+- A-08: Verificación consentimiento `ai_processing` antes de llamar a Claude
+- A-11: AbortController + timeout 5 min + reconexión SSE en generación
+
+### Sprint 4 — UX/UI (commit `db6720c`)
+- M-06: 4 `loading.tsx` con skeletons (patients/new, recetas, derechos-datos, admin/beta)
+- M-08: Header branding nutricionista en PWA paciente (logo/inicial + clínica + primaryColor)
+- M-07: Cookie banner no bloqueante con animación slide-up (ease-out-expo, 600ms delay)
+- M-11: 8 queries secuenciales del dashboard → `Promise.all` paralelo
+- B-07: No aplica (landing sin imágenes raster)
+
+### Pendiente roadmap (no bloqueante para beta)
+- ~46 `as any` restantes, consolidar `/src/lib/` + `/src/libs/`, centralizar detección plan Pro
+- Art. 28.3 RGPD completa en T&Cs, audit logs en todas las tablas, retención `ai_request_logs` 90d
+- Refactorizar archivos >400 líneas, logger estructurado, limpiar datos E2E en producción
