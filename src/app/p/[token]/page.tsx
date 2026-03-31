@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import { headers } from 'next/headers';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 
 import { validatePlanAccessToken } from '@/lib/auth/plan-tokens';
@@ -260,13 +261,14 @@ export default async function PaginaPaciente({
   let clinicName: string | null = null;
   let primaryColor = '#1a7a45';
   let whatsappNumber: string | null = null;
+  let logoUrl: string | null = null;
   let consentAlreadyGiven = false;
 
   if (pacienteData?.nutritionist_id) {
     const [profileResult, consentResult] = await Promise.all([
       (supabaseAdminClient as any)
         .from('profiles')
-        .select('show_macros, full_name, college_number, primary_color, clinic_name, whatsapp_number')
+        .select('show_macros, full_name, college_number, primary_color, clinic_name, whatsapp_number, logo_url')
         .eq('id', pacienteData.nutritionist_id)
         .single(),
       pacienteData?.id
@@ -287,6 +289,7 @@ export default async function PaginaPaciente({
     clinicName = profileBrand?.clinic_name ?? null;
     if (profileBrand?.primary_color) primaryColor = profileBrand.primary_color;
     whatsappNumber = profileBrand?.whatsapp_number ?? null;
+    logoUrl = profileBrand?.logo_url ?? null;
 
     consentAlreadyGiven = !!consentResult.data;
   }
@@ -324,6 +327,37 @@ export default async function PaginaPaciente({
         className={jakarta.className}
         style={{ minHeight: '100vh', background: 'var(--bg)', scrollBehavior: 'smooth' }}
       >
+        {/* ── Branding header del nutricionista ───────────────────────────── */}
+        <header
+          className='mx-auto flex max-w-lg items-center gap-3 px-4 pt-4 pb-2'
+          style={{ maxHeight: 56 }}
+        >
+          {logoUrl ? (
+            <Image
+              src={logoUrl}
+              alt={clinicName ?? nombreDN ?? ''}
+              width={36}
+              height={36}
+              className='h-9 w-9 flex-shrink-0 rounded-full object-cover'
+              style={{ border: `2px solid ${primaryColor}` }}
+            />
+          ) : (nombreDN || clinicName) ? (
+            <span
+              className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white'
+              style={{ background: primaryColor }}
+              aria-hidden='true'
+            >
+              {(clinicName ?? nombreDN ?? '').charAt(0).toUpperCase()}
+            </span>
+          ) : null}
+          <span
+            className='truncate text-sm font-semibold'
+            style={{ color: 'var(--text)' }}
+          >
+            {clinicName ?? nombreDN ?? ''}
+          </span>
+        </header>
+
         {/* ── CONTENIDO ────────────────────────────────────────────────────── */}
         <main className='mx-auto max-w-lg px-4 pb-24'>
           {/* Navegación + swipe + tarjetas de comida */}

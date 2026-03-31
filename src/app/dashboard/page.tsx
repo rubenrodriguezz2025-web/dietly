@@ -28,21 +28,84 @@ export default async function DashboardPage() {
 
   if (!profile) redirect('/onboarding');
 
-  // Pacientes activos del nutricionista autenticado (con estado de planes)
-  const { data: patientsRaw } = (await (supabase as any)
-    .from('patients')
-    .select('id, name, email, goal, created_at, nutrition_plans(id, status, created_at)')
-    .eq('nutritionist_id', user.id)
-    .order('created_at', { ascending: false })) as {
-    data: (Patient & { nutrition_plans: { id: string; status: string; created_at: string }[] })[] | null;
-  };
+  // ── Queries paralelas (todas dependen solo de user.id) ──────────────────
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
 
-  // Recordatorios con seguimiento pendiente por paciente
-  const { data: allPendingReminders } = await (supabase as any)
-    .from('followup_reminders')
-    .select('patient_id')
-    .eq('nutritionist_id', user.id)
-    .eq('status', 'pending') as { data: { patient_id: string }[] | null };
+  const startOfLastMonth = new Date(startOfMonth);
+  startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
+
+  const today = new Date().toISOString().split('T')[0];
+  const normalizedEmail = (user.email ?? '').toLowerCase().trim();
+
+  const [
+    { data: patientsRaw },
+    { data: allPendingReminders },
+    { count: plansThisMonth },
+    { count: plansLastMonth },
+    { count: totalPlans },
+    { data: dueReminders },
+    { data: whitelistEntry },
+    { data: allPlans },
+  ] = await Promise.all([
+    // Pacientes activos con estado de planes
+    (supabase as any)
+      .from('patients')
+      .select('id, name, email, goal, created_at, nutrition_plans(id, status, created_at)')
+      .eq('nutritionist_id', user.id)
+      .order('created_at', { ascending: false }) as Promise<{
+      data: (Patient & { nutrition_plans: { id: string; status: string; created_at: string }[] })[] | null;
+    }>,
+    // Recordatorios pendientes por paciente
+    (supabase as any)
+      .from('followup_reminders')
+      .select('patient_id')
+      .eq('nutritionist_id', user.id)
+      .eq('status', 'pending') as Promise<{ data: { patient_id: string }[] | null }>,
+    // Planes este mes
+    (supabase as any)
+      .from('nutrition_plans')
+      .select('id', { count: 'exact', head: true })
+      .eq('nutritionist_id', user.id)
+      .gte('created_at', startOfMonth.toISOString()) as Promise<{ count: number | null }>,
+    // Planes mes anterior
+    (supabase as any)
+      .from('nutrition_plans')
+      .select('id', { count: 'exact', head: true })
+      .eq('nutritionist_id', user.id)
+      .gte('created_at', startOfLastMonth.toISOString())
+      .lt('created_at', startOfMonth.toISOString()) as Promise<{ count: number | null }>,
+    // Total planes (onboarding checklist)
+    (supabase as any)
+      .from('nutrition_plans')
+      .select('id', { count: 'exact', head: true })
+      .eq('nutritionist_id', user.id) as Promise<{ count: number | null }>,
+    // Recordatorios vencidos
+    (supabase as any)
+      .from('followup_reminders')
+      .select('id, remind_at, patients(id, name)')
+      .eq('nutritionist_id', user.id)
+      .eq('status', 'pending')
+      .lte('remind_at', today)
+      .order('remind_at', { ascending: true }),
+    // Beta whitelist limit
+    (supabaseAdminClient as any)
+      .from('beta_whitelist')
+      .select('plan_limit')
+      .eq('email', normalizedEmail)
+      .maybeSingle() as Promise<{ data: { plan_limit: number | null } | null }>,
+    // Planes recientes (kanban)
+    (supabase as any)
+      .from('nutrition_plans')
+      .select('id, status, week_start_date, created_at, patients(id, name)')
+      .eq('nutritionist_id', user.id)
+      .in('status', ['draft', 'approved', 'sent', 'generating'])
+      .order('created_at', { ascending: false })
+      .limit(30) as Promise<{
+      data: (NutritionPlan & { patients: { id: string; name: string } | null })[] | null;
+    }>,
+  ]);
 
   const pendingReminderPatientIds = new Set((allPendingReminders ?? []).map((r) => r.patient_id));
 
@@ -54,44 +117,6 @@ export default async function DashboardPage() {
     has_pending_reminder: pendingReminderPatientIds.has(p.id),
   }));
 
-  // Planes generados este mes por el nutricionista autenticado
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const startOfLastMonth = new Date(startOfMonth);
-  startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
-
-  const [{ count: plansThisMonth }, { count: plansLastMonth }] = await Promise.all([
-    (supabase as any)
-      .from('nutrition_plans')
-      .select('id', { count: 'exact', head: true })
-      .eq('nutritionist_id', user.id)
-      .gte('created_at', startOfMonth.toISOString()) as Promise<{ count: number | null }>,
-    (supabase as any)
-      .from('nutrition_plans')
-      .select('id', { count: 'exact', head: true })
-      .eq('nutritionist_id', user.id)
-      .gte('created_at', startOfLastMonth.toISOString())
-      .lt('created_at', startOfMonth.toISOString()) as Promise<{ count: number | null }>,
-  ]);
-
-  // Total de planes del nutricionista (para el checklist de onboarding)
-  const { count: totalPlans } = await (supabase as any)
-    .from('nutrition_plans')
-    .select('id', { count: 'exact', head: true })
-    .eq('nutritionist_id', user.id) as { count: number | null };
-
-  // Recordatorios pendientes (remind_at <= hoy, status = 'pending')
-  const today = new Date().toISOString().split('T')[0];
-  const { data: dueReminders } = await (supabase as any)
-    .from('followup_reminders')
-    .select('id, remind_at, patients(id, name)')
-    .eq('nutritionist_id', user.id)
-    .eq('status', 'pending')
-    .lte('remind_at', today)
-    .order('remind_at', { ascending: true });
-
   // Marcar los recordatorios vencidos como 'sent' (se mostraron en el banner)
   if (dueReminders && dueReminders.length > 0) {
     await (supabase as any)
@@ -100,25 +125,7 @@ export default async function DashboardPage() {
       .in('id', (dueReminders as Array<{ id: string }>).map((r) => r.id));
   }
 
-  // plan_limit del usuario en beta_whitelist (para mostrar u ocultar el medidor)
-  const normalizedEmail = (user.email ?? '').toLowerCase().trim();
-  const { data: whitelistEntry } = await (supabaseAdminClient as any)
-    .from('beta_whitelist')
-    .select('plan_limit')
-    .eq('email', normalizedEmail)
-    .maybeSingle() as { data: { plan_limit: number | null } | null };
   const betaPlanLimit: number | null = whitelistEntry?.plan_limit ?? null;
-
-  // Todos los planes recientes del nutricionista (para kanban)
-  const { data: allPlans } = (await (supabase as any)
-    .from('nutrition_plans')
-    .select('id, status, week_start_date, created_at, patients(id, name)')
-    .eq('nutritionist_id', user.id)
-    .in('status', ['draft', 'approved', 'sent', 'generating'])
-    .order('created_at', { ascending: false })
-    .limit(30)) as {
-    data: (NutritionPlan & { patients: { id: string; name: string } | null })[] | null;
-  };
 
   const draftPlans = (allPlans ?? []).filter((p) => p.status === 'draft');
   const draftCount = draftPlans.length;
