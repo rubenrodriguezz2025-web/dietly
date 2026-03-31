@@ -11,9 +11,9 @@ interface MealImageRequest {
   ingredients: string[];
 }
 
-interface GeminiPart {
-  inlineData?: { data: string; mimeType: string };
-  text?: string;
+interface ImagenPrediction {
+  bytesBase64Encoded?: string;
+  mimeType?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -62,43 +62,39 @@ export async function POST(req: NextRequest) {
 
     console.log('[meal-image] Llamando a Gemini para:', mealName);
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
+    const imagenRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ['IMAGE'] },
+          instances: [{ prompt }],
+          parameters: { sampleCount: 1 },
         }),
         signal: AbortSignal.timeout(25000),
       }
     );
 
-    if (!geminiRes.ok) {
-      const geminiError = await geminiRes.text();
-      console.error('[meal-image] Gemini status:', geminiRes.status, geminiError);
-      return NextResponse.json({ url: null, error: `Gemini ${geminiRes.status}: ${geminiError}` });
+    if (!imagenRes.ok) {
+      const imagenError = await imagenRes.text();
+      console.error('[meal-image] Imagen3 status:', imagenRes.status, imagenError);
+      return NextResponse.json({ url: null, error: `Imagen3 ${imagenRes.status}: ${imagenError}` });
     }
 
-    const geminiData = (await geminiRes.json()) as {
-      candidates?: Array<{ content?: { parts?: GeminiPart[] } }>;
+    const imagenData = (await imagenRes.json()) as {
+      predictions?: ImagenPrediction[];
     };
 
-    console.log('[meal-image] Gemini candidates:', geminiData?.candidates?.length ?? 0);
+    console.log('[meal-image] Imagen3 predictions:', imagenData?.predictions?.length ?? 0);
 
-    const parts = geminiData?.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = parts.find(
-      (p) => p.inlineData?.mimeType?.startsWith('image/')
-    );
+    const prediction = imagenData?.predictions?.[0];
 
-    if (!imagePart?.inlineData?.data) {
-      const partsDebug = parts.map((p) => ({ hasInlineData: !!p.inlineData, hasText: !!p.text, mimeType: p.inlineData?.mimeType }));
-      console.error('[meal-image] Gemini no devolvió imagen. Parts:', JSON.stringify(partsDebug));
-      return NextResponse.json({ url: null, error: 'Gemini no devolvió imagen', parts: partsDebug });
+    if (!prediction?.bytesBase64Encoded) {
+      console.error('[meal-image] Imagen3 no devolvió imagen. Data:', JSON.stringify(imagenData));
+      return NextResponse.json({ url: null, error: 'Imagen3 no devolvió imagen' });
     }
 
-    const imageBuffer = Buffer.from(imagePart.inlineData.data, 'base64');
+    const imageBuffer = Buffer.from(prediction.bytesBase64Encoded, 'base64');
     console.log('[meal-image] Imagen generada, tamaño (bytes):', imageBuffer.length);
 
     const { error: uploadError } = await supabaseAdminClient.storage
