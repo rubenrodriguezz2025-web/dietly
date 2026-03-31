@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback,useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,9 @@ import type { CalcTargets } from '@/utils/calc-targets';
 import { PlanGenerationStatus } from './plan-generation-status';
 
 
-type State = 'idle' | 'confirm' | 'generating' | 'error';
+type State = 'idle' | 'confirm' | 'generating' | 'error' | 'timeout';
+
+const GENERATION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos
 
 interface Props {
   patientId: string;
@@ -31,7 +33,20 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   const [errorMsg, setErrorMsg] = useState('');
   const [errorCode, setErrorCode] = useState<AnthropicErrorCode | string | undefined>();
 
+  // A-11: AbortController ref para cancelar el stream al desmontar
+  const abortRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup al desmontar
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   function handleCancel() {
+    abortRef.current?.abort();
     setState('idle');
   }
 
@@ -41,16 +56,29 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
     setErrorCode(undefined);
   }
 
-  async function handleGenerate() {
+  const handleGenerate = useCallback(async () => {
+    // Cancelar stream previo si existe
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setState('generating');
     setCurrentDay(0);
     setErrorMsg('');
     setErrorCode(undefined);
+
+    // A-11: Timeout de 5 minutos
+    timeoutRef.current = setTimeout(() => {
+      if (controller.signal.aborted) return;
+      setState('timeout');
+    }, GENERATION_TIMEOUT_MS);
+
     try {
       const res = await fetch('/api/plans/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ patient_id: patientId }),
+        signal: controller.signal,
       });
       if (!res.ok || !res.body) {
         let msg = `Error HTTP ${res.status}. Inténtalo de nuevo.`;
@@ -69,34 +97,43 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let doneReceived = false;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        for (const line of decoder.decode(value).split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.type === 'progress') setCurrentDay(data.day as number);
-            else if (data.type === 'done') { doneReceived = true; router.push(`/dashboard/plans/${data.plan_id}`); }
-            else if (data.type === 'error') {
-              setState('error');
-              setErrorMsg(data.message as string);
-              setErrorCode(data.error_code as AnthropicErrorCode | undefined);
-              return;
-            }
-          } catch { /* ignore malformed */ }
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          for (const line of decoder.decode(value).split('\n')) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.type === 'progress') setCurrentDay(data.day as number);
+              else if (data.type === 'done') { doneReceived = true; router.push(`/dashboard/plans/${data.plan_id}`); }
+              else if (data.type === 'error') {
+                setState('error');
+                setErrorMsg(data.message as string);
+                setErrorCode(data.error_code as AnthropicErrorCode | undefined);
+                return;
+              }
+            } catch { /* ignore malformed */ }
+          }
         }
+      } catch (readErr) {
+        // Si fue abort intencional (desmontaje), no mostramos error
+        if (controller.signal.aborted) return;
+        throw readErr;
       }
-      // Stream cerrado sin recibir 'done' — el servidor ha tardado demasiado o se ha cortado la conexión
+      // Stream cerrado sin recibir 'done'
       if (!doneReceived) {
         setState('error');
-        setErrorMsg('La generación tardó demasiado o se cortó la conexión. Revisa la sección de planes — puede que se haya guardado. Si no, inténtalo de nuevo.');
+        setErrorMsg('La conexión se ha cortado inesperadamente. El plan parcial puede haberse guardado — revisa la sección de planes. Si no aparece, inténtalo de nuevo.');
       }
-    } catch {
+    } catch (err) {
+      if (controller.signal.aborted) return;
       setState('error');
       setErrorMsg('Error de red. Comprueba tu conexión e inténtalo de nuevo.');
+    } finally {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     }
-  }
+  }, [patientId, router]);
 
   // ── Error ────────────────────────────────────────────────────────────────────
   if (state === 'error') {
@@ -107,6 +144,37 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
         errorCode={errorCode}
         onRetry={handleRetry}
       />
+    );
+  }
+
+  // ── Timeout (A-11) ──────────────────────────────────────────────────────────
+  if (state === 'timeout') {
+    return (
+      <div className='flex w-72 flex-col gap-3 rounded-lg border border-amber-600/30 bg-amber-950/20 p-3.5'>
+        <div className='flex items-start gap-2.5'>
+          <svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='mt-0.5 flex-shrink-0 text-amber-500' aria-hidden='true'>
+            <circle cx='12' cy='12' r='10' /><polyline points='12 6 12 12 16 14' />
+          </svg>
+          <div className='flex flex-col gap-1'>
+            <p className='text-xs font-medium text-amber-300'>
+              La generación está tardando más de lo habitual
+            </p>
+            <p className='text-[11px] leading-relaxed text-amber-200/60'>
+              Lleva más de 5 minutos. Puedes esperar o reintentar la generación.
+            </p>
+          </div>
+        </div>
+        <button
+          type='button'
+          onClick={() => {
+            abortRef.current?.abort();
+            handleRetry();
+          }}
+          className='w-full rounded-md border border-amber-600/40 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:border-amber-500/60 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-500'
+        >
+          Reintentar generación
+        </button>
+      </div>
     );
   }
 

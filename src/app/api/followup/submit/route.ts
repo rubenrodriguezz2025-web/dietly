@@ -1,24 +1,34 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { Json } from '@/libs/supabase/types';
 import { escapeHtml } from '@/utils/escape-html';
 
+const followupSubmitSchema = z.object({
+  token: z.string().uuid('token debe ser un UUID válido.'),
+  answers: z.record(z.string(), z.unknown()).refine((v) => Object.keys(v).length > 0, {
+    message: 'El cuestionario debe contener al menos una respuesta.',
+  }),
+});
+
 export async function POST(req: Request) {
-  let body: { token?: string; answers?: Record<string, unknown> };
+  let parsed: z.infer<typeof followupSubmitSchema>;
 
   try {
-    body = await req.json();
+    const body = await req.json();
+    const result = followupSubmitSchema.safeParse(body);
+    if (!result.success) {
+      const msg = result.error.issues.map((i) => i.message).join('; ');
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+    parsed = result.data;
   } catch {
     return NextResponse.json({ error: 'Cuerpo de petición inválido.' }, { status: 400 });
   }
 
-  const { token, answers } = body;
-
-  if (!token || !answers) {
-    return NextResponse.json({ error: 'Faltan campos obligatorios.' }, { status: 400 });
-  }
+  const { token, answers } = parsed;
 
   // Buscar el formulario por token
   const { data: form } = await supabaseAdminClient

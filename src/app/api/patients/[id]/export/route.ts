@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+
+const patientIdSchema = z.string().uuid('El ID del paciente debe ser un UUID válido.');
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: patientId } = await params;
+  const { id: rawId } = await params;
+  const parseResult = patientIdSchema.safeParse(rawId);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: parseResult.error.issues[0].message }, { status: 400 });
+  }
+  const patientId = parseResult.data;
 
   // Verificar autenticación
   const supabase = await createSupabaseServerClient();

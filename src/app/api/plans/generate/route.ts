@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 import { logAIRequest } from '@/libs/ai/logger';
 import {
@@ -20,6 +21,24 @@ import { GOAL_LABELS } from '@/types/dietly';
 import { calcTargets, type MacroOverrides } from '@/utils/calc-targets';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
+
+// ── Zod schemas (A-02) ──────────────────────────────────────────────────────
+
+const macroOverridesSchema = z.object({
+  protein_per_kg: z.number().min(0.5).max(4).optional(),
+  carbs_pct: z.number().min(0.1).max(0.8).optional(),
+  fat_pct: z.number().min(0.1).max(0.6).optional(),
+}).optional();
+
+const generateBodySchema = z.object({
+  patient_id: z.string().uuid('patient_id debe ser un UUID válido.'),
+  macro_overrides: macroOverridesSchema,
+});
+
+// ── Rate limiting (A-03 + A-07) ─────────────────────────────────────────────
+
+const RATE_LIMIT_BASIC = 10; // planes por 24h
+const RATE_LIMIT_PRO = 30;
 
 // Vercel: allow up to 5 minutes for 7 sequential Claude calls + shopping list
 export const maxDuration = 300;
@@ -264,19 +283,21 @@ function calcCost(inputTokens: number, outputTokens: number): number {
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // Leer el body antes de abrir el stream (el Request body solo se puede
+  // Leer y validar el body antes de abrir el stream (el Request body solo se puede
   // leer una vez y no es accesible dentro del ReadableStream callback).
   let patient_id: string;
   let macro_overrides: MacroOverrides | undefined;
   try {
     const body = await req.json();
-    patient_id = body.patient_id;
-    if (!patient_id) throw new Error('missing patient_id');
-    if (body.macro_overrides && typeof body.macro_overrides === 'object') {
-      macro_overrides = body.macro_overrides as MacroOverrides;
+    const parsed = generateBodySchema.safeParse(body);
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map((i) => i.message).join('; ');
+      return Response.json({ error: msg }, { status: 400 });
     }
+    patient_id = parsed.data.patient_id;
+    macro_overrides = parsed.data.macro_overrides as MacroOverrides | undefined;
   } catch {
-    return Response.json({ error: 'patient_id requerido' }, { status: 400 });
+    return Response.json({ error: 'Cuerpo de petición inválido.' }, { status: 400 });
   }
 
   const encoder = new TextEncoder();
@@ -284,10 +305,22 @@ export async function POST(req: NextRequest) {
   // IMPORTANTE: abrimos el stream INMEDIATAMENTE antes de cualquier query a DB.
   // Así el Response llega al cliente de golpe y el primer evento SSE confirma
   // que el stream funciona. Toda la lógica de auth/DB/Claude va dentro del start().
+  // A-11: AbortController para detectar desconexión del cliente
+  const abortController = new AbortController();
+  const { signal } = abortController;
+
+  // Detectar abort del request (cliente cierra pestaña/conexión)
+  req.signal.addEventListener('abort', () => abortController.abort());
+
   const stream = new ReadableStream({
     async start(controller) {
       function send(data: object) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        if (signal.aborted) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        } catch {
+          // Controller ya cerrado
+        }
       }
 
       // Primer evento inmediato — confirma que el stream SSE está abierto
@@ -348,6 +381,43 @@ export async function POST(req: NextRequest) {
         }
         send({ type: 'progress', step: 'beta_ok' });
 
+        // ── Rate limiting (A-03 + A-07) ──────────────────────────────────────
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { count: plansLast24h } = await supabaseAdminClient
+          .from('nutrition_plans')
+          .select('id', { count: 'exact', head: true })
+          .eq('nutritionist_id', user.id)
+          .gte('created_at', twentyFourHoursAgo);
+
+        // Determinar si es Pro para el límite
+        const { data: subForLimit } = await supabase
+          .from('subscriptions')
+          .select('price_id')
+          .eq('user_id', user.id)
+          .in('status', ['trialing', 'active'])
+          .maybeSingle();
+
+        const isProUser =
+          subForLimit != null &&
+          !!process.env.STRIPE_PRICE_PRO_ID &&
+          subForLimit.price_id === process.env.STRIPE_PRICE_PRO_ID;
+
+        const rateLimit = isProUser ? RATE_LIMIT_PRO : RATE_LIMIT_BASIC;
+
+        if ((plansLast24h ?? 0) >= rateLimit) {
+          const resetTime = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+          send({
+            type: 'error',
+            message: `Has alcanzado el límite de ${rateLimit} generaciones en 24 horas. El límite se restablece aproximadamente a las ${resetTime}.${!isProUser ? ' Actualiza a Pro para generar hasta 30 planes/día.' : ''}`,
+            error_code: 'rate_limited',
+          });
+          controller.close();
+          return;
+        }
+
         // ── Paciente ──────────────────────────────────────────────────────────
         const { data: patient } = (await supabase
           .from('patients')
@@ -381,6 +451,26 @@ export async function POST(req: NextRequest) {
         }
 
         send({ type: 'progress', step: 'patient_ok' });
+
+        // ── Consentimiento IA (A-08) ─────────────────────────────────────────
+        const { data: consentRecord } = await supabaseAdminClient
+          .from('patient_consents')
+          .select('id')
+          .eq('patient_id', patient_id)
+          .eq('consent_type', 'patient_ai_consent')
+          .is('revoked_at', null)
+          .limit(1)
+          .maybeSingle();
+
+        if (!consentRecord) {
+          send({
+            type: 'error',
+            message: 'El paciente no ha dado consentimiento para el procesamiento de sus datos con IA. Ve a la ficha del paciente para solicitarlo.',
+            error_code: 'consent_missing',
+          });
+          controller.close();
+          return;
+        }
 
         // Pseudonimizar el paciente ANTES de que sus datos salgan del servidor.
         // A partir de aquí, todos los prompts y logs usan pseudoPatient + sessionId.
@@ -496,6 +586,17 @@ export async function POST(req: NextRequest) {
 
         // Generar los 7 días
         for (let dayNum = 1; dayNum <= 7; dayNum++) {
+          // A-11: Si el cliente se desconectó, marcar plan como error y salir
+          if (signal.aborted) {
+            await supabaseAdminClient
+              .from('nutrition_plans')
+              .update({ status: 'error' })
+              .eq('id', planId);
+            console.warn(`[plans/generate] plan=${planId} — cliente desconectado en día ${dayNum}`);
+            controller.close();
+            return;
+          }
+
           send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1] });
           console.log(`[plans/generate] plan=${planId} — iniciando día ${dayNum}`);
 
