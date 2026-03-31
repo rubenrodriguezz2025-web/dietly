@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 30;
 
@@ -10,11 +9,6 @@ interface MealImageRequest {
   mealIndex: number;
   mealName: string;
   ingredients: string[];
-}
-
-interface GeminiPart {
-  inlineData?: { data: string; mimeType: string };
-  text?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -59,54 +53,50 @@ export async function POST(req: NextRequest) {
       `Bright natural light, top-down view, white ceramic plate, clean minimalist background. ` +
       `Appetizing and fresh. No text, no labels, no watermarks.`;
 
-    console.log('[meal-image] Generando imagen para:', mealName);
+    console.log('[meal-image] Llamando a gemini-2.0-flash (test texto)...');
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    // DEBUG: test text-only para verificar que API key y modelo funcionan
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Describe briefly: ${prompt}` }] }],
+        }),
+        signal: AbortSignal.timeout(25000),
+      }
+    );
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseModalities: ['IMAGE', 'TEXT'],
-      } as never,
+    console.log('[meal-image] Gemini status:', geminiRes.status);
+
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error('[meal-image] Gemini error:', errText);
+      return NextResponse.json({ url: null, error: `Gemini ${geminiRes.status}: ${errText}` });
+    }
+
+    const geminiData = (await geminiRes.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+
+    const textResponse = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    console.log('[meal-image] Gemini text response (primeros 100 chars):', textResponse.slice(0, 100));
+
+    // TODO: una vez confirmada la conexión, añadir generación de imagen aquí
+    // Por ahora devolvemos el texto como debug para confirmar que la API funciona
+    return NextResponse.json({
+      url: null,
+      debug: 'API key y modelo funcionan',
+      textSample: textResponse.slice(0, 200),
     });
 
-    const parts = (result.response.candidates?.[0]?.content?.parts ?? []) as GeminiPart[];
-    console.log('[meal-image] Parts recibidas:', parts.length);
-
-    const imagePart = parts.find((p) => p.inlineData?.mimeType?.startsWith('image/'));
-    const base64 = imagePart?.inlineData?.data;
-
-    if (!base64) {
-      const debug = parts.map((p) => ({ hasInlineData: !!p.inlineData, mimeType: p.inlineData?.mimeType, hasText: !!p.text }));
-      console.error('[meal-image] No se generó imagen. Parts:', JSON.stringify(debug));
-      return NextResponse.json({ url: null, error: 'No image generated', debug });
-    }
-
-    const imageBuffer = Buffer.from(base64, 'base64');
-    console.log('[meal-image] Imagen generada, tamaño (bytes):', imageBuffer.length);
-
-    const { error: uploadError } = await supabaseAdminClient.storage
-      .from('meal-images')
-      .upload(storagePath, imageBuffer, {
-        contentType: 'image/png',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error('[meal-image] Error subiendo a Storage:', uploadError.message);
-      return NextResponse.json({ url: null, error: `Storage upload: ${uploadError.message}` });
-    }
-
-    const { data: urlData } = supabaseAdminClient.storage
-      .from('meal-images')
-      .getPublicUrl(storagePath);
-
-    console.log('[meal-image] OK, URL:', urlData.publicUrl);
-    return NextResponse.json({ url: urlData.publicUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[meal-image] Error inesperado:', err);
     return NextResponse.json({ url: null, error: message });
   }
 }
+
+// Silenciar advertencia de uso de supabaseAdminClient sin imágenes reales por ahora
+void supabaseAdminClient;
