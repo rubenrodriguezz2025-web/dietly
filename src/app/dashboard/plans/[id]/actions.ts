@@ -250,49 +250,51 @@ export async function approvePlan(
     console.error('[approvePlan] Error en notificación automática:', err);
   }
 
-  // ── Generación de fotos de platos (after — se ejecuta tras enviar respuesta) ──
-  // after() garantiza ejecución post-respuesta en Vercel (Next.js 15.1+)
-  after(async () => {
-    try {
-      const { data: planParaFotos } = await supabaseAdminClient
-        .from('nutrition_plans')
-        .select('content')
-        .eq('id', planId)
-        .single();
-
-      const contenido = planParaFotos?.content as PlanContent | null;
-      if (!contenido?.days) return;
-
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-      if (!appUrl) return;
-
-      let globalIndex = 0;
-
-      for (const day of contenido.days) {
-        for (const meal of day.meals) {
-          if (globalIndex >= 10) break;
-          const idx = globalIndex++;
-          try {
-            await fetch(`${appUrl}/api/meal-image`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                planId,
-                mealIndex: idx,
-                mealName: meal.meal_name,
-                ingredients: meal.ingredients.map((i) => i.name),
-              }),
-            });
-          } catch {
-            // Fallo individual no cancela el resto
-          }
-        }
-        if (globalIndex >= 10) break;
-      }
-    } catch (err) {
-      console.error('[approvePlan] Error generando fotos:', err);
-    }
-  });
+  // ── Generación de fotos de platos ────────────────────────────────────────────
+  // PAUSADO: pendiente de API key Gemini con billing activado
+  // Roadmap post-beta cuando haya ventas
+  //
+  // after(async () => {
+  //   try {
+  //     const { data: planParaFotos } = await supabaseAdminClient
+  //       .from('nutrition_plans')
+  //       .select('content')
+  //       .eq('id', planId)
+  //       .single();
+  //
+  //     const contenido = planParaFotos?.content as PlanContent | null;
+  //     if (!contenido?.days) return;
+  //
+  //     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  //     if (!appUrl) return;
+  //
+  //     let globalIndex = 0;
+  //
+  //     for (const day of contenido.days) {
+  //       for (const meal of day.meals) {
+  //         if (globalIndex >= 10) break;
+  //         const idx = globalIndex++;
+  //         try {
+  //           await fetch(`${appUrl}/api/meal-image`, {
+  //             method: 'POST',
+  //             headers: { 'Content-Type': 'application/json' },
+  //             body: JSON.stringify({
+  //               planId,
+  //               mealIndex: idx,
+  //               mealName: meal.meal_name,
+  //               ingredients: meal.ingredients.map((i) => i.name),
+  //             }),
+  //           });
+  //         } catch {
+  //           // Fallo individual no cancela el resto
+  //         }
+  //       }
+  //       if (globalIndex >= 10) break;
+  //     }
+  //   } catch (err) {
+  //     console.error('[approvePlan] Error generando fotos:', err);
+  //   }
+  // });
 
   return { ok: true };
 }

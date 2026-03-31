@@ -1,3 +1,6 @@
+// PAUSADO: pendiente de API key Gemini con billing activado
+// Roadmap post-beta cuando haya ventas
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
@@ -11,17 +14,18 @@ interface MealImageRequest {
   ingredients: string[];
 }
 
-export async function POST(req: NextRequest) {
-  console.log('[meal-image] GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
+interface GeminiPart {
+  inlineData?: { data: string; mimeType: string };
+  text?: string;
+}
 
+export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as MealImageRequest;
     const { planId, mealIndex, mealName, ingredients } = body;
-    console.log('[meal-image] Request:', { planId, mealIndex, mealName, ingredientsCount: ingredients?.length });
 
     const idx = typeof mealIndex === 'string' ? parseInt(mealIndex, 10) : mealIndex;
     if (!planId || typeof idx !== 'number' || isNaN(idx) || !mealName) {
-      console.error('[meal-image] Validación fallida:', { planId, idx, mealName });
       return NextResponse.json({ url: null, error: 'Parámetros inválidos' }, { status: 400 });
     }
 
@@ -32,17 +36,15 @@ export async function POST(req: NextRequest) {
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/meal-images/${storagePath}`;
     try {
       const headRes = await fetch(publicUrl, { method: 'HEAD' });
-      console.log('[meal-image] HEAD check:', headRes.status);
       if (headRes.ok) {
         return NextResponse.json({ url: publicUrl });
       }
-    } catch (headErr) {
-      console.error('[meal-image] HEAD check error:', headErr);
+    } catch {
+      // continuar con generación
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error('[meal-image] GEMINI_API_KEY no configurada');
       return NextResponse.json({ url: null, error: 'GEMINI_API_KEY no configurada' });
     }
 
@@ -53,9 +55,6 @@ export async function POST(req: NextRequest) {
       `Bright natural light, top-down view, white ceramic plate, clean minimalist background. ` +
       `Appetizing and fresh. No text, no labels, no watermarks.`;
 
-    console.log('[meal-image] Llamando a gemini-2.0-flash (test texto)...');
-
-    // DEBUG: test text-only para verificar que API key y modelo funcionan
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
@@ -68,35 +67,43 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    console.log('[meal-image] Gemini status:', geminiRes.status);
-
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      console.error('[meal-image] Gemini error:', errText);
       return NextResponse.json({ url: null, error: `Gemini ${geminiRes.status}: ${errText}` });
     }
 
     const geminiData = (await geminiRes.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      candidates?: Array<{ content?: { parts?: GeminiPart[] } }>;
     };
 
-    const textResponse = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-    console.log('[meal-image] Gemini text response (primeros 100 chars):', textResponse.slice(0, 100));
+    const parts = (geminiData?.candidates?.[0]?.content?.parts ?? []) as GeminiPart[];
+    const imagePart = parts.find((p) => p.inlineData?.mimeType?.startsWith('image/'));
+    const base64 = imagePart?.inlineData?.data;
 
-    // TODO: una vez confirmada la conexión, añadir generación de imagen aquí
-    // Por ahora devolvemos el texto como debug para confirmar que la API funciona
-    return NextResponse.json({
-      url: null,
-      debug: 'API key y modelo funcionan',
-      textSample: textResponse.slice(0, 200),
-    });
+    if (!base64) {
+      return NextResponse.json({ url: null, error: 'No image generated' });
+    }
 
+    const imageBuffer = Buffer.from(base64, 'base64');
+
+    const { error: uploadError } = await supabaseAdminClient.storage
+      .from('meal-images')
+      .upload(storagePath, imageBuffer, {
+        contentType: 'image/png',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      return NextResponse.json({ url: null, error: `Storage upload: ${uploadError.message}` });
+    }
+
+    const { data: urlData } = supabaseAdminClient.storage
+      .from('meal-images')
+      .getPublicUrl(storagePath);
+
+    return NextResponse.json({ url: urlData.publicUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[meal-image] Error inesperado:', err);
     return NextResponse.json({ url: null, error: message });
   }
 }
-
-// Silenciar advertencia de uso de supabaseAdminClient sin imágenes reales por ahora
-void supabaseAdminClient;
