@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 
 import { PlanReadyEmail } from '@/features/emails/plan-ready';
+import { generatePlanAccessToken } from '@/lib/auth/plan-tokens';
 import { logAIRequest } from '@/libs/ai/logger';
 import {
   buildShoppingListPrompt,
@@ -216,7 +217,8 @@ export async function approvePlan(
 
     if (patientEmail && patientToken) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-      const planUrl = `${appUrl}/p/${patientToken}`;
+      const hmacData = await generatePlanAccessToken(patientToken);
+      const planUrl = `${appUrl}/p/${patientToken}?h=${hmacData.token}&e=${hmacData.expires}`;
       const nutritionistName = profileResult.data?.full_name ?? 'Tu nutricionista';
       const clinicName = profileResult.data?.clinic_name ?? null;
 
@@ -337,7 +339,8 @@ export async function sendPlanToPatient(
   const nombreDN = profile?.full_name ?? 'Tu nutricionista';
   const clinica = profile?.clinic_name ?? '';
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const planUrl = `${appUrl}/p/${plan.patient_token}`;
+  const hmacData = await generatePlanAccessToken(plan.patient_token);
+  const planUrl = `${appUrl}/p/${plan.patient_token}?h=${hmacData.token}&e=${hmacData.expires}`;
   const semana = new Date(plan.week_start_date).toLocaleDateString('es-ES', {
     day: 'numeric',
     month: 'long',

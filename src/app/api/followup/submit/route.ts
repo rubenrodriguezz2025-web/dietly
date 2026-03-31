@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { Json } from '@/libs/supabase/types';
+import { escapeHtml } from '@/utils/escape-html';
 
 export async function POST(req: Request) {
   let body: { token?: string; answers?: Record<string, unknown> };
@@ -56,10 +57,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Error guardando las respuestas.' }, { status: 500 });
   }
 
-  const patientName = form.patients?.name ?? 'Paciente';
-  const nutritionistName = form.profiles?.full_name ?? 'Nutricionista';
+  const patientName = escapeHtml(form.patients?.name ?? 'Paciente');
+  const nutritionistName = escapeHtml(form.profiles?.full_name ?? 'Nutricionista');
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const fichaUrl = `${appUrl}/dashboard/patients/${form.patient_id}`;
+  const fichaUrl = `${appUrl}/dashboard/patients/${encodeURIComponent(form.patient_id)}`;
 
   // Enviar email al nutricionista con las respuestas
   try {
@@ -90,8 +91,8 @@ export async function POST(req: Request) {
 
       const answersHtml = Object.entries(answers)
         .map(([key, value]) => {
-          const label = PREGUNTAS_LABELS[key] ?? key;
-          const displayValue = value !== null && value !== '' ? String(value) : '<em style="color:#a1a1aa">Sin respuesta</em>';
+          const label = escapeHtml(PREGUNTAS_LABELS[key] ?? key);
+          const displayValue = value !== null && value !== '' ? escapeHtml(String(value)) : '<em style="color:#a1a1aa">Sin respuesta</em>';
           return `
           <tr>
             <td style="padding:10px 16px;border-top:1px solid #e4e4e7;vertical-align:top;width:45%;color:#71717a;font-size:13px">${label}</td>

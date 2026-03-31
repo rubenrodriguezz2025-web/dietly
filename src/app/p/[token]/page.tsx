@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
+import { validatePlanAccessToken } from '@/lib/auth/plan-tokens';
 import { aggregateShoppingList } from '@/libs/shopping-list';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { PlanContent } from '@/types/dietly';
@@ -188,10 +189,18 @@ export default async function PaginaPaciente({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ dia?: string }>;
+  searchParams: Promise<{ dia?: string; h?: string; e?: string }>;
 }) {
   const { token } = await params;
-  const { dia } = await searchParams;
+  const { dia, h: hmac, e: expires } = await searchParams;
+
+  // Si la URL incluye HMAC, verificarlo criptográficamente
+  if (hmac && expires) {
+    const result = await validatePlanAccessToken(token, hmac, expires);
+    if (!result.valid) {
+      notFound();
+    }
+  }
 
   const { data: plan } = await (supabaseAdminClient as any)
     .from('nutrition_plans')

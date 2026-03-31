@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 export const maxDuration = 30;
 
@@ -20,6 +21,13 @@ interface GeminiPart {
 }
 
 export async function POST(req: NextRequest) {
+  // Verificar autenticación
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
   try {
     const body = (await req.json()) as MealImageRequest;
     const { planId, mealIndex, mealName, ingredients } = body;

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { Json } from '@/libs/supabase/types';
+import { escapeHtml } from '@/utils/escape-html';
 
 export async function POST(req: Request) {
   let body: { patient_id?: string; answers?: Record<string, unknown>; consent?: boolean };
@@ -89,9 +90,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    const nombreNutricionista = perfil?.full_name ?? 'Nutricionista';
+    const nombreNutricionista = escapeHtml(perfil?.full_name ?? 'Nutricionista');
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-    const fichaUrl = `${appUrl}/dashboard/patients/${patient_id}`;
+    const fichaUrl = `${appUrl}/dashboard/patients/${encodeURIComponent(patient_id)}`;
     const fecha = new Date().toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'long',
@@ -99,11 +100,12 @@ export async function POST(req: Request) {
       hour: '2-digit',
       minute: '2-digit',
     });
+    const safePacienteName = escapeHtml(paciente.name);
 
     await resendClient.emails.send({
       from: 'Dietly <noreply@dietly.es>',
       to: emailNutricionista,
-      subject: `Paciente ha completado su cuestionario — ${paciente.name}`,
+      subject: `Paciente ha completado su cuestionario — ${safePacienteName}`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#18181b">
           <div style="margin-bottom:24px">
@@ -120,7 +122,7 @@ export async function POST(req: Request) {
           <table style="width:100%;border-collapse:collapse;border:1px solid #e4e4e7;border-radius:8px;overflow:hidden">
             <tr style="background:#f4f4f5">
               <td style="padding:12px 16px;color:#71717a;font-size:13px;width:40%">Paciente</td>
-              <td style="padding:12px 16px;font-weight:600;color:#18181b;font-size:13px">${paciente.name}</td>
+              <td style="padding:12px 16px;font-weight:600;color:#18181b;font-size:13px">${safePacienteName}</td>
             </tr>
             <tr>
               <td style="padding:12px 16px;color:#71717a;font-size:13px;border-top:1px solid #e4e4e7">Nutricionista</td>
