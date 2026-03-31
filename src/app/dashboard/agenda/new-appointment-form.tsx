@@ -25,13 +25,13 @@ for (let h = 7; h <= 21; h++) {
 export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
   const [state, action, pending] = useActionState(createAppointment, {});
   const [tipo, setTipo] = useState<string>('presencial');
-  const [patientId, setPatientId] = useState<string>('');
+  const [patientId, setPatientId] = useState<string>('__none__');
   const [selectedTime, setSelectedTime] = useState<string>('');
 
   return (
     <form action={action} className='flex flex-col gap-4'>
       {/* Campos ocultos para los valores de los Selects (compatibilidad con Server Actions) */}
-      <input type='hidden' name='patient_id' value={patientId} />
+      <input type='hidden' name='patient_id' value={patientId === '__none__' ? '' : patientId} />
       <input type='hidden' name='type' value={tipo} />
       <input type='hidden' name='time' value={selectedTime} />
 
@@ -44,7 +44,7 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
               <SelectValue placeholder='Sin paciente asignado' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value=''>Sin paciente asignado</SelectItem>
+              <SelectItem value='__none__'>Sin paciente asignado</SelectItem>
               {pacientes.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}
