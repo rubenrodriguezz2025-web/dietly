@@ -77,21 +77,17 @@ export async function GET(
   };
 
   // Verificar si el usuario tiene suscripción Pro activa
-  // Plan Pro = producto Stripe cuyo nombre contiene "pro" o "profesional"
-  // TODO: cuando haya price_id de Pro en variables de entorno, comparar directamente
   const { data: subscription } = await supabase
     .from('subscriptions')
-    .select('status, price_id, prices(unit_amount, products(name))')
+    .select('status, price_id')
     .eq('user_id', user.id)
     .in('status', ['trialing', 'active'])
     .maybeSingle();
 
-  const prices = subscription?.prices as unknown as { products: { name: string } | null } | null;
-  const productName: string = prices?.products?.name ?? '';
   const is_pro =
     subscription != null &&
-    (productName.toLowerCase().includes('pro') ||
-      productName.toLowerCase().includes('profesional'));
+    !!process.env.STRIPE_PRICE_PRO_ID &&
+    subscription.price_id === process.env.STRIPE_PRICE_PRO_ID;
 
   // Helper: descarga un archivo de Storage y devuelve data URI base64
   async function downloadAsDataUri(bucket: string, path: string): Promise<string | null> {

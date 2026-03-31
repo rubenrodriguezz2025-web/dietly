@@ -40,7 +40,8 @@ export async function DELETE(
   const { error } = await supabaseAdminClient
     .from('patients')
     .delete()
-    .eq('id', patientId);
+    .eq('id', patientId)
+    .eq('nutritionist_id', user.id);
 
   if (error) {
     console.error('[patients/delete] Error al eliminar paciente:', error);

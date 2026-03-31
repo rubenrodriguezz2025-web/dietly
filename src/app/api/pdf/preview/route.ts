@@ -151,17 +151,15 @@ async function handlePreview() {
   // Determinar si tiene suscripción Pro (para logo/firma)
   const { data: subscription } = await supabase
     .from('subscriptions')
-    .select('status, prices(products(name))')
+    .select('status, price_id')
+    .eq('user_id', user.id)
     .in('status', ['trialing', 'active'])
     .maybeSingle();
 
-  const prices = subscription?.prices as unknown as { products: { name: string } | null } | null;
-  const productName: string = prices?.products?.name ?? '';
   const is_pro =
     subscription != null &&
-    (productName.toLowerCase().includes('pro') ||
-      productName.toLowerCase().includes('profesional') ||
-      productName === '');
+    !!process.env.STRIPE_PRICE_PRO_ID &&
+    subscription.price_id === process.env.STRIPE_PRICE_PRO_ID;
 
   let logo_uri: string | null = null;
   let signature_uri: string | null = null;

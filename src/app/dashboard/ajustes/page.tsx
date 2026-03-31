@@ -28,11 +28,10 @@ export default async function AjustesPage() {
 
   // Suscripción activa → determinar si es Plan Pro
   const subscription = await getSubscription();
-  const productName: string = (subscription as any)?.prices?.products?.name ?? '';
   const isPro =
     subscription != null &&
-    (productName.toLowerCase().includes('pro') ||
-      productName.toLowerCase().includes('profesional'));
+    !!process.env.STRIPE_PRICE_PRO_ID &&
+    subscription.price_id === process.env.STRIPE_PRICE_PRO_ID;
 
   // URL firmada del logo para previsualización (1 hora de validez)
   let logoPreviewUrl: string | null = null;
