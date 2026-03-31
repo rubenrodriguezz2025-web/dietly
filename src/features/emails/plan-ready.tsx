@@ -10,20 +10,48 @@ import {
   Text,
 } from '@react-email/components';
 
+type ShoppingListData = {
+  produce?: string[];
+  protein?: string[];
+  dairy?: string[];
+  grains?: string[];
+  pantry?: string[];
+};
+
 interface PlanReadyEmailProps {
   patientName: string;
   nutritionistName: string;
   clinicName?: string | null;
   planUrl: string;
+  shoppingList?: ShoppingListData | null;
 }
+
+const CATEGORIES: { key: keyof ShoppingListData; emoji: string; label: string }[] = [
+  { key: 'produce', emoji: '🥦', label: 'Frutas y verduras' },
+  { key: 'protein', emoji: '🥩', label: 'Proteínas' },
+  { key: 'dairy',   emoji: '🥛', label: 'Lácteos' },
+  { key: 'grains',  emoji: '🌾', label: 'Cereales y legumbres' },
+  { key: 'pantry',  emoji: '🫙', label: 'Despensa' },
+];
 
 export function PlanReadyEmail({
   patientName,
   nutritionistName,
   clinicName,
   planUrl,
+  shoppingList,
 }: PlanReadyEmailProps) {
   const from = clinicName ?? nutritionistName;
+
+  // Construir categorías con items (máx 5 por categoría → máx 25 en total)
+  const listSections = CATEGORIES
+    .map(({ key, emoji, label }) => {
+      const items = (shoppingList?.[key] ?? []).slice(0, 5);
+      return items.length > 0 ? { emoji, label, items } : null;
+    })
+    .filter((s): s is { emoji: string; label: string; items: string[] } => s !== null);
+
+  const hasShoppingList = listSections.length > 0;
 
   return (
     <Html lang='es'>
@@ -64,6 +92,25 @@ export function PlanReadyEmail({
               💡 Puedes añadir esta página a la pantalla de inicio de tu móvil para
               acceder al plan sin necesidad de buscar el enlace.
             </Text>
+
+            {/* Lista de la compra */}
+            {hasShoppingList && (
+              <Section style={shoppingContainerStyle}>
+                <Text style={shoppingTitleStyle}>Tu lista de la compra</Text>
+                {listSections.map(({ emoji, label, items }) => (
+                  <Section key={label} style={categoryBlockStyle}>
+                    <Text style={categoryLabelStyle}>
+                      {emoji} {label}
+                    </Text>
+                    {items.map((item) => (
+                      <Text key={item} style={itemStyle}>
+                        · {item}
+                      </Text>
+                    ))}
+                  </Section>
+                ))}
+              </Section>
+            )}
 
             <Hr style={hrStyle} />
 
@@ -165,4 +212,40 @@ const footerStyle: React.CSSProperties = {
   fontSize: '13px',
   lineHeight: '1.6',
   margin: '0',
+};
+
+const shoppingContainerStyle: React.CSSProperties = {
+  backgroundColor: '#22253a',
+  borderRadius: '10px',
+  padding: '20px 20px 8px',
+  margin: '0 0 24px',
+};
+
+const shoppingTitleStyle: React.CSSProperties = {
+  color: '#e8eaf0',
+  fontSize: '15px',
+  fontWeight: '600',
+  margin: '0 0 16px',
+  letterSpacing: '-0.2px',
+};
+
+const categoryBlockStyle: React.CSSProperties = {
+  margin: '0 0 14px',
+};
+
+const categoryLabelStyle: React.CSSProperties = {
+  color: '#5ebd8a',
+  fontSize: '12px',
+  fontWeight: '600',
+  letterSpacing: '0.5px',
+  textTransform: 'uppercase',
+  margin: '0 0 6px',
+};
+
+const itemStyle: React.CSSProperties = {
+  color: '#b0b8cc',
+  fontSize: '14px',
+  lineHeight: '1.5',
+  margin: '0 0 2px',
+  paddingLeft: '4px',
 };

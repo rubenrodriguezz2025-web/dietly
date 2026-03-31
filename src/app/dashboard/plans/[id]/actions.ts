@@ -197,7 +197,7 @@ export async function approvePlan(
     const [planForEmail, profileResult] = await Promise.all([
       supabaseAdminClient
         .from('nutrition_plans')
-        .select('patient_token, patients(email, name)')
+        .select('patient_token, content, patients(email, name)')
         .eq('id', planId)
         .single(),
       supabaseAdminClient
@@ -211,6 +211,8 @@ export async function approvePlan(
     const patient = planForEmail.data?.patients as unknown as { email: string | null; name: string } | null;
     const patientEmail = patient?.email ?? null;
     const patientName = patient?.name ?? '';
+    const planContent = planForEmail.data?.content as PlanContent | null;
+    const shoppingList = planContent?.shopping_list ?? null;
 
     if (patientEmail && patientToken) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
@@ -223,6 +225,7 @@ export async function approvePlan(
         nutritionistName,
         clinicName,
         planUrl,
+        shoppingList,
       });
 
       const [html, text] = await Promise.all([
