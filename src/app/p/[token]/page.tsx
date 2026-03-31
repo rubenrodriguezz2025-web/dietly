@@ -337,6 +337,7 @@ export default async function PaginaPaciente({
             initialDay={diaActual}
             showMacros={showMacros}
             primaryColor={primaryColor}
+            planId={plan.id as string}
           />
 
           {/* Lista de la compra interactiva */}

@@ -249,6 +249,56 @@ export async function approvePlan(
     console.error('[approvePlan] Error en notificación automática:', err);
   }
 
+  // ── Generación de fotos de platos (fire-and-forget, no bloquea) ─────────────
+  void (async () => {
+    try {
+      const { data: planParaFotos } = await supabaseAdminClient
+        .from('nutrition_plans')
+        .select('content')
+        .eq('id', planId)
+        .single();
+
+      const contenido = planParaFotos?.content as PlanContent | null;
+      if (!contenido?.days) return;
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+      if (!appUrl) return;
+
+      let globalIndex = 0;
+      const meals: { mealName: string; ingredients: string[] }[] = [];
+
+      for (const day of contenido.days) {
+        for (const meal of day.meals) {
+          if (globalIndex >= 10) break;
+          meals.push({
+            mealName: meal.meal_name,
+            ingredients: meal.ingredients.map((i) => i.name),
+          });
+          globalIndex++;
+        }
+        if (globalIndex >= 10) break;
+      }
+
+      // Escalonar las peticiones 300 ms entre cada una para evitar rate-limit
+      for (let idx = 0; idx < meals.length; idx++) {
+        setTimeout(() => {
+          fetch(`${appUrl}/api/meal-image`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              planId,
+              mealIndex: idx,
+              mealName: meals[idx].mealName,
+              ingredients: meals[idx].ingredients,
+            }),
+          }).catch(() => {});
+        }, idx * 300);
+      }
+    } catch (err) {
+      console.error('[approvePlan] Error iniciando fotos:', err);
+    }
+  })();
+
   return { ok: true };
 }
 

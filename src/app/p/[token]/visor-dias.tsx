@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Meal, PlanDay } from '@/types/dietly';
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+
 // ── Constantes de estilos por tipo de comida ──────────────────────────────────
 
 const ACENTO_TIPO: Record<string, { borde: string; etiqueta: string }> = {
@@ -29,15 +31,24 @@ type Props = {
   initialDay: number;
   showMacros: boolean;
   primaryColor: string;
+  planId: string;
 };
 
-export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props) {
+export function VisorDias({ days, initialDay, showMacros, primaryColor, planId }: Props) {
   const [currentDay, setCurrentDay] = useState(initialDay);
   const [animKey, setAnimKey] = useState(0);
   const [animDir, setAnimDir] = useState<'right' | 'left'>('right');
   const touchStartX = useRef<number | null>(null);
 
   const diaData = days.find((d) => d.day_number === currentDay) ?? days[0];
+
+  // Índice global del primer plato de cada día (para construir URLs de fotos)
+  const mealStartIndex: Record<number, number> = {};
+  let offset = 0;
+  for (const day of days) {
+    mealStartIndex[day.day_number] = offset;
+    offset += day.meals.length;
+  }
 
   // Actualizar hash de URL al cambiar de día (back button funciona)
   useEffect(() => {
@@ -215,14 +226,22 @@ export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props)
           className='flex flex-col gap-3'
           style={{ animation: `pwa-slide-${animDir} 0.28s ease both` }}
         >
-          {diaData.meals.map((comida, i) => (
-            <TarjetaComida
-              key={`${currentDay}-${i}`}
-              comida={comida}
-              showMacros={showMacros}
-              delay={i * 0.055}
-            />
-          ))}
+          {diaData.meals.map((comida, i) => {
+            const globalIdx = (mealStartIndex[diaData.day_number] ?? 0) + i;
+            const imageUrl =
+              SUPABASE_URL && globalIdx < 10
+                ? `${SUPABASE_URL}/storage/v1/object/public/meal-images/${planId}/${globalIdx}.png`
+                : null;
+            return (
+              <TarjetaComida
+                key={`${currentDay}-${i}`}
+                comida={comida}
+                showMacros={showMacros}
+                delay={i * 0.055}
+                imageUrl={imageUrl}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -314,12 +333,17 @@ function TarjetaComida({
   comida,
   showMacros,
   delay,
+  imageUrl,
 }: {
   comida: Meal;
   showMacros: boolean;
   delay: number;
+  imageUrl?: string | null;
 }) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const acento = ACENTO_TIPO[comida.meal_type] ?? { borde: '#16a34a', etiqueta: '#15803d' };
+  const showImg = !!imageUrl && !imgError;
 
   return (
     <article
@@ -332,6 +356,49 @@ function TarjetaComida({
     >
       {/* Banda de color por tipo */}
       <div className='h-[3px] w-full' style={{ background: acento.borde }} />
+
+      {/* Foto del plato */}
+      {showImg && (
+        <div className='relative w-full overflow-hidden' style={{ aspectRatio: '16/9' }}>
+          {/* Placeholder mientras carga */}
+          {!imgLoaded && (
+            <div
+              className='absolute inset-0 flex items-center justify-center'
+              style={{ background: 'var(--chip-off)' }}
+            >
+              <svg
+                width='28'
+                height='28'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='1.5'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                style={{ color: 'var(--text-muted)', opacity: 0.4 }}
+                aria-hidden='true'
+              >
+                <path d='M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2' />
+                <path d='M7 2v20' />
+                <path d='M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7' />
+              </svg>
+            </div>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt={comida.meal_name}
+            loading='lazy'
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+            className='h-full w-full object-cover'
+            style={{
+              opacity: imgLoaded ? 1 : 0,
+              transition: 'opacity 0.5s ease',
+            }}
+          />
+        </div>
+      )}
 
       {/* Cabecera de comida */}
       <div className='flex items-start justify-between gap-3 px-4 pb-2 pt-3.5'>
