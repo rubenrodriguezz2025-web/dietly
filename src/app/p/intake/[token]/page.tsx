@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
+export const dynamic = 'force-dynamic';
+
 import { IntakeForm } from './intake-form';
 
 export const metadata: Metadata = {

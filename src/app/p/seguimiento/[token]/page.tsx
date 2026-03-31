@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
+export const dynamic = 'force-dynamic';
+
 import { FollowupForm } from './followup-form';
 
 export const metadata: Metadata = {

@@ -13,6 +13,8 @@
 
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
+
+export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';

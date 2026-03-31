@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { type FontPreference,NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Patient, PlanContent, Profile } from '@/types/dietly';
 import { renderToBuffer } from '@react-pdf/renderer';
@@ -47,6 +48,41 @@ export async function GET(
       { error: 'El plan no tiene contenido' },
       { status: 400 }
     );
+  }
+
+  // A-12: Comprobar si existe PDF cacheado y sigue vigente
+  const pdfStoragePath = `${user.id}/${id}.pdf`;
+  const pdfGeneratedAt = plan.pdf_generated_at ? new Date(plan.pdf_generated_at as string) : null;
+  const planUpdatedAt = plan.updated_at ? new Date(plan.updated_at as string) : null;
+
+  if (pdfGeneratedAt && planUpdatedAt && pdfGeneratedAt >= planUpdatedAt) {
+    try {
+      const { data: cachedBlob } = await supabase.storage
+        .from('plan-pdfs')
+        .download(pdfStoragePath);
+
+      if (cachedBlob) {
+        const cachedBuffer = await cachedBlob.arrayBuffer();
+        const patientForName = plan.patients as { name: string };
+        const fechaCache = new Date(plan.week_start_date as string).toISOString().split('T')[0];
+        const nombreCache = patientForName.name
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '');
+
+        return new Response(new Uint8Array(cachedBuffer), {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="plan-${nombreCache}-${fechaCache}.pdf"`,
+            'Cache-Control': 'private, max-age=60',
+          },
+        });
+      }
+    } catch {
+      // Cache miss — continuar con generación
+    }
   }
 
   // Obtener perfil del nutricionista (logo, firma, número de colegiado y ajustes de marca)
@@ -107,19 +143,22 @@ export async function GET(
   let signature_uri: string | null = null;
   let profile_photo_uri: string | null = null;
 
-  if (is_pro) {
-    if (profileData?.logo_url) {
-      logo_uri = await downloadAsDataUri('nutritionist-logos', profileData.logo_url as string);
-    }
-    if (profileData?.signature_url) {
-      signature_uri = await downloadAsDataUri('nutritionist-signatures', profileData.signature_url as string);
-    }
-  }
+  // Descargar logo, firma y foto en paralelo (A-10)
+  const downloads = await Promise.all([
+    is_pro && profileData?.logo_url
+      ? downloadAsDataUri('nutritionist-logos', profileData.logo_url as string)
+      : Promise.resolve(null),
+    is_pro && profileData?.signature_url
+      ? downloadAsDataUri('nutritionist-signatures', profileData.signature_url as string)
+      : Promise.resolve(null),
+    profileData?.profile_photo_url
+      ? downloadAsDataUri('nutritionist-photos', profileData.profile_photo_url as string)
+      : Promise.resolve(null),
+  ]);
 
-  // Foto de perfil disponible para todos los planes
-  if (profileData?.profile_photo_url) {
-    profile_photo_uri = await downloadAsDataUri('nutritionist-photos', profileData.profile_photo_url as string);
-  }
+  logo_uri = downloads[0];
+  signature_uri = downloads[1];
+  profile_photo_uri = downloads[2];
 
   // Fecha de aprobación formateada
   const approved_at = plan.approved_at
@@ -148,6 +187,23 @@ export async function GET(
 
     const buffer = await renderToBuffer(elemento as unknown as React.JSX.Element);
 
+    // A-12: Guardar PDF en Storage y marcar pdf_generated_at
+    try {
+      await supabaseAdminClient.storage
+        .from('plan-pdfs')
+        .upload(pdfStoragePath, new Uint8Array(buffer), {
+          contentType: 'application/pdf',
+          upsert: true,
+        });
+
+      await supabaseAdminClient
+        .from('nutrition_plans')
+        .update({ pdf_generated_at: new Date().toISOString() })
+        .eq('id', id);
+    } catch (cacheErr) {
+      console.error('[PDF] Error guardando caché:', cacheErr);
+    }
+
     const fechaStr = new Date(plan.week_start_date as string)
       .toISOString()
       .split('T')[0]; // YYYY-MM-DD
@@ -163,7 +219,7 @@ export async function GET(
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${nombreArchivo}"`,
-        'Cache-Control': 'no-store',
+        'Cache-Control': 'private, max-age=60',
       },
     });
   } catch (err) {

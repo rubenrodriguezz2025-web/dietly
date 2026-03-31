@@ -16,8 +16,6 @@ import { Navigation } from './navigation';
 
 import '@/styles/globals.css';
 
-export const dynamic = 'force-dynamic';
-
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: '--font-plus-jakarta-sans',
   subsets: ['latin'],
