@@ -9,7 +9,6 @@ import type { PlanContent } from '@/types/dietly';
 
 import { BannerInstalar } from './banner-instalar';
 import { BienvenidaPwa } from './bienvenida-pwa';
-import { BotonCompartir } from './boton-compartir';
 import { ListaCompraInteractiva } from './lista-compra';
 import { PwaShell } from './pwa-shell';
 import { VisorDias } from './visor-dias';
@@ -231,7 +230,6 @@ export default async function PaginaPaciente({
   })();
 
   const pacienteData = plan.patients as { name: string; nutritionist_id: string } | null;
-  const nombrePaciente = pacienteData?.name ?? 'Paciente';
 
   // Ajustes de marca del nutricionista
   let showMacros = true;
@@ -277,13 +275,6 @@ export default async function PaginaPaciente({
     content.days.length
   );
 
-  const fechaSemana = new Date(plan.week_start_date).toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'long',
-  });
-
-  const sm = content.week_summary;
-
   return (
     <>
       {/* CSS de la PWA — scoped a data-pwa-theme */}
@@ -293,74 +284,6 @@ export default async function PaginaPaciente({
         className={jakarta.className}
         style={{ minHeight: '100vh', background: 'var(--bg)', scrollBehavior: 'smooth' }}
       >
-        {/* ── HEADER ───────────────────────────────────────────────────────── */}
-        <header
-          className='anim-header relative overflow-hidden px-5 pb-7'
-          style={{
-            background: `linear-gradient(150deg, color-mix(in srgb, ${primaryColor} 60%, #000) 0%, color-mix(in srgb, ${primaryColor} 80%, #000) 50%, ${primaryColor} 100%)`,
-            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 2.5rem)',
-          }}
-        >
-          {/* Decoración geométrica */}
-          <div
-            className='pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full'
-            style={{ background: 'rgba(255,255,255,0.04)' }}
-          />
-          <div
-            className='pointer-events-none absolute right-12 top-24 h-24 w-24 rounded-full'
-            style={{ background: 'rgba(255,255,255,0.04)' }}
-          />
-          <div
-            className='pointer-events-none absolute -left-6 bottom-0 h-32 w-32 rounded-full'
-            style={{ background: 'rgba(255,255,255,0.03)' }}
-          />
-
-          <div className='flex items-start justify-between gap-3'>
-            <div>
-              <h1 className='text-2xl font-extrabold leading-tight text-white'>
-                {nombrePaciente}
-              </h1>
-              <p className='mt-1 text-sm font-medium text-white/50'>
-                Plan nutricional · semana del {fechaSemana}
-              </p>
-            </div>
-            <BotonCompartir
-              titulo={`Plan nutricional de ${nombrePaciente}`}
-              texto='Mira mi plan nutricional personalizado'
-            />
-          </div>
-
-          {/* Objetivos diarios — solo si show_macros */}
-          {showMacros && (
-            <div className='anim-summary mt-5 flex gap-2.5 overflow-x-auto pb-0.5'>
-              <PildoraMacro
-                valor={sm.target_daily_calories}
-                unidad='kcal'
-                color='rgba(74,222,128,0.18)'
-                colorTexto='#4ade80'
-              />
-              <PildoraMacro
-                valor={`${sm.target_macros.protein_g}g`}
-                unidad='proteína'
-                color='rgba(147,197,253,0.18)'
-                colorTexto='#93c5fd'
-              />
-              <PildoraMacro
-                valor={`${sm.target_macros.carbs_g}g`}
-                unidad='carbos'
-                color='rgba(252,211,77,0.18)'
-                colorTexto='#fcd34d'
-              />
-              <PildoraMacro
-                valor={`${sm.target_macros.fat_g}g`}
-                unidad='grasa'
-                color='rgba(249,168,212,0.18)'
-                colorTexto='#f9a8d4'
-              />
-            </div>
-          )}
-        </header>
-
         {/* ── CONTENIDO ────────────────────────────────────────────────────── */}
         <main className='mx-auto max-w-lg px-4 pb-24'>
           {/* Navegación + swipe + tarjetas de comida */}
@@ -412,35 +335,6 @@ export default async function PaginaPaciente({
 }
 
 // ── Subcomponentes ────────────────────────────────────────────────────────────
-
-function PildoraMacro({
-  valor,
-  unidad,
-  color,
-  colorTexto,
-}: {
-  valor: number | string;
-  unidad: string;
-  color: string;
-  colorTexto: string;
-}) {
-  return (
-    <div
-      className='flex-shrink-0 rounded-xl px-4 py-2.5 text-center'
-      style={{ background: color }}
-    >
-      <p
-        className='text-base font-extrabold leading-none tabular-nums'
-        style={{ color: colorTexto }}
-      >
-        {valor}
-      </p>
-      <p className='mt-0.5 text-[10px] font-semibold' style={{ color: colorTexto, opacity: 0.7 }}>
-        {unidad}
-      </p>
-    </div>
-  );
-}
 
 function FooterTransparenciaIA({
   nombreDN,
