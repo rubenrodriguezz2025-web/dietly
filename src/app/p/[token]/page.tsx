@@ -7,6 +7,8 @@ import { aggregateShoppingList } from '@/libs/shopping-list';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { PlanContent } from '@/types/dietly';
 
+import { BannerInstalar } from './banner-instalar';
+import { BienvenidaPwa } from './bienvenida-pwa';
 import { BotonCompartir } from './boton-compartir';
 import { ListaCompraInteractiva } from './lista-compra';
 import { PwaShell } from './pwa-shell';
@@ -88,6 +90,34 @@ const PWA_STYLES = `
     from { opacity: 0; transform: translateX(-32px); }
     to   { opacity: 1; transform: translateX(0); }
   }
+
+  /* Animaciones bienvenida PWA */
+  @keyframes bvBackdropIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes bvBackdropOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes bvCardUp      { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bvCardDown    { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(100%); } }
+
+  .pwa-bv-backdrop { animation: bvBackdropIn  0.28s ease both; }
+  .pwa-bv-backdrop.saliendo { animation: bvBackdropOut 0.28s ease both; }
+  .pwa-bv-card { animation: bvCardUp   0.32s cubic-bezier(0.32,0.72,0,1) both; }
+  .pwa-bv-card.saliendo { animation: bvCardDown  0.28s cubic-bezier(0.32,0.72,0,1) both; }
+
+  /* Animaciones banner instalar */
+  @keyframes bannerUp   { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bannerDown { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(100%); } }
+
+  .pwa-banner { animation: bannerUp   0.30s cubic-bezier(0.32,0.72,0,1) both; }
+  .pwa-banner.saliendo { animation: bannerDown 0.28s cubic-bezier(0.32,0.72,0,1) both; }
+
+  /* Expansión instrucciones con grid-template-rows */
+  .pwa-instruc-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.22s ease, margin-top 0.22s ease;
+    overflow: hidden;
+  }
+  .pwa-instruc-wrap.open { grid-template-rows: 1fr; }
+  .pwa-instruc-inner { min-height: 0; }
 `;
 
 // ── Metadata PWA (dinámica por nutricionista) ─────────────────────────────────
@@ -207,17 +237,19 @@ export default async function PaginaPaciente({
   let showMacros = true;
   let nombreDN: string | null = null;
   let colegiado: string | null = null;
+  let clinicName: string | null = null;
   let primaryColor = '#1a7a45';
 
   if (pacienteData?.nutritionist_id) {
     const { data: profileBrand } = await (supabaseAdminClient as any)
       .from('profiles')
-      .select('show_macros, full_name, college_number, primary_color')
+      .select('show_macros, full_name, college_number, primary_color, clinic_name')
       .eq('id', pacienteData.nutritionist_id)
       .single();
     if (profileBrand?.show_macros === false) showMacros = false;
     nombreDN = profileBrand?.full_name ?? null;
     colegiado = profileBrand?.college_number ?? null;
+    clinicName = profileBrand?.clinic_name ?? null;
     if (profileBrand?.primary_color) primaryColor = profileBrand.primary_color;
   }
 
@@ -356,6 +388,17 @@ export default async function PaginaPaciente({
             aprobadoEl={aprobadoEl}
           />
         </main>
+
+        {/* Bienvenida primera visita */}
+        <BienvenidaPwa
+          planId={plan.id as string}
+          nombreDN={nombreDN ?? ''}
+          clinicName={clinicName}
+          primaryColor={primaryColor}
+        />
+
+        {/* Banner instalar PWA (visitas de vuelta) */}
+        <BannerInstalar planId={plan.id as string} />
 
         {/* Service Worker */}
         <script
