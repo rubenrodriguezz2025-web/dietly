@@ -216,6 +216,58 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
+      {/* Avisos de acción requerida */}
+      {(!hasConsent || !intakeForm) && (
+        <div className='flex flex-col gap-2'>
+          {!hasConsent && (
+            <div className='flex items-start gap-3 rounded-lg border border-amber-700/30 bg-amber-950/15 px-4 py-3'>
+              <svg className='mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                <path d='M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z' />
+                <line x1='12' y1='9' x2='12' y2='13' />
+                <line x1='12' y1='17' x2='12.01' y2='17' />
+              </svg>
+              <div className='flex flex-1 flex-wrap items-center justify-between gap-2'>
+                <p className='text-sm text-amber-300'>
+                  <span className='font-semibold'>Sin consentimiento RGPD.</span>{' '}
+                  Este paciente no ha firmado el consentimiento para el procesamiento de sus datos con IA. Sin él, no podrás generar el plan nutricional.
+                </p>
+                <a
+                  href='#ficha'
+                  className='flex-shrink-0 rounded-md border border-amber-700/50 bg-amber-900/30 px-3 py-1 text-xs font-medium text-amber-300 transition-colors hover:bg-amber-900/50'
+                >
+                  Ir a Ficha →
+                </a>
+              </div>
+            </div>
+          )}
+          {!intakeForm && (
+            <div className='flex items-start gap-3 rounded-lg border border-blue-700/30 bg-blue-950/15 px-4 py-3'>
+              <svg className='mt-0.5 h-4 w-4 flex-shrink-0 text-blue-400' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                <circle cx='12' cy='12' r='10' />
+                <line x1='12' y1='8' x2='12' y2='12' />
+                <line x1='12' y1='16' x2='12.01' y2='16' />
+              </svg>
+              <div className='flex flex-1 flex-wrap items-center justify-between gap-2'>
+                <p className='text-sm text-blue-300'>
+                  <span className='font-semibold'>Cuestionario inicial pendiente.</span>{' '}
+                  El paciente aún no ha completado su perfil nutricional. El plan se generará solo con los datos básicos.
+                </p>
+                {intakeUrl && (
+                  <a
+                    href={intakeUrl}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='flex-shrink-0 rounded-md border border-blue-700/50 bg-blue-900/30 px-3 py-1 text-xs font-medium text-blue-300 transition-colors hover:bg-blue-900/50'
+                  >
+                    Abrir cuestionario →
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Objetivos nutricionales calculados */}
       {initialTargets && (
         <MacroTransparencyCard patient={patient} targets={initialTargets} />

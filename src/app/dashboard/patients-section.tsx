@@ -288,7 +288,7 @@ function PatientRow({ patient }: { patient: PatientWithMeta }) {
   return (
     <Link
       href={`/dashboard/patients/${patient.id}`}
-      className='flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-colors hover:border-zinc-600 hover:bg-zinc-900'
+      className='flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-all duration-200 hover:border-zinc-600 hover:bg-zinc-900 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20'
     >
       <div
         className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold'

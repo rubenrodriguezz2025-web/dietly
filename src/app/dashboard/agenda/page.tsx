@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
+import { CalendarioSemanal, NavSemana } from './calendario-semanal';
 import { NewAppointmentForm } from './new-appointment-form';
 import { GrupoDia } from './tarjeta-cita';
 
@@ -20,14 +21,32 @@ type Appointment = {
   patients: { name: string; email: string | null } | null;
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function getMondayOf(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function toDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 // ── Página ─────────────────────────────────────────────────────────────────────
 
 export default async function AgendaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<{ mes?: string; vista?: string; semana?: string }>;
 }) {
-  const { mes } = await searchParams;
+  const { mes, vista, semana } = await searchParams;
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -35,8 +54,92 @@ export default async function AgendaPage({
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  // Parsear mes (YYYY-MM) o usar el mes actual
   const hoy = new Date();
+  const esSemana = vista === 'semana';
+
+  // Pacientes para el formulario (ambas vistas)
+  const { data: pacientes } = await (supabase as any)
+    .from('patients')
+    .select('id, name')
+    .eq('nutritionist_id', user.id)
+    .order('name', { ascending: true });
+
+  // ── Vista semanal ─────────────────────────────────────────────────────────
+
+  if (esSemana) {
+    let monday: Date;
+    if (semana && /^\d{4}-\d{2}-\d{2}$/.test(semana)) {
+      const [y, m, d] = semana.split('-').map(Number);
+      monday = new Date(y, m - 1, d);
+      monday.setHours(0, 0, 0, 0);
+    } else {
+      monday = getMondayOf(hoy);
+    }
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    const semanaInicioStr = toDateStr(monday);
+    const semanaFinStr = toDateStr(sunday);
+
+    const { data: citasSemana } = (await (supabase as any)
+      .from('appointments')
+      .select('*, patients(name, email)')
+      .eq('nutritionist_id', user.id)
+      .gte('date', semanaInicioStr)
+      .lte('date', semanaFinStr)
+      .order('date', { ascending: true })
+      .order('time', { ascending: true })) as { data: Appointment[] | null };
+
+    const semanaLabel = monday.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+
+    return (
+      <div className='flex flex-col gap-6'>
+        {/* Cabecera */}
+        <div className='flex flex-wrap items-center justify-between gap-3'>
+          <div>
+            <h1 className='text-2xl font-bold capitalize text-zinc-100'>Agenda</h1>
+            <p className='mt-0.5 text-sm capitalize text-zinc-500'>{semanaLabel}</p>
+          </div>
+          <div className='flex flex-wrap items-center gap-2'>
+            {/* Toggle vista */}
+            <div className='flex rounded-lg border border-zinc-800 p-0.5'>
+              <Link
+                href='/dashboard/agenda'
+                className='rounded-md px-3 py-1.5 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-300'
+              >
+                Lista
+              </Link>
+              <span className='rounded-md bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200'>
+                Semana
+              </span>
+            </div>
+            <NavSemana semanaInicioStr={semanaInicioStr} />
+          </div>
+        </div>
+
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+          {/* Calendario semanal */}
+          <div className='lg:col-span-2'>
+            <CalendarioSemanal citas={citasSemana ?? []} semanaInicioStr={semanaInicioStr} />
+          </div>
+
+          {/* Formulario nueva cita */}
+          <div className='flex flex-col gap-4'>
+            <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+              <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+                Nueva cita
+              </h2>
+              <NewAppointmentForm pacientes={pacientes ?? []} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Vista de lista mensual ─────────────────────────────────────────────────
+
   let año = hoy.getFullYear();
   let mes_num = hoy.getMonth() + 1;
 
@@ -51,7 +154,6 @@ export default async function AgendaPage({
   const primerDiaStr = primerDia.toISOString().split('T')[0];
   const ultimoDiaStr = ultimoDia.toISOString().split('T')[0];
 
-  // Mes anterior / siguiente para navegación
   const mesPrev = new Date(año, mes_num - 2, 1);
   const mesSig = new Date(año, mes_num, 1);
   const mesPrevStr = `${mesPrev.getFullYear()}-${String(mesPrev.getMonth() + 1).padStart(2, '0')}`;
@@ -59,7 +161,6 @@ export default async function AgendaPage({
 
   const mesLabel = primerDia.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
-  // Citas del mes
   const { data: citas } = (await (supabase as any)
     .from('appointments')
     .select('*, patients(name, email)')
@@ -69,14 +170,6 @@ export default async function AgendaPage({
     .order('date', { ascending: true })
     .order('time', { ascending: true })) as { data: Appointment[] | null };
 
-  // Pacientes para el formulario nueva cita (solo los del nutricionista autenticado)
-  const { data: pacientes } = await (supabase as any)
-    .from('patients')
-    .select('id, name')
-    .eq('nutritionist_id', user.id)
-    .order('name', { ascending: true });
-
-  // Agrupar citas por día
   const citasPorDia = new Map<string, Appointment[]>();
   for (const cita of citas ?? []) {
     const lista = citasPorDia.get(cita.date) ?? [];
@@ -88,22 +181,35 @@ export default async function AgendaPage({
     a.localeCompare(b)
   );
 
-  // Detectar si estamos viendo el mes actual
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
-  const mesActualStr = mesActual;
-  const esMesActual = !mes || mes === mesActualStr;
+  const esMesActual = !mes || mes === mesActual;
+
+  // Semana actual para el enlace de toggle a vista semanal
+  const semanaActualStr = toDateStr(getMondayOf(hoy));
 
   return (
     <div className='flex flex-col gap-8'>
       {/* Cabecera con navegación de mes */}
-      <div className='flex items-center justify-between'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
           <h1 className='text-2xl font-bold capitalize text-zinc-100'>{mesLabel}</h1>
           <p className='mt-0.5 text-sm text-zinc-500'>
             {citas?.length ?? 0} cita{citas?.length !== 1 ? 's' : ''} este mes
           </p>
         </div>
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
+          {/* Toggle vista */}
+          <div className='flex rounded-lg border border-zinc-800 p-0.5'>
+            <span className='rounded-md bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200'>
+              Lista
+            </span>
+            <Link
+              href={`/dashboard/agenda?vista=semana&semana=${semanaActualStr}`}
+              className='rounded-md px-3 py-1.5 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-300'
+            >
+              Semana
+            </Link>
+          </div>
           {/* Botón "Hoy" solo cuando no estamos en el mes actual */}
           {!esMesActual && (
             <Link

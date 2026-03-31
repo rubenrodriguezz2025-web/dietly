@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import type { Metadata } from 'next';
-import { Montserrat, Montserrat_Alternates } from 'next/font/google';
+import { Montserrat_Alternates, Plus_Jakarta_Sans } from 'next/font/google';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { IoLogoInstagram, IoLogoTwitter } from 'react-icons/io5';
@@ -17,9 +17,10 @@ import '@/styles/globals.css';
 
 export const dynamic = 'force-dynamic';
 
-const montserrat = Montserrat({
-  variable: '--font-montserrat',
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: '--font-plus-jakarta-sans',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
 const montserratAlternates = Montserrat_Alternates({
@@ -43,7 +44,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 
   return (
     <html lang='es'>
-      <body className={cn('bg-[#050a05] font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
+      <body className={cn('bg-[#050a05] font-sans antialiased', plusJakartaSans.variable, montserratAlternates.variable)}>
         <div className='flex min-h-screen flex-col'>
           {!isPwa && !isDashboard && <AppBar />}
           <main className='relative flex-1'>{children}</main>

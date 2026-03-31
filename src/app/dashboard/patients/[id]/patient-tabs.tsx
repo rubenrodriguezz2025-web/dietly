@@ -149,7 +149,7 @@ export function PatientTabs({
       </TabsList>
 
       {/* ── Ficha ── */}
-      <TabsContent value='ficha' className='mt-6'>
+      <TabsContent value='ficha' className='mt-6 animate-tab-in'>
         <PatientFichaTab
           patient={patient}
           plans={plans}
@@ -163,7 +163,7 @@ export function PatientTabs({
       </TabsContent>
 
       {/* ── Progreso ── */}
-      <TabsContent value='progreso' className='mt-6'>
+      <TabsContent value='progreso' className='mt-6 animate-tab-in'>
         <PatientProgresoTab
           progress={progress}
           patientId={patient.id}
@@ -172,7 +172,7 @@ export function PatientTabs({
       </TabsContent>
 
       {/* ── Cuestionario ── */}
-      <TabsContent value='cuestionario' className='mt-6'>
+      <TabsContent value='cuestionario' className='mt-6 animate-tab-in'>
         <PatientCuestionarioTab
           patient={patient}
           intakeForm={intakeForm}
@@ -183,7 +183,7 @@ export function PatientTabs({
       </TabsContent>
 
       {/* ── Seguimientos ── */}
-      <TabsContent value='seguimientos' className='mt-6'>
+      <TabsContent value='seguimientos' className='mt-6 animate-tab-in'>
         <PatientSeguimientosTab
           patient={patient}
           followupForms={followupForms}

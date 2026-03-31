@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import type React from 'react';
 
 import { validateNutritionPlan, type ValidatorPatient } from '@/lib/validation/nutrition-validator';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
@@ -229,21 +230,29 @@ export default async function PlanPage({
                   label='Kcal media/día'
                   value={`${content.week_summary.weekly_averages.calories} kcal`}
                   accent
+                  target={content.week_summary.target_daily_calories}
+                  actual={content.week_summary.weekly_averages.calories}
                 />
                 <MacroStat
                   label='Proteína media'
                   value={`${content.week_summary.weekly_averages.protein_g}g`}
                   accent
+                  target={content.week_summary.target_macros.protein_g}
+                  actual={content.week_summary.weekly_averages.protein_g}
                 />
                 <MacroStat
                   label='Carbos media'
                   value={`${content.week_summary.weekly_averages.carbs_g}g`}
                   accent
+                  target={content.week_summary.target_macros.carbs_g}
+                  actual={content.week_summary.weekly_averages.carbs_g}
                 />
                 <MacroStat
                   label='Grasa media'
                   value={`${content.week_summary.weekly_averages.fat_g}g`}
                   accent
+                  target={content.week_summary.target_macros.fat_g}
+                  actual={content.week_summary.weekly_averages.fat_g}
                 />
               </div>
             </div>
@@ -364,17 +373,50 @@ function MacroStat({
   label,
   value,
   accent,
+  target,
+  actual,
 }: {
   label: string;
   value: string;
   accent?: boolean;
+  target?: number;
+  actual?: number;
 }) {
+  let indicator: React.ReactNode = null;
+  if (target !== undefined && actual !== undefined && target > 0) {
+    const pct = Math.abs((actual - target) / target * 100);
+    if (pct > 10) {
+      indicator = (
+        <span
+          title={`Desviación del ${Math.round(pct)}% respecto al objetivo`}
+          className='cursor-help text-xs text-amber-400'
+          aria-label={`Desviación del ${Math.round(pct)}%`}
+        >
+          ⚠ {Math.round(pct)}%
+        </span>
+      );
+    } else {
+      indicator = (
+        <span
+          title={`Dentro del objetivo (${Math.round(pct)}% desviación)`}
+          className='cursor-help text-xs text-emerald-500'
+          aria-label='Dentro del objetivo'
+        >
+          ✓
+        </span>
+      );
+    }
+  }
+
   return (
     <div className='flex flex-col gap-0.5'>
       <span className='text-xs text-zinc-600'>{label}</span>
-      <span className={`text-sm font-medium ${accent ? 'text-emerald-400' : 'text-zinc-200'}`}>
-        {value}
-      </span>
+      <div className='flex items-center gap-1.5'>
+        <span className={`text-sm font-medium ${accent ? 'text-emerald-400' : 'text-zinc-200'}`}>
+          {value}
+        </span>
+        {indicator}
+      </div>
     </div>
   );
 }
