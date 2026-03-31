@@ -39,14 +39,15 @@ export default async function RootLayout({ children }: PropsWithChildren) {
   const headersList = await headers();
   const pathname = headersList.get('x-pathname') ?? '';
   const isPwa = pathname.startsWith('/p/');
+  const isDashboard = pathname.startsWith('/dashboard');
 
   return (
     <html lang='es'>
       <body className={cn('bg-[#050a05] font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
         <div className='flex min-h-screen flex-col'>
-          {!isPwa && <AppBar />}
+          {!isPwa && !isDashboard && <AppBar />}
           <main className='relative flex-1'>{children}</main>
-          {!isPwa && <Footer />}
+          {!isPwa && !isDashboard && <Footer />}
         </div>
         <Toaster />
         <ConsentAnalytics />

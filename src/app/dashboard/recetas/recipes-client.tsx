@@ -301,21 +301,43 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) 
 
       {/* Empty state */}
       {recipes.length === 0 ? (
-        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 py-20 text-center'>
-          <div className='mb-4 text-zinc-700'>
-            <BookIcon />
+        <div className='relative overflow-hidden rounded-2xl border border-dashed border-zinc-800 py-16 text-center'>
+          {/* Ghost cards de fondo */}
+          <div className='pointer-events-none absolute inset-0 flex items-end justify-center gap-3 px-8 opacity-[0.06]' aria-hidden='true'>
+            {[120, 180, 140].map((h, i) => (
+              <div
+                key={i}
+                className='w-full max-w-[180px] rounded-xl border border-zinc-500 bg-zinc-700'
+                style={{ height: h }}
+              />
+            ))}
           </div>
-          <h2 className='mb-1 text-base font-semibold text-zinc-300'>Tu recetario está vacío</h2>
-          <p className='mb-6 max-w-sm text-sm text-zinc-600'>
-            Añade tus recetas habituales para que la IA las use al generar planes personalizados para tus pacientes
-          </p>
-          <button
-            type='button'
-            onClick={() => setShowForm(true)}
-            className='flex items-center gap-2 rounded-xl bg-[#1a7a45] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#1a7a45]/90'
-          >
-            <PlusIcon /> Añadir mi primera receta
-          </button>
+
+          <div className='relative flex flex-col items-center'>
+            {/* Icono con color */}
+            <div className='mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1a7a45]/10 ring-1 ring-[#1a7a45]/20'>
+              <svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' className='text-emerald-500' aria-hidden='true'>
+                <path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20' />
+                <path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z' />
+              </svg>
+            </div>
+
+            <h2 className='mb-1.5 text-base font-semibold text-zinc-200'>
+              Crea tu recetario personal
+            </h2>
+            <p className='mb-7 max-w-sm text-sm leading-relaxed text-zinc-500'>
+              La IA usará tus recetas al generar planes nutricionales.
+              Cuantas más añadas, más personalizados serán los planes.
+            </p>
+
+            <button
+              type='button'
+              onClick={() => setShowForm(true)}
+              className='flex items-center gap-2 rounded-xl bg-[#1a7a45] px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:bg-[#1a7a45]/90 active:scale-[0.98]'
+            >
+              <PlusIcon /> Añadir primera receta
+            </button>
+          </div>
         </div>
       ) : filtered.length === 0 ? (
         <div className='rounded-xl border border-zinc-800 py-12 text-center text-zinc-600'>

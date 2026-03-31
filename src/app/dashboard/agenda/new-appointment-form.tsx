@@ -1,15 +1,13 @@
 'use client';
 
-import { useActionState,useState } from 'react';
+import { useActionState, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { createAppointment } from './actions';
 
 type Paciente = { id: string; name: string };
-
-const selectClass =
-  'h-10 w-full rounded-md border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50';
 
 const inputClass =
   'h-10 w-full rounded-md border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50';
@@ -27,21 +25,33 @@ for (let h = 7; h <= 21; h++) {
 export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
   const [state, action, pending] = useActionState(createAppointment, {});
   const [tipo, setTipo] = useState<string>('presencial');
+  const [patientId, setPatientId] = useState<string>('');
+  const [selectedTime, setSelectedTime] = useState<string>('');
 
   return (
     <form action={action} className='flex flex-col gap-4'>
+      {/* Campos ocultos para los valores de los Selects (compatibilidad con Server Actions) */}
+      <input type='hidden' name='patient_id' value={patientId} />
+      <input type='hidden' name='type' value={tipo} />
+      <input type='hidden' name='time' value={selectedTime} />
+
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
         {/* Paciente */}
         <div className='flex flex-col gap-1.5'>
           <label className='text-sm font-medium text-zinc-300'>Paciente</label>
-          <select name='patient_id' className={selectClass} disabled={pending}>
-            <option value=''>Sin paciente asignado</option>
-            {pacientes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+          <Select value={patientId} onValueChange={setPatientId} disabled={pending}>
+            <SelectTrigger>
+              <SelectValue placeholder='Sin paciente asignado' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value=''>Sin paciente asignado</SelectItem>
+              {pacientes.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tipo */}
@@ -49,16 +59,15 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
           <label className='text-sm font-medium text-zinc-300'>
             Tipo <span className='text-red-500'>*</span>
           </label>
-          <select
-            name='type'
-            className={selectClass}
-            disabled={pending}
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
-          >
-            <option value='presencial'>Presencial</option>
-            <option value='online'>Online (videollamada)</option>
-          </select>
+          <Select value={tipo} onValueChange={setTipo} disabled={pending}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='presencial'>Presencial</SelectItem>
+              <SelectItem value='online'>Online (videollamada)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Fecha */}
@@ -71,7 +80,7 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
             type='date'
             required
             disabled={pending}
-            className={selectClass}
+            className={inputClass}
           />
         </div>
 
@@ -80,12 +89,16 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
           <label className='text-sm font-medium text-zinc-300'>
             Hora <span className='text-red-500'>*</span>
           </label>
-          <select name='time' required disabled={pending} defaultValue='' className={selectClass}>
-            <option value='' disabled>Selecciona hora</option>
-            {TIME_SLOTS.map((slot) => (
-              <option key={slot} value={slot}>{slot}</option>
-            ))}
-          </select>
+          <Select value={selectedTime} onValueChange={setSelectedTime} disabled={pending}>
+            <SelectTrigger>
+              <SelectValue placeholder='Selecciona hora' />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_SLOTS.map((slot) => (
+                <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

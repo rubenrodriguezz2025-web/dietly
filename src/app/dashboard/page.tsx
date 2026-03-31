@@ -59,11 +59,22 @@ export default async function DashboardPage() {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const { count: plansThisMonth } = await (supabase as any)
-    .from('nutrition_plans')
-    .select('id', { count: 'exact', head: true })
-    .eq('nutritionist_id', user.id)
-    .gte('created_at', startOfMonth.toISOString()) as { count: number | null };
+  const startOfLastMonth = new Date(startOfMonth);
+  startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
+
+  const [{ count: plansThisMonth }, { count: plansLastMonth }] = await Promise.all([
+    (supabase as any)
+      .from('nutrition_plans')
+      .select('id', { count: 'exact', head: true })
+      .eq('nutritionist_id', user.id)
+      .gte('created_at', startOfMonth.toISOString()) as Promise<{ count: number | null }>,
+    (supabase as any)
+      .from('nutrition_plans')
+      .select('id', { count: 'exact', head: true })
+      .eq('nutritionist_id', user.id)
+      .gte('created_at', startOfLastMonth.toISOString())
+      .lt('created_at', startOfMonth.toISOString()) as Promise<{ count: number | null }>,
+  ]);
 
   // Total de planes del nutricionista (para el checklist de onboarding)
   const { count: totalPlans } = await (supabase as any)
@@ -167,6 +178,8 @@ export default async function DashboardPage() {
           value={plansThisMonth ?? 0}
           accent='emerald'
           tooltip='Planes nutricionales generados desde el 1 de este mes'
+          trend={(plansThisMonth ?? 0) - (plansLastMonth ?? 0)}
+          trendLabel={plansLastMonth ? `vs ${plansLastMonth} el mes pasado` : undefined}
           icon={
             <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
               <path d='M13 2L4.09 12.96A1 1 0 0 0 5 14.5h5.5L11 22l8.91-10.96A1 1 0 0 0 19 9.5H13.5L13 2z' />
@@ -315,6 +328,8 @@ function MetricCard({
   tooltip,
   href,
   cta,
+  trend,
+  trendLabel,
 }: {
   label: string;
   value: number;
@@ -323,8 +338,13 @@ function MetricCard({
   tooltip?: string;
   href?: string;
   cta?: string;
+  trend?: number;
+  trendLabel?: string;
 }) {
   const s = METRIC_ACCENT[accent];
+
+  const trendUp = trend !== undefined && trend > 0;
+  const trendDown = trend !== undefined && trend < 0;
 
   const inner = (
     <div className='flex flex-col gap-3 p-5'>
@@ -355,11 +375,32 @@ function MetricCard({
         <span className={`text-2xl font-bold tabular-nums leading-none ${s.valueColor}`}>
           {value}
         </span>
-        {cta && href && (
-          <span className='text-xs text-amber-500/70 leading-none'>
-            {cta} →
-          </span>
-        )}
+        <div className='flex flex-col items-end gap-0.5'>
+          {trend !== undefined && trend !== 0 && (
+            <span className={`flex items-center gap-0.5 text-xs font-medium leading-none tabular-nums ${
+              trendUp ? 'text-emerald-400' : trendDown ? 'text-red-400' : 'text-zinc-600'
+            }`}>
+              {trendUp ? (
+                <svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                  <polyline points='18 15 12 9 6 15' />
+                </svg>
+              ) : (
+                <svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                  <polyline points='6 9 12 15 18 9' />
+                </svg>
+              )}
+              {trendUp ? '+' : ''}{trend}
+            </span>
+          )}
+          {trendLabel && (
+            <span className='text-[10px] text-zinc-700 leading-none'>{trendLabel}</span>
+          )}
+          {cta && href && (
+            <span className='text-xs text-amber-500/70 leading-none'>
+              {cta} →
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
