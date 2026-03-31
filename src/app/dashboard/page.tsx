@@ -109,17 +109,19 @@ export default async function DashboardPage() {
     .maybeSingle() as { data: { plan_limit: number | null } | null };
   const betaPlanLimit: number | null = whitelistEntry?.plan_limit ?? null;
 
-  // Borradores pendientes de aprobar del nutricionista autenticado
-  const { data: draftPlans } = (await (supabase as any)
+  // Todos los planes recientes del nutricionista (para kanban)
+  const { data: allPlans } = (await (supabase as any)
     .from('nutrition_plans')
-    .select('id, week_start_date, created_at, patients(id, name)')
+    .select('id, status, week_start_date, created_at, patients(id, name)')
     .eq('nutritionist_id', user.id)
-    .eq('status', 'draft')
-    .order('created_at', { ascending: false })) as {
+    .in('status', ['draft', 'approved', 'sent', 'generating'])
+    .order('created_at', { ascending: false })
+    .limit(30)) as {
     data: (NutritionPlan & { patients: { id: string; name: string } | null })[] | null;
   };
 
-  const draftCount = draftPlans?.length ?? 0;
+  const draftPlans = (allPlans ?? []).filter((p) => p.status === 'draft');
+  const draftCount = draftPlans.length;
 
   return (
     <div className='flex flex-col gap-8'>
@@ -207,16 +209,28 @@ export default async function DashboardPage() {
         <BetaMeter used={totalPlans ?? 0} limit={betaPlanLimit ?? 10} />
       )}
 
-      {/* Borradores pendientes de aprobar */}
-      {draftCount > 0 && (
+      {/* Kanban de planes */}
+      {(allPlans?.length ?? 0) > 0 && (
         <div id='borradores'>
           <h2 className='mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500'>
-            Borradores pendientes de aprobar
+            Estado de los planes
           </h2>
-          <div className='flex flex-col gap-2'>
-            {draftPlans!.map((plan) => (
-              <DraftPlanRow key={plan.id} plan={plan} />
-            ))}
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+            <KanbanColumn
+              title='Borrador'
+              color='amber'
+              plans={(allPlans ?? []).filter((p) => p.status === 'draft' || p.status === 'generating')}
+            />
+            <KanbanColumn
+              title='Aprobado'
+              color='emerald'
+              plans={(allPlans ?? []).filter((p) => p.status === 'approved')}
+            />
+            <KanbanColumn
+              title='Enviado'
+              color='blue'
+              plans={(allPlans ?? []).filter((p) => p.status === 'sent')}
+            />
           </div>
         </div>
       )}
@@ -423,33 +437,78 @@ function MetricCard({
   );
 }
 
-function DraftPlanRow({
-  plan,
+const KANBAN_COLORS = {
+  amber: {
+    border: 'border-amber-900/40',
+    dot: 'bg-amber-400',
+    title: 'text-amber-400',
+    cardBorder: 'border-amber-900/30 hover:border-amber-700/50',
+    empty: 'text-amber-900/60',
+  },
+  emerald: {
+    border: 'border-emerald-900/40',
+    dot: 'bg-emerald-400',
+    title: 'text-emerald-400',
+    cardBorder: 'border-emerald-900/30 hover:border-emerald-700/50',
+    empty: 'text-emerald-900/60',
+  },
+  blue: {
+    border: 'border-blue-900/40',
+    dot: 'bg-blue-400',
+    title: 'text-blue-400',
+    cardBorder: 'border-blue-900/30 hover:border-blue-700/50',
+    empty: 'text-blue-900/60',
+  },
+} as const;
+
+function KanbanColumn({
+  title,
+  color,
+  plans,
 }: {
-  plan: NutritionPlan & { patients: { id: string; name: string } | null };
+  title: string;
+  color: keyof typeof KANBAN_COLORS;
+  plans: (NutritionPlan & { patients: { id: string; name: string } | null })[];
 }) {
+  const s = KANBAN_COLORS[color];
   return (
-    <Link
-      href={`/dashboard/plans/${plan.id}`}
-      className='flex items-center justify-between rounded-xl border border-amber-900/40 bg-zinc-950 p-4 transition-colors hover:border-amber-700/60 hover:bg-zinc-900'
-    >
-      <div className='flex flex-col gap-0.5'>
-        <span className='font-medium text-zinc-100'>
-          {plan.patients?.name ?? 'Paciente desconocido'}
+    <div className={`rounded-xl border ${s.border} bg-zinc-950 p-4`}>
+      <div className='mb-3 flex items-center gap-2'>
+        <div className={`h-2 w-2 rounded-full ${s.dot}`} />
+        <span className={`text-xs font-semibold uppercase tracking-wider ${s.title}`}>
+          {title}
         </span>
-        <span className='text-xs text-zinc-500'>
-          Semana del{' '}
-          {new Date(plan.week_start_date).toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          })}
-        </span>
+        <span className='ml-auto text-xs tabular-nums text-zinc-600'>{plans.length}</span>
       </div>
-      <span className='rounded-full bg-amber-950 px-2.5 py-0.5 text-xs font-medium text-amber-400'>
-        {PLAN_STATUS_LABELS.draft}
-      </span>
-    </Link>
+      {plans.length === 0 ? (
+        <p className={`py-4 text-center text-xs ${s.empty}`}>Sin planes</p>
+      ) : (
+        <div className='flex flex-col gap-2'>
+          {plans.slice(0, 5).map((plan) => (
+            <Link
+              key={plan.id}
+              href={`/dashboard/plans/${plan.id}`}
+              className={`rounded-lg border ${s.cardBorder} bg-zinc-900/50 px-3 py-2.5 transition-colors`}
+            >
+              <span className='block text-sm font-medium text-zinc-200'>
+                {plan.patients?.name ?? 'Paciente'}
+              </span>
+              <span className='text-xs text-zinc-600'>
+                {new Date(plan.created_at).toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'short',
+                })}
+              </span>
+            </Link>
+          ))}
+          {plans.length > 5 && (
+            <p className='pt-1 text-center text-xs text-zinc-600'>
+              +{plans.length - 5} más
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

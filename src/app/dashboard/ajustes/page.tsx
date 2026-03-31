@@ -105,18 +105,23 @@ export default async function AjustesPage() {
         </div>
       )}
 
-      {/* ── Información personal ── */}
-      <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
-        <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
-          Información del perfil
-        </h2>
-        <ProfileForm
-          fullName={profile?.full_name ?? ''}
-          clinicName={profile?.clinic_name ?? null}
-          collegeNumber={profile?.college_number ?? null}
-          whatsappNumber={profile?.whatsapp_number ?? null}
+      {/* ── Mi marca (arriba para visibilidad) ── */}
+      <div id='mi-marca'>
+        {!profile?.brand_settings_visited_at && <BrandVisitTracker />}
+
+        <h2 className='mb-1 text-xl font-bold text-zinc-100'>Mi marca</h2>
+        <p className='mb-6 text-sm text-zinc-500'>
+          Personaliza el aspecto y contenido de todos tus planes nutricionales en PDF.
+        </p>
+        <BrandSettings
+          primaryColor={profile?.primary_color ?? '#1a7a45'}
+          showMacros={profile?.show_macros ?? true}
+          showShoppingList={profile?.show_shopping_list ?? true}
+          welcomeMessage={profile?.welcome_message ?? null}
+          fontPreference={profile?.font_preference ?? 'clasica'}
+          profilePhotoUrl={profilePhotoPreviewUrl}
         />
-      </section>
+      </div>
 
       {/* ── Logo de la clínica (solo Pro) ── */}
       <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-800 bg-zinc-950' : 'border-zinc-800/60 bg-zinc-950/50'}`}>
@@ -172,24 +177,18 @@ export default async function AjustesPage() {
         <SignatureForm currentSignatureUrl={signaturePreviewUrl} isPro={isPro} />
       </section>
 
-      {/* ── Mi marca ── */}
-      <div id='mi-marca'>
-        {/* Registra la primera visita a esta sección (solo se renderiza una vez) */}
-        {!profile?.brand_settings_visited_at && <BrandVisitTracker />}
-
-        <h2 className='mb-1 text-xl font-bold text-zinc-100'>Mi marca</h2>
-        <p className='mb-6 text-sm text-zinc-500'>
-          Personaliza el aspecto y contenido de todos tus planes nutricionales en PDF.
-        </p>
-        <BrandSettings
-          primaryColor={profile?.primary_color ?? '#1a7a45'}
-          showMacros={profile?.show_macros ?? true}
-          showShoppingList={profile?.show_shopping_list ?? true}
-          welcomeMessage={profile?.welcome_message ?? null}
-          fontPreference={profile?.font_preference ?? 'clasica'}
-          profilePhotoUrl={profilePhotoPreviewUrl}
+      {/* ── Información personal ── */}
+      <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
+        <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+          Información del perfil
+        </h2>
+        <ProfileForm
+          fullName={profile?.full_name ?? ''}
+          clinicName={profile?.clinic_name ?? null}
+          collegeNumber={profile?.college_number ?? null}
+          whatsappNumber={profile?.whatsapp_number ?? null}
         />
-      </div>
+      </section>
     </div>
   );
 }

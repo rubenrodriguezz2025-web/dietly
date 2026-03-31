@@ -8,6 +8,7 @@ import { IoLogoInstagram, IoLogoTwitter } from 'react-icons/io5';
 import { ConsentAnalytics } from '@/components/consent-analytics';
 import { CookieBanner, CookiePreferencesLink } from '@/components/cookie-banner';
 import { Logo } from '@/components/logo';
+import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/utils/cn';
 
@@ -44,15 +45,17 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 
   return (
     <html lang='es'>
-      <body className={cn('bg-[#050a05] font-sans antialiased', plusJakartaSans.variable, montserratAlternates.variable)}>
-        <div className='flex min-h-screen flex-col'>
-          {!isPwa && !isDashboard && <AppBar />}
-          <main className='relative flex-1'>{children}</main>
-          {!isPwa && !isDashboard && <Footer />}
-        </div>
-        <Toaster />
-        <ConsentAnalytics />
-        <CookieBanner />
+      <body className={cn('font-sans antialiased', plusJakartaSans.variable, montserratAlternates.variable)}>
+        <ThemeProvider>
+          <div className='flex min-h-screen flex-col'>
+            {!isPwa && !isDashboard && <AppBar />}
+            <main className='relative flex-1'>{children}</main>
+            {!isPwa && !isDashboard && <Footer />}
+          </div>
+          <Toaster />
+          <ConsentAnalytics />
+          <CookieBanner />
+        </ThemeProvider>
       </body>
     </html>
   );

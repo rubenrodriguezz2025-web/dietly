@@ -6,12 +6,12 @@ import type { Meal, PlanDay } from '@/types/dietly';
 
 // ── Constantes de estilos por tipo de comida ──────────────────────────────────
 
-const ACENTO_TIPO: Record<string, { borde: string; etiqueta: string }> = {
-  desayuno:     { borde: '#f59e0b', etiqueta: '#b45309' },
-  media_manana: { borde: '#f97316', etiqueta: '#c2410c' },
-  almuerzo:     { borde: '#10b981', etiqueta: '#047857' },
-  merienda:     { borde: '#8b5cf6', etiqueta: '#6d28d9' },
-  cena:         { borde: '#3b82f6', etiqueta: '#1d4ed8' },
+const ACENTO_TIPO: Record<string, { borde: string; etiqueta: string; emoji: string }> = {
+  desayuno:     { borde: '#f59e0b', etiqueta: '#b45309', emoji: '☀️' },
+  media_manana: { borde: '#f97316', etiqueta: '#c2410c', emoji: '🍎' },
+  almuerzo:     { borde: '#10b981', etiqueta: '#047857', emoji: '🍽️' },
+  merienda:     { borde: '#8b5cf6', etiqueta: '#6d28d9', emoji: '🫐' },
+  cena:         { borde: '#3b82f6', etiqueta: '#1d4ed8', emoji: '🌙' },
 };
 
 const NOMBRE_TIPO: Record<string, string> = {
@@ -37,6 +37,7 @@ export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props)
   const [animKey, setAnimKey] = useState(0);
   const [animDir, setAnimDir] = useState<'right' | 'left'>('right');
   const touchStartX = useRef<number | null>(null);
+  const mealsContainerRef = useRef<HTMLDivElement>(null);
 
   const diaData = days.find((d) => d.day_number === currentDay) ?? days[0];
 
@@ -44,6 +45,42 @@ export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props)
   useEffect(() => {
     window.history.replaceState(null, '', `#dia-${currentDay}`);
   }, [currentDay]);
+
+  // Auto-scroll a la comida actual según la hora del día
+  useEffect(() => {
+    const container = mealsContainerRef.current;
+    if (!container || !diaData?.meals?.length) return;
+
+    const hora = new Date().getHours();
+    const HORARIOS_TIPO: Record<string, number> = {
+      desayuno: 9,
+      media_manana: 11,
+      almuerzo: 14,
+      merienda: 17,
+      cena: 21,
+    };
+
+    // Buscar la comida más cercana a la hora actual (la próxima o la actual)
+    let targetIdx = 0;
+    for (let i = 0; i < diaData.meals.length; i++) {
+      const meal = diaData.meals[i];
+      const mealHour = meal.time_suggestion
+        ? parseInt(meal.time_suggestion.split(':')[0], 10)
+        : HORARIOS_TIPO[meal.meal_type] ?? 12;
+      if (hora >= mealHour - 1) targetIdx = i;
+    }
+
+    // Solo scroll si no es la primera comida (evitar scroll innecesario)
+    if (targetIdx > 0) {
+      const timer = setTimeout(() => {
+        const cards = container.querySelectorAll('article');
+        if (cards[targetIdx]) {
+          cards[targetIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 400); // Esperar a que termine la animación de entrada
+      return () => clearTimeout(timer);
+    }
+  }, [currentDay, diaData]);
 
   const goToDay = useCallback(
     (newDay: number, dir: 'left' | 'right') => {
@@ -212,6 +249,7 @@ export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props)
 
         {/* Tarjetas de comida — animadas */}
         <div
+          ref={mealsContainerRef}
           key={`meals-${animKey}`}
           className='flex flex-col gap-3'
           style={{ animation: `pwa-slide-${animDir} 0.28s ease both` }}
@@ -320,7 +358,7 @@ function TarjetaComida({
   showMacros: boolean;
   delay: number;
 }) {
-  const acento = ACENTO_TIPO[comida.meal_type] ?? { borde: '#16a34a', etiqueta: '#15803d' };
+  const acento = ACENTO_TIPO[comida.meal_type] ?? { borde: '#16a34a', etiqueta: '#15803d', emoji: '🍴' };
 
   return (
     <article
@@ -341,6 +379,7 @@ function TarjetaComida({
             className='mb-0.5 text-[10px] font-bold uppercase tracking-widest'
             style={{ color: acento.etiqueta }}
           >
+            <span className='mr-1 text-sm not-italic' aria-hidden='true'>{acento.emoji}</span>
             {NOMBRE_TIPO[comida.meal_type] ?? comida.meal_type}
             {comida.time_suggestion && (
               <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>

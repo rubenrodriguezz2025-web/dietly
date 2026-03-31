@@ -77,9 +77,20 @@ export function ListaCompraInteractiva({ shoppingList, categorias, planId }: Pro
         </div>
       )}
 
+      {totalItems === 0 && (
+        <div
+          className='rounded-2xl px-5 py-6 text-center'
+          style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+        >
+          <p className='text-sm' style={{ color: 'var(--text-muted)' }}>
+            Tu nutricionista no ha incluido lista de la compra en este plan.
+          </p>
+        </div>
+      )}
+
       <div
         className='overflow-hidden rounded-2xl shadow-sm'
-        style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+        style={{ background: 'var(--card)', border: '1px solid var(--border)', display: totalItems === 0 ? 'none' : undefined }}
       >
         {categorias.map(([clave, etiqueta, icono], idx) => {
           const items = shoppingList[clave]?.length ? shoppingList[clave] : null;

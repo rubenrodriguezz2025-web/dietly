@@ -9,6 +9,7 @@ import type { PlanContent } from '@/types/dietly';
 
 import { BannerInstalar } from './banner-instalar';
 import { BienvenidaPwa } from './bienvenida-pwa';
+import { BotonDescargar } from './boton-descargar';
 import { BotonWhatsApp } from './boton-whatsapp';
 import { ConsentimientoView } from './consentimiento-view';
 import { ListaCompraInteractiva } from './lista-compra';
@@ -119,6 +120,12 @@ const PWA_STYLES = `
   }
   .pwa-instruc-wrap.open { grid-template-rows: 1fr; }
   .pwa-instruc-inner { min-height: 0; }
+
+  /* Ocultar elementos no imprimibles al guardar como PDF */
+  @media print {
+    [data-pwa-theme] { --bg: #ffffff; --card: #ffffff; --text: #18181b; --text-muted: #71717a; --border: #e4e4e7; }
+    button, .pwa-banner, .pwa-bv-backdrop, .pwa-bv-card, [aria-label="Contactar con tu nutricionista por WhatsApp"] { display: none !important; }
+  }
 `;
 
 // ── Metadata PWA (dinámica por nutricionista) ─────────────────────────────────
@@ -327,6 +334,9 @@ export default async function PaginaPaciente({
               planId={plan.id}
             />
           )}
+
+          {/* Botón guardar como PDF */}
+          <BotonDescargar />
 
           {/* Pie — transparencia IA (CLAUDE.md: siempre mencionar revisión profesional) */}
           <FooterTransparenciaIA

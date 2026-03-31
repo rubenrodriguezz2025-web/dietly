@@ -92,6 +92,7 @@ export function NewPatientForm() {
   const [state, action, pending] = useActionState(createPatient, {});
   const [dob, setDob] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showClinicalNotes, setShowClinicalNotes] = useState(false);
   const isMinor = dob ? calcAge(dob) < 18 : false;
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
@@ -223,47 +224,71 @@ export function NewPatientForm() {
         </div>
       </section>
 
-      {/* Notas clínicas */}
+      {/* Notas clínicas — colapsable */}
       <section className='flex flex-col gap-4'>
-        <SectionTitle>Notas clínicas</SectionTitle>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <Field label='Alergias'>
-            <textarea
-              name='allergies'
-              rows={3}
-              placeholder='Ej: alergia a la penicilina, alergia al látex...'
-              disabled={pending}
-              className={textareaClass}
-            />
-          </Field>
-          <Field label='Intolerancias'>
-            <textarea
-              name='intolerances'
-              rows={3}
-              placeholder='Ej: intolerancia a la fructosa...'
-              disabled={pending}
-              className={textareaClass}
-            />
-          </Field>
-          <Field label='Preferencias alimentarias'>
-            <textarea
-              name='preferences'
-              rows={3}
-              placeholder='Ej: no le gusta el pescado azul, prefiere cocina mediterránea...'
-              disabled={pending}
-              className={textareaClass}
-            />
-          </Field>
-          <Field label='Notas médicas'>
-            <textarea
-              name='medical_notes'
-              rows={3}
-              placeholder='Ej: diabetes tipo 2 controlada, hipertensión...'
-              disabled={pending}
-              className={textareaClass}
-            />
-          </Field>
-        </div>
+        <button
+          type='button'
+          onClick={() => setShowClinicalNotes((v) => !v)}
+          className='flex items-center gap-2 border-b border-zinc-800 pb-2'
+        >
+          <svg
+            width='14'
+            height='14'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            className={`text-zinc-500 transition-transform ${showClinicalNotes ? 'rotate-90' : ''}`}
+          >
+            <polyline points='9 18 15 12 9 6' />
+          </svg>
+          <span className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+            Notas clínicas
+          </span>
+          <span className='text-xs text-zinc-600'>(opcional)</span>
+        </button>
+        {showClinicalNotes && (
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            <Field label='Alergias'>
+              <textarea
+                name='allergies'
+                rows={3}
+                placeholder='Ej: alergia a la penicilina, alergia al látex...'
+                disabled={pending}
+                className={textareaClass}
+              />
+            </Field>
+            <Field label='Intolerancias'>
+              <textarea
+                name='intolerances'
+                rows={3}
+                placeholder='Ej: intolerancia a la fructosa...'
+                disabled={pending}
+                className={textareaClass}
+              />
+            </Field>
+            <Field label='Preferencias alimentarias'>
+              <textarea
+                name='preferences'
+                rows={3}
+                placeholder='Ej: no le gusta el pescado azul, prefiere cocina mediterránea...'
+                disabled={pending}
+                className={textareaClass}
+              />
+            </Field>
+            <Field label='Notas médicas'>
+              <textarea
+                name='medical_notes'
+                rows={3}
+                placeholder='Ej: diabetes tipo 2 controlada, hipertensión...'
+                disabled={pending}
+                className={textareaClass}
+              />
+            </Field>
+          </div>
+        )}
       </section>
 
       {/* Consentimiento informado — obligatorio para habilitar la generación de planes con IA */}
