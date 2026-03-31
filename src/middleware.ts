@@ -206,8 +206,23 @@ export async function middleware(request: NextRequest) {
     return handleIntakeRoute(request);
   }
 
+  // Inyectar x-pathname en los headers del request para que los layouts
+  // puedan detectar la ruta activa sin necesidad de usePathname (server-side)
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+
   // Resto de rutas → gestión de sesión Supabase
-  return updateSession(request);
+  const supabaseResponse = await updateSession(request);
+
+  // Crear nueva respuesta con el header x-pathname en el request,
+  // preservando las cookies de sesión de Supabase
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie.name, cookie.value, cookie as Parameters<typeof response.cookies.set>[2]);
+  });
+  return response;
 }
 
 export const config = {

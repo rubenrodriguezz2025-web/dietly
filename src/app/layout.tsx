@@ -1,8 +1,9 @@
 import { PropsWithChildren } from 'react';
 import type { Metadata } from 'next';
 import { Montserrat, Montserrat_Alternates } from 'next/font/google';
+import { headers } from 'next/headers';
 import Link from 'next/link';
-import { IoLogoFacebook, IoLogoInstagram, IoLogoTwitter } from 'react-icons/io5';
+import { IoLogoInstagram, IoLogoTwitter } from 'react-icons/io5';
 
 import { ConsentAnalytics } from '@/components/consent-analytics';
 import { CookieBanner, CookiePreferencesLink } from '@/components/cookie-banner';
@@ -34,14 +35,18 @@ export const metadata: Metadata = {
   icons: { icon: '/favicon.svg' },
 };
 
-export default function RootLayout({ children }: PropsWithChildren) {
+export default async function RootLayout({ children }: PropsWithChildren) {
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') ?? '';
+  const isPwa = pathname.startsWith('/p/');
+
   return (
     <html lang='es'>
       <body className={cn('bg-[#050a05] font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
         <div className='flex min-h-screen flex-col'>
-          <AppBar />
+          {!isPwa && <AppBar />}
           <main className='relative flex-1'>{children}</main>
-          <Footer />
+          {!isPwa && <Footer />}
         </div>
         <Toaster />
         <ConsentAnalytics />
