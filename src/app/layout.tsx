@@ -46,9 +46,19 @@ export default async function RootLayout({ children }: PropsWithChildren) {
       <body className={cn('font-sans antialiased', plusJakartaSans.variable, montserratAlternates.variable)}>
         <ThemeProvider>
           <div className='flex min-h-screen flex-col'>
-            {!isPwa && !isDashboard && <AppBar />}
-            <main className='relative flex-1'>{children}</main>
-            {!isPwa && !isDashboard && <Footer />}
+            {!isPwa && !isDashboard ? (
+              <>
+                <div className='bg-[#050a05] text-white'>
+                  <AppBar />
+                </div>
+                <main className='relative flex-1'>{children}</main>
+                <div className='bg-[#050a05] text-white'>
+                  <Footer />
+                </div>
+              </>
+            ) : (
+              <main className='relative flex-1'>{children}</main>
+            )}
           </div>
           <Toaster />
           <ConsentAnalytics />

@@ -33,27 +33,29 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
   ]);
 
   return (
-    <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-10'>
-      <div className='flex min-h-[calc(100vh-200px)] gap-8 py-4 lg:py-6'>
-        {/* Desktop sidebar */}
-        <aside className='hidden w-48 flex-shrink-0 lg:block'>
-          <div className='sticky top-8'>
-            <SidebarNav
-              isAdmin={isAdmin}
-              draftCount={draftCount ?? 0}
-              profileName={profile?.full_name ?? ''}
-              profileSpecialty={profile?.specialty ?? null}
-              profilePhoto={profile?.profile_photo_url ?? null}
-            />
-          </div>
-        </aside>
+    <div data-dashboard className='min-h-screen'>
+      <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-10'>
+        <div className='flex min-h-[calc(100vh-200px)] gap-8 py-4 lg:py-6'>
+          {/* Desktop sidebar */}
+          <aside className='hidden w-48 flex-shrink-0 lg:block'>
+            <div className='sticky top-8'>
+              <SidebarNav
+                isAdmin={isAdmin}
+                draftCount={draftCount ?? 0}
+                profileName={profile?.full_name ?? ''}
+                profileSpecialty={profile?.specialty ?? null}
+                profilePhoto={profile?.profile_photo_url ?? null}
+              />
+            </div>
+          </aside>
 
-        {/* Main content */}
-        <div className='min-w-0 flex-1'>
-          {/* Mobile nav — horizontal pills, shown only on mobile */}
-          <MobileDashboardNav isAdmin={isAdmin} draftCount={draftCount ?? 0} />
-          <div className='animate-page-in'>
-            {children}
+          {/* Main content */}
+          <div className='min-w-0 flex-1'>
+            {/* Mobile nav — horizontal pills, shown only on mobile */}
+            <MobileDashboardNav isAdmin={isAdmin} draftCount={draftCount ?? 0} />
+            <div className='animate-page-in'>
+              {children}
+            </div>
           </div>
         </div>
       </div>
