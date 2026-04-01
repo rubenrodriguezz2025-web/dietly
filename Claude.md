@@ -724,3 +724,20 @@ Auditoría completa ejecutada en 4 sprints (ver `AUDIT_COMPLETO.md` para los 35 
 - ~46 `as any` restantes, consolidar `/src/lib/` + `/src/libs/`, centralizar detección plan Pro
 - Art. 28.3 RGPD completa en T&Cs, audit logs en todas las tablas, retención `ai_request_logs` 90d
 - Refactorizar archivos >400 líneas, logger estructurado, limpiar datos E2E en producción
+
+---
+
+## Skills disponibles — leer SIEMPRE antes de escribir cualquier componente UI
+
+Antes de escribir cualquier componente, página, o modificar cualquier elemento visual, leer obligatoriamente estas skills en este orden:
+
+1. `.agents/skills/UI UX Pro Max/SKILL.md`
+2. `.agents/skills/frontend-design/SKILL.md`
+3. `.agents/skills/polish/SKILL.md`
+4. `.agents/skills/animate/SKILL.md` — solo si hay animaciones o transiciones
+5. `.agents/skills/colorize/SKILL.md` — solo si hay cambios de color o tema
+
+Para prompts de marketing o contenido:
+- `.agents/skills/` — revisar todas las disponibles en esta carpeta
+
+Esta instrucción es obligatoria y tiene prioridad sobre cualquier otra instrucción de velocidad o eficiencia.
