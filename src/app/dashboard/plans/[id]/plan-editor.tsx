@@ -62,7 +62,7 @@ function DayTabsNav({
 
   return (
     <div className='sticky top-0 z-20 -mx-4 sm:mx-0'>
-      <div className='border-b border-zinc-800 bg-white/95 dark:bg-zinc-950/96 backdrop-blur-sm px-4 sm:px-0 sm:rounded-xl sm:border sm:border-zinc-800'>
+      <div className='border-b border-zinc-200 dark:border-zinc-800 bg-gray-50/95 dark:bg-zinc-950/96 backdrop-blur-sm px-4 sm:px-0 sm:rounded-xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800'>
         <div
           ref={listRef}
           className='flex overflow-x-auto scrollbar-none'
@@ -81,10 +81,10 @@ function DayTabsNav({
                 data-day={number}
                 onClick={() => onSelect(number)}
                 className={[
-                  'relative flex flex-shrink-0 flex-col items-center gap-0.5 px-4 py-3 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45] focus-visible:ring-inset sm:flex-1',
+                  'relative flex flex-shrink-0 flex-col items-center gap-0.5 px-3 py-2 my-1.5 mx-0.5 rounded-lg text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45] focus-visible:ring-inset sm:flex-1',
                   isActive
-                    ? 'text-zinc-100'
-                    : 'text-zinc-600 hover:text-zinc-400',
+                    ? 'bg-[#1a7a45] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200',
                 ].join(' ')}
               >
                 {short}
@@ -93,14 +93,10 @@ function DayTabsNav({
                   <span
                     className={[
                       'h-1 w-1 rounded-full',
-                      isActive ? 'bg-[#1a7a45]' : 'bg-zinc-600',
+                      isActive ? 'bg-white/70' : 'bg-gray-400 dark:bg-zinc-600',
                     ].join(' ')}
                     aria-label='Hoy'
                   />
-                )}
-                {/* Underline del tab activo */}
-                {isActive && (
-                  <span className='absolute bottom-0 left-3 right-3 h-0.5 rounded-t-full bg-[#1a7a45]' />
                 )}
               </button>
             );
