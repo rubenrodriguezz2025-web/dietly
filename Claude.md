@@ -624,6 +624,8 @@ npm run stripe:listen    # Escuchar webhooks Stripe en local
 | `OPTIMIZATION.md` | Auditoría de código (25 marzo 2026): 171 archivos, 26.611 LOC |
 | `AUDITORIA_EXPERTOS.md` | Auditoría de 4 agentes: clínica, seguridad, UX, arquitectura |
 | `AUDIT_COMPLETO.md` | Auditoría completa (35 hallazgos, 1 abril 2026) |
+| `ROADMAP_DIETLY.md` | Roadmap completo: beta → lanzamiento → fase 3 + proyecciones |
+| `ANALISIS_COMPETITIVO_COMPLETO.md` | 12 competidores analizados (Nutrium, INDYA, Harbiz, Dietopro...) |
 | `BUGS.md` | Lista de bugs conocidos |
 | `MVP_FEATURES.md` | Checklist de features MVP |
 

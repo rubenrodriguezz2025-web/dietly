@@ -92,7 +92,9 @@
       "mcp__glance__browser_scroll",
       "mcp__glance__browser_snapshot",
       "Bash(head -200 /c/Users/Rubén/dietly/src/app/\\\\\\(marketing\\\\\\)/page.tsx)",
-      "Bash(wc -l /c/Users/Rubén/dietly/src/app/\\\\\\(marketing\\\\\\)/page.tsx)"
+      "Bash(wc -l /c/Users/Rubén/dietly/src/app/\\\\\\(marketing\\\\\\)/page.tsx)",
+      "Bash(cp \"C:/Users/Rubén/Downloads/ROADMAP_DIETLY.md\" \"C:/Users/Rubén/dietly/ROADMAP_DIETLY.md\")",
+      "Bash(cp \"C:/Users/Rubén/Downloads/ANALISIS_COMPETITIVO_COMPLETO.md\" \"C:/Users/Rubén/dietly/ANALISIS_COMPETITIVO_COMPLETO.md\")"
     ]
   }
 }

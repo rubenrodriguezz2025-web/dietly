@@ -169,6 +169,17 @@ export async function approvePlan(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'No autenticado.' };
 
+  // Verificar que el nutricionista tiene nº de colegiado antes de aprobar
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('college_number')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile?.college_number || profile.college_number.trim().length < 4) {
+    return { error: 'Necesitas añadir tu número de colegiado en Ajustes antes de aprobar un plan.' };
+  }
+
   console.log('[approvePlan] Usuario:', user.id, 'Plan:', planId);
 
   const { error, count } = await supabase

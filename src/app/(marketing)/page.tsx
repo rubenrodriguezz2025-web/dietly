@@ -336,13 +336,13 @@ function HeroSection() {
 
         {/* Titular */}
         <h1 className='fu1 mx-auto max-w-3xl text-3xl font-bold leading-tight tracking-tight text-zinc-100 lg:text-5xl'>
-          Recupera 2 horas por paciente.{' '}
-          <span className='text-[#22c55e]'>Sin perder el control clínico.</span>
+          Genera planes nutricionales con IA en 2 minutos.{' '}
+          <span className='text-[#22c55e]'>Tú revisas y entregas.</span>
         </h1>
 
         {/* Subtítulo */}
         <p className='fu2 mx-auto mt-5 max-w-2xl text-base leading-relaxed text-zinc-400 lg:text-lg'>
-          Dietly prepara el borrador nutricional. Tú lo revisas, ajustas y apruebas.
+          Dietly genera el borrador del plan nutricional con IA. Tú lo revisas, ajustas y lo entregas con tu marca.
           Tu paciente lo recibe en su móvil en minutos.
         </p>
 

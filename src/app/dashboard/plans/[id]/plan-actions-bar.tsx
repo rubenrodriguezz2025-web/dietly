@@ -111,6 +111,7 @@ interface Props {
   patientEmail: string;
   planTitle: string;
   hasEmail: boolean;
+  hasCollegeNumber?: boolean;
   approvedDaysCount?: number;
   totalDaysCount?: number;
   sentAt?: string | null;
@@ -126,6 +127,7 @@ export function PlanActionsBar({
   patientEmail,
   planTitle,
   hasEmail,
+  hasCollegeNumber = true,
   approvedDaysCount = 0,
   totalDaysCount = 7,
   sentAt,
@@ -355,7 +357,14 @@ export function PlanActionsBar({
           )}
 
           {/* Botón primario: Aprobar (borrador) */}
-          {isDraft && (
+          {isDraft && !hasCollegeNumber && (
+            <span className='inline-flex items-center gap-1.5 rounded-lg border border-amber-800/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-400'>
+              <span>Añade tu nº colegiado en</span>
+              <a href='/dashboard/ajustes' className='font-medium underline underline-offset-2 hover:text-amber-300'>Ajustes</a>
+              <span>para aprobar</span>
+            </span>
+          )}
+          {isDraft && hasCollegeNumber && (
             <button
               type='button'
               onClick={openApproveModal}

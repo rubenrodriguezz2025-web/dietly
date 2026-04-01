@@ -53,12 +53,21 @@ export default async function PlanPage({
 
   const showReminderModal = approved === '1' && plan.status === 'approved' && !!plan.patients;
 
-  // Obtener registro de visitas del paciente
-  const { data: planView } = await (supabase as any)
-    .from('plan_views')
-    .select('open_count, last_opened_at')
-    .eq('plan_id', id)
-    .maybeSingle() as { data: { open_count: number; last_opened_at: string } | null };
+  // Obtener registro de visitas y perfil del nutricionista en paralelo
+  const [{ data: planView }, { data: profile }] = await Promise.all([
+    (supabase as any)
+      .from('plan_views')
+      .select('open_count, last_opened_at')
+      .eq('plan_id', id)
+      .maybeSingle() as Promise<{ data: { open_count: number; last_opened_at: string } | null }>,
+    (supabase as any)
+      .from('profiles')
+      .select('college_number')
+      .eq('id', user.id)
+      .single() as Promise<{ data: { college_number: string | null } | null }>,
+  ]);
+
+  const hasCollegeNumber = !!profile?.college_number && profile.college_number.trim().length >= 4;
 
   return (
     <div className='flex flex-col gap-8'>
@@ -118,6 +127,7 @@ export default async function PlanPage({
             patientEmail={plan.patients?.email ?? ''}
             planTitle={`Semana del ${new Date(plan.week_start_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`}
             hasEmail={!!plan.patients?.email}
+            hasCollegeNumber={hasCollegeNumber}
             approvedDaysCount={content?.days?.filter((d) => d.day_status === 'approved').length ?? 0}
             totalDaysCount={content?.days?.length ?? 7}
             sentAt={plan.sent_at ?? null}

@@ -19,12 +19,8 @@ export async function saveProfile(formData: FormData) {
   const full_name = (formData.get('full_name') as string).trim();
   const clinic_name = (formData.get('clinic_name') as string).trim() || null;
   const specialty = formData.get('specialty') as string;
-  const college_number = (formData.get('college_number') as string).trim();
+  const college_number = (formData.get('college_number') as string | null)?.trim() || null;
   const aiLiteracy = formData.get('ai_literacy') === 'on';
-
-  if (!college_number || college_number.length < 4) {
-    return { error: 'El número de colegiado debe tener al menos 4 caracteres.' };
-  }
 
   if (!aiLiteracy) {
     return { error: 'Debes confirmar que conoces las capacidades y limitaciones de la IA.' };
@@ -35,8 +31,9 @@ export async function saveProfile(formData: FormData) {
     full_name,
     clinic_name,
     specialty,
-    college_number,
+    ...(college_number ? { college_number } : {}),
     ai_literacy_acknowledged_at: new Date().toISOString(),
+    onboarding_completed_at: new Date().toISOString(),
   });
 
   if (error) {
