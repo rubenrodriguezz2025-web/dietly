@@ -46,41 +46,6 @@ export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props)
     window.history.replaceState(null, '', `#dia-${currentDay}`);
   }, [currentDay]);
 
-  // Auto-scroll a la comida actual según la hora del día
-  useEffect(() => {
-    const container = mealsContainerRef.current;
-    if (!container || !diaData?.meals?.length) return;
-
-    const hora = new Date().getHours();
-    const HORARIOS_TIPO: Record<string, number> = {
-      desayuno: 9,
-      media_manana: 11,
-      almuerzo: 14,
-      merienda: 17,
-      cena: 21,
-    };
-
-    // Buscar la comida más cercana a la hora actual (la próxima o la actual)
-    let targetIdx = 0;
-    for (let i = 0; i < diaData.meals.length; i++) {
-      const meal = diaData.meals[i];
-      const mealHour = meal.time_suggestion
-        ? parseInt(meal.time_suggestion.split(':')[0], 10)
-        : HORARIOS_TIPO[meal.meal_type] ?? 12;
-      if (hora >= mealHour - 1) targetIdx = i;
-    }
-
-    // Solo scroll si no es la primera comida (evitar scroll innecesario)
-    if (targetIdx > 0) {
-      const timer = setTimeout(() => {
-        const cards = container.querySelectorAll('article');
-        if (cards[targetIdx]) {
-          cards[targetIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 400); // Esperar a que termine la animación de entrada
-      return () => clearTimeout(timer);
-    }
-  }, [currentDay, diaData]);
 
   const goToDay = useCallback(
     (newDay: number, dir: 'left' | 'right') => {
