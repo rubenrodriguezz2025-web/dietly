@@ -123,7 +123,7 @@ export function OnboardingForm() {
       </label>
 
       {/* ── AI Literacy — nota inline colapsable ─────────────────────────── */}
-      <div className='rounded-lg border border-zinc-700/60 bg-zinc-900/50'>
+      <div className='rounded-lg border border-zinc-700/60 bg-gray-50 dark:bg-zinc-900/50'>
         <div className='px-4 py-3'>
           <div className='flex items-start gap-3'>
             <input

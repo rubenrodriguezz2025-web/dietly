@@ -52,7 +52,7 @@ export function ProfileForm({
           defaultValue={fullName}
           required
           disabled={pending}
-          className='h-10 rounded-lg border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
+          className='h-10 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
         />
       </div>
 
@@ -67,7 +67,7 @@ export function ProfileForm({
           defaultValue={clinicName ?? ''}
           disabled={pending}
           placeholder='Ej: Clínica Nutrición Activa'
-          className='h-10 rounded-lg border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
+          className='h-10 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
         />
       </div>
 
@@ -82,7 +82,7 @@ export function ProfileForm({
           defaultValue={collegeNumber ?? ''}
           disabled={pending}
           placeholder='Ej: CV-1234'
-          className='h-10 rounded-lg border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
+          className='h-10 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
         />
         <p className='text-xs text-zinc-600'>Aparecerá en el pie de cada página del PDF.</p>
       </div>
@@ -98,7 +98,7 @@ export function ProfileForm({
           defaultValue={whatsappNumber ?? ''}
           disabled={pending}
           placeholder='+34 600 000 000'
-          className='h-10 rounded-lg border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
+          className='h-10 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-3 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none disabled:opacity-50'
         />
         <p className='text-xs text-zinc-600'>
           Aparecerá como botón flotante en el plan del paciente para que pueda contactarte.

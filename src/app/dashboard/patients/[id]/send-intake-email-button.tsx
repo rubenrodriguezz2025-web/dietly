@@ -57,8 +57,8 @@ export function SendIntakeEmailButton({ patientId, patientEmail }: Props) {
             : currentState === 'error'
               ? 'border-red-800/50 bg-red-950/20 cursor-default'
               : !patientEmail
-                ? 'cursor-not-allowed border-zinc-800/50 bg-zinc-900/20 opacity-50'
-                : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-900'
+                ? 'cursor-not-allowed border-zinc-800/50 bg-gray-50/50 dark:bg-zinc-900/20 opacity-50'
+                : 'border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-900'
           }`}
       >
         <div

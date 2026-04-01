@@ -264,7 +264,7 @@ function BetaMeter({ used, limit }: { used: number; limit: number }) {
   const labelColor = isFull ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-zinc-500';
 
   return (
-    <div className={`rounded-xl border ${borderColor} bg-zinc-950 px-5 py-4`}>
+    <div className={`rounded-xl border ${borderColor} bg-white dark:bg-zinc-950 px-5 py-4`}>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='flex flex-col gap-0.5'>
           <p className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
@@ -295,7 +295,7 @@ function BetaMeter({ used, limit }: { used: number; limit: number }) {
       </div>
 
       {/* Barra de progreso */}
-      <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-800'>
+      <div className='mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-800'>
         <div
           className='h-full rounded-full transition-all duration-500'
           style={{ width: `${pct}%`, backgroundColor: barColor }}
@@ -430,7 +430,7 @@ function MetricCard({
     return (
       <a
         href={href}
-        className={`group rounded-xl border ${s.border} bg-zinc-950 transition-colors duration-150 ${s.hoverBorder} hover:bg-zinc-900`}
+        className={`group rounded-xl border ${s.border} bg-white dark:bg-zinc-950 shadow-sm dark:shadow-none transition-colors duration-150 ${s.hoverBorder} hover:bg-gray-50 dark:hover:bg-zinc-900`}
       >
         {inner}
       </a>
@@ -438,7 +438,7 @@ function MetricCard({
   }
 
   return (
-    <div className={`rounded-xl border ${s.border} bg-zinc-950`}>
+    <div className={`rounded-xl border ${s.border} bg-white dark:bg-zinc-950 shadow-sm dark:shadow-none`}>
       {inner}
     </div>
   );
@@ -479,7 +479,7 @@ function KanbanColumn({
 }) {
   const s = KANBAN_COLORS[color];
   return (
-    <div className={`rounded-xl border ${s.border} bg-zinc-950 p-4`}>
+    <div className={`rounded-xl border ${s.border} bg-gray-50 dark:bg-zinc-950 p-4`}>
       <div className='mb-3 flex items-center gap-2'>
         <div className={`h-2 w-2 rounded-full ${s.dot}`} />
         <span className={`text-xs font-semibold uppercase tracking-wider ${s.title}`}>
@@ -495,7 +495,7 @@ function KanbanColumn({
             <Link
               key={plan.id}
               href={`/dashboard/plans/${plan.id}`}
-              className={`rounded-lg border ${s.cardBorder} bg-zinc-900/50 px-3 py-2.5 transition-colors`}
+              className={`rounded-lg border ${s.cardBorder} bg-white dark:bg-zinc-900/50 shadow-sm dark:shadow-none px-3 py-2.5 transition-colors`}
             >
               <span className='block text-sm font-medium text-zinc-200'>
                 {plan.patients?.name ?? 'Paciente'}

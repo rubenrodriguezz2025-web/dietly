@@ -78,7 +78,7 @@ export default async function DerechosDatosPage() {
         </h2>
 
         {active.length === 0 ? (
-          <div className='rounded-xl border border-zinc-800 bg-zinc-900/30 px-6 py-8 text-center'>
+          <div className='rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/30 px-6 py-8 text-center'>
             <p className='text-sm text-zinc-600'>No hay solicitudes pendientes.</p>
             <p className='mt-1 text-xs text-zinc-700'>
               Cuando un paciente use{' '}
@@ -93,7 +93,7 @@ export default async function DerechosDatosPage() {
               return (
                 <div
                   key={r.id}
-                  className={`rounded-xl border bg-zinc-900/40 px-4 py-4 ${
+                  className={`rounded-xl border bg-gray-50 dark:bg-zinc-900/40 px-4 py-4 ${
                     isOverdue ? 'border-red-900/50' : 'border-zinc-800'
                   }`}
                 >
@@ -162,7 +162,7 @@ export default async function DerechosDatosPage() {
             {resolved.map((r) => (
               <div
                 key={r.id}
-                className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800/60 bg-zinc-900/20 px-4 py-3 opacity-60'
+                className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800/60 bg-gray-50/50 dark:bg-zinc-900/20 px-4 py-3 opacity-60'
               >
                 <div className='flex flex-wrap items-center gap-2'>
                   <RequestTypeBadge type={r.request_type} />
@@ -183,7 +183,7 @@ export default async function DerechosDatosPage() {
       )}
 
       {/* Info legal */}
-      <div className='rounded-xl border border-zinc-800/40 bg-zinc-900/20 px-4 py-3'>
+      <div className='rounded-xl border border-zinc-800/40 bg-gray-50/50 dark:bg-zinc-900/20 px-4 py-3'>
         <p className='text-xs leading-relaxed text-zinc-600'>
           <strong className='text-zinc-500'>Obligaciones legales:</strong> Debes responder en
           30 días naturales (Art. 12.3 RGPD). Para supresión: borra los datos del paciente con

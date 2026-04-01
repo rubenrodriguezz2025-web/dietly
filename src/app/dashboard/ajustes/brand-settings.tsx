@@ -281,7 +281,7 @@ export function BrandSettings({
       </div>
 
       {/* ── Subsección 1: Identidad visual ── */}
-      <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
+      <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
         <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
           Identidad visual
         </h2>
@@ -296,7 +296,7 @@ export function BrandSettings({
 
             {hasPhoto && (
               <div className='mb-4 flex items-center gap-4'>
-                <div className='relative h-16 w-16 overflow-hidden rounded-full border border-zinc-700 bg-zinc-900'>
+                <div className='relative h-16 w-16 overflow-hidden rounded-full border border-zinc-700 bg-gray-100 dark:bg-zinc-900'>
                   <Image
                     src={photoPreview ?? profilePhotoUrl!}
                     alt='Foto de perfil'
@@ -389,7 +389,7 @@ export function BrandSettings({
                 type='color'
                 value={color}
                 onChange={(e) => handleColorChange(e.target.value)}
-                className='h-10 w-14 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 p-1'
+                className='h-10 w-14 cursor-pointer rounded-lg border border-zinc-700 bg-gray-100 dark:bg-zinc-900 p-1'
               />
               <input
                 type='text'
@@ -397,7 +397,7 @@ export function BrandSettings({
                 onChange={handleColorInputChange}
                 maxLength={7}
                 placeholder='#1a7a45'
-                className='h-10 w-32 rounded-lg border border-zinc-800 bg-zinc-950 px-3 font-mono text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none'
+                className='h-10 w-32 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-3 font-mono text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none'
               />
               <div
                 className='h-10 w-10 rounded-lg border border-zinc-700'
@@ -430,7 +430,7 @@ export function BrandSettings({
                   className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-colors duration-150 disabled:opacity-50 ${
                     fontPref === opt.id
                       ? 'border-[#1a7a45] bg-[#1a7a45]/10'
-                      : 'border-zinc-800 bg-zinc-950 hover:border-zinc-600'
+                      : 'border-zinc-800 bg-white dark:bg-zinc-950 hover:border-zinc-600'
                   }`}
                 >
                   <span
@@ -454,7 +454,7 @@ export function BrandSettings({
       </section>
 
       {/* ── Subsección 2: Contenido del PDF ── */}
-      <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
+      <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
         <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
           Contenido del PDF
         </h2>
@@ -516,7 +516,7 @@ export function BrandSettings({
               rows={3}
               maxLength={300}
               placeholder='Hola [nombre], este plan está diseñado especialmente para ti...'
-              className='w-full resize-none rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none'
+              className='w-full resize-none rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none'
             />
             <div className='mt-1 flex items-center justify-between'>
               <button
@@ -536,7 +536,7 @@ export function BrandSettings({
       </section>
 
       {/* ── Subsección 3: Preview ── */}
-      <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
+      <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
         <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
           Vista previa
         </h2>

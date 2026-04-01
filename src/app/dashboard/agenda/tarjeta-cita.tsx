@@ -80,7 +80,7 @@ export function TarjetaCita({ cita }: { cita: Appointment }) {
   }
 
   return (
-    <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-4'>
+    <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-4'>
       <div className='flex items-start justify-between gap-3'>
         <div className='min-w-0 flex-1'>
           <div className='flex flex-wrap items-center gap-2'>

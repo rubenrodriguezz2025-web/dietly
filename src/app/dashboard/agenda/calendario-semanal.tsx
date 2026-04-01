@@ -85,7 +85,7 @@ export function CalendarioSemanal({
   }
 
   return (
-    <div className='overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950'>
+    <div className='overflow-x-auto rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950'>
       {/* Cabecera con los días */}
       <div
         className='grid border-b border-zinc-800'
@@ -186,7 +186,7 @@ function CitaBloque({ cita }: { cita: Appointment }) {
       </div>
 
       {/* Tooltip al hacer hover */}
-      <div className='pointer-events-none absolute left-full top-0 z-30 ml-2 hidden w-44 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 shadow-xl group-hover:block'>
+      <div className='pointer-events-none absolute left-full top-0 z-30 ml-2 hidden w-44 rounded-lg border border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 shadow-xl group-hover:block'>
         <p className='font-medium text-zinc-200'>{cita.time.substring(0, 5)} — {cita.patients?.name ?? 'Sin paciente'}</p>
         {cita.notes && (
           <p className='mt-1 text-[11px] text-zinc-500 leading-snug'>{cita.notes}</p>

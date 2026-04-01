@@ -18,7 +18,7 @@ export default function AgendaLoading() {
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
         <div className='flex flex-col gap-4 lg:col-span-2'>
           {[...Array(3)].map((_, i) => (
-            <div key={i} className='rounded-xl border border-zinc-800 bg-zinc-950 p-4'>
+            <div key={i} className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-4'>
               <div className='skeleton mb-3 h-4 w-24' />
               {[...Array(2)].map((_, j) => (
                 <div key={j} className='mb-2 flex items-center gap-3 rounded-lg p-2'>
@@ -33,7 +33,7 @@ export default function AgendaLoading() {
           ))}
         </div>
 
-        <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+        <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-5'>
           <div className='skeleton mb-4 h-3 w-20' />
           <div className='flex flex-col gap-3'>
             {[...Array(6)].map((_, i) => (

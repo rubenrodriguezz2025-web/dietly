@@ -184,7 +184,7 @@ export default async function AdminBetaPage() {
       </div>
 
       {/* Counter */}
-      <div className='flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-4'>
+      <div className='flex items-center gap-3 rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 px-5 py-4'>
         <span className='text-3xl font-bold tabular-nums text-zinc-100'>{list.length}</span>
         <span className='text-sm text-zinc-500'>
           {list.length === 1 ? 'nutricionista en beta' : 'nutricionistas en beta'}
@@ -192,7 +192,7 @@ export default async function AdminBetaPage() {
       </div>
 
       {/* Añadir */}
-      <div className='rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-5'>
+      <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 px-5 py-5'>
         <h2 className='mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
           Añadir nutricionista
         </h2>
@@ -200,7 +200,7 @@ export default async function AdminBetaPage() {
       </div>
 
       {/* Lista blanca */}
-      <div className='rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-5'>
+      <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 px-5 py-5'>
         <h2 className='mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
           Lista blanca
         </h2>
@@ -208,7 +208,7 @@ export default async function AdminBetaPage() {
       </div>
 
       {/* Métricas */}
-      <div className='rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-5'>
+      <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 px-5 py-5'>
         <h2 className='mb-5 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
           Métricas de beta users
         </h2>

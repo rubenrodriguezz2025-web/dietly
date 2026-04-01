@@ -126,7 +126,7 @@ export default async function AgendaPage({
 
           {/* Formulario nueva cita */}
           <div className='flex flex-col gap-4'>
-            <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+            <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-5'>
               <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
                 Nueva cita
               </h2>
@@ -247,7 +247,7 @@ export default async function AgendaPage({
         <div className='flex flex-col gap-4 lg:col-span-2'>
           {diasConCitas.length === 0 ? (
             <div className='flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-800 py-16 text-center'>
-              <div className='flex h-11 w-11 items-center justify-center rounded-full bg-zinc-900'>
+              <div className='flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-900'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
                   width='20'
@@ -283,7 +283,7 @@ export default async function AgendaPage({
 
         {/* Formulario nueva cita */}
         <div className='flex flex-col gap-4'>
-          <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+          <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-5'>
             <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
               Nueva cita
             </h2>

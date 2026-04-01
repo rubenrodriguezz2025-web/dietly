@@ -136,7 +136,7 @@ export function DataRightsForm() {
             required
             disabled={isPending}
             placeholder='Tu nombre y apellidos'
-            className='h-10 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50'
+            className='h-10 rounded-lg border border-zinc-700 bg-white dark:bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50'
           />
         </div>
         <div className='flex flex-col gap-1.5'>
@@ -150,7 +150,7 @@ export function DataRightsForm() {
             required
             disabled={isPending}
             placeholder='tu@email.com'
-            className='h-10 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50'
+            className='h-10 rounded-lg border border-zinc-700 bg-white dark:bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50'
           />
         </div>
       </div>
@@ -167,7 +167,7 @@ export function DataRightsForm() {
               className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
                 selectedType === value
                   ? 'border-emerald-700/60 bg-emerald-950/30'
-                  : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'
+                  : 'border-zinc-800 bg-gray-50 dark:bg-zinc-900/40 hover:border-zinc-700'
               } ${isPending ? 'pointer-events-none opacity-50' : ''}`}
             >
               <input
@@ -200,7 +200,7 @@ export function DataRightsForm() {
           rows={3}
           disabled={isPending}
           placeholder='Especifica cualquier detalle relevante para tu solicitud...'
-          className='resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50'
+          className='resize-none rounded-lg border border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50'
         />
       </div>
 

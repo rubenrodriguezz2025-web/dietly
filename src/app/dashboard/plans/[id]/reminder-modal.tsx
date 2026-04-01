@@ -70,7 +70,7 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm'>
-      <div className='mx-4 w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900/95 p-6 shadow-2xl backdrop-blur'>
+      <div className='mx-4 w-full max-w-md rounded-2xl border border-zinc-700 bg-white dark:bg-zinc-900/95 p-6 shadow-2xl backdrop-blur'>
         {/* Icono */}
         <div className='mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-amber-950/60'>
           <svg

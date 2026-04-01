@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function DerechosDatosPage() {
   return (
-    <div className='min-h-screen bg-zinc-950 px-4 py-12 sm:px-6'>
+    <div className='min-h-screen bg-white dark:bg-zinc-950 px-4 py-12 sm:px-6'>
       <div className='mx-auto max-w-2xl'>
         {/* Header */}
         <div className='mb-8'>
@@ -43,7 +43,7 @@ export default function DerechosDatosPage() {
         </div>
 
         {/* Info legal */}
-        <div className='mb-6 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4'>
+        <div className='mb-6 rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 px-4 py-4'>
           <ul className='flex flex-col gap-2 text-xs text-zinc-500'>
             <li className='flex items-start gap-2'>
               <span className='mt-0.5 flex-shrink-0 text-zinc-700'>→</span>
@@ -71,7 +71,7 @@ export default function DerechosDatosPage() {
         </div>
 
         {/* Formulario */}
-        <div className='rounded-xl border border-zinc-800 bg-zinc-900/30 p-6'>
+        <div className='rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/30 p-6'>
           <DataRightsForm />
         </div>
       </div>

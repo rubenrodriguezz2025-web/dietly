@@ -8,7 +8,7 @@ import { saveIntakeFromDashboard } from './intake-actions';
 
 const labelClass = 'block text-sm font-medium text-zinc-300 mb-1.5';
 const inputClass =
-  'w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#1a7a45]/50 focus:border-[#1a7a45]/60 transition-colors';
+  'w-full rounded-xl border border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#1a7a45]/50 focus:border-[#1a7a45]/60 transition-colors';
 const textareaClass = `${inputClass} resize-none`;
 const selectClass = `${inputClass} cursor-pointer`;
 
@@ -16,7 +16,7 @@ const selectClass = `${inputClass} cursor-pointer`;
 
 function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+    <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-5'>
       <h3 className='mb-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-500'>
         {title}
       </h3>

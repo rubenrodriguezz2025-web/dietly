@@ -69,7 +69,7 @@ function Card({
   footer?: ReactNode;
 }>) {
   return (
-    <div className='m-auto w-full max-w-3xl rounded-md bg-zinc-900'>
+    <div className='m-auto w-full max-w-3xl rounded-md bg-white dark:bg-zinc-900'>
       <div className='p-4'>
         <h2 className='mb-1 text-xl font-semibold'>{title}</h2>
         <div className='py-4'>{children}</div>

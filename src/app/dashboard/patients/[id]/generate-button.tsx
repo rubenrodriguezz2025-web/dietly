@@ -186,7 +186,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   // ── Confirmación de generación ────────────────────────────────────────────────
   if (state === 'confirm') {
     return (
-      <div className='w-72 rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl'>
+      <div className='w-72 rounded-xl border border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl'>
         <div className='flex items-center justify-between border-b border-zinc-800 px-4 py-3'>
           <span className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
             Confirmar generación
@@ -279,7 +279,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   if (!hasConsent) {
     return (
       <div className='flex flex-col items-end gap-1.5'>
-        <div className='flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-1.5'>
+        <div className='flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-gray-50 dark:bg-zinc-900/60 px-3 py-1.5'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             width='11'

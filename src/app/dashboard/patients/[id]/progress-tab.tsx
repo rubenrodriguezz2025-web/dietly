@@ -74,7 +74,7 @@ function ChartTooltip({
   const entry = payload[0]?.payload;
 
   return (
-    <div className='pointer-events-none rounded-lg border border-zinc-700/40 bg-zinc-950 px-3 py-2.5 shadow-xl'>
+    <div className='pointer-events-none rounded-lg border border-zinc-700/40 bg-white dark:bg-zinc-950 px-3 py-2.5 shadow-xl'>
       <p className='mb-1.5 text-[11px] text-zinc-600'>{fmtLong(entry.recorded_at)}</p>
       <p className='text-sm font-semibold text-zinc-100'>
         {value}
@@ -331,7 +331,7 @@ export function ProgressTab({
             {/* ── Add measurement sheet ── */}
             <SheetContent
               side='right'
-              className='w-full overflow-y-auto border-zinc-800 bg-zinc-950 sm:max-w-[420px]'
+              className='w-full overflow-y-auto border-zinc-800 bg-white dark:bg-zinc-950 sm:max-w-[420px]'
             >
               <SheetHeader className='mb-7'>
                 <SheetTitle className='text-base font-semibold text-zinc-100'>
@@ -433,7 +433,7 @@ export function ProgressTab({
 
         {/* ── Chart ── */}
         {entries.length >= 1 && (
-          <div className='rounded-xl border border-zinc-800/50 bg-zinc-950/40 p-5'>
+          <div className='rounded-xl border border-zinc-800/50 bg-gray-50 dark:bg-zinc-950/40 p-5'>
             {/* Metric selector — only when multiple metrics have data */}
             {availableMetrics.length > 1 && (
               <div className='mb-5 flex flex-wrap gap-1'>

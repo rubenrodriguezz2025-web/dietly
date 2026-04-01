@@ -385,7 +385,7 @@ export function MobileDashboardNav({ isAdmin, draftCount = 0 }: { isAdmin?: bool
               'relative flex flex-shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm transition-colors duration-150 whitespace-nowrap',
               active
                 ? 'bg-[#1a7a45]/20 font-medium text-emerald-400'
-                : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300',
+                : 'bg-gray-100 dark:bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300',
             )}
           >
             <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', active ? 'text-emerald-400' : 'text-zinc-600')} />
@@ -406,7 +406,7 @@ export function MobileDashboardNav({ isAdmin, draftCount = 0 }: { isAdmin?: bool
             'flex flex-shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm transition-colors duration-150 whitespace-nowrap',
             pathname.startsWith('/dashboard/admin')
               ? 'bg-amber-950/40 font-medium text-amber-400'
-              : 'bg-zinc-900 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400',
+              : 'bg-gray-100 dark:bg-zinc-900 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400',
           )}
         >
           <svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='w-3.5 h-3.5 flex-shrink-0' aria-hidden='true'>

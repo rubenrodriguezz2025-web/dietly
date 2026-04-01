@@ -109,7 +109,7 @@ export function BannerUpgrade({ estado, diasRestantesTrialDia }: Props) {
   if (cerrado) return null;
 
   return (
-    <div className='overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900'>
+    <div className='overflow-hidden rounded-xl border border-zinc-700 bg-white dark:bg-zinc-900'>
       <div className='relative border-b border-zinc-800 px-5 py-4'>
         <p className='text-sm font-semibold text-zinc-100'>
           Empieza gratis — 14 días sin tarjeta

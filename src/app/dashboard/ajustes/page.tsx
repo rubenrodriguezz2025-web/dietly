@@ -74,7 +74,7 @@ export default async function AjustesPage() {
           className={`flex flex-shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 ${
             isPro
               ? 'border-[#1a7a45]/30 bg-[#1a7a45]/10'
-              : 'border-zinc-800 bg-zinc-950'
+              : 'border-zinc-800 bg-white dark:bg-zinc-950'
           }`}
         >
           <div className={`h-2 w-2 rounded-full ${isPro ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
@@ -123,7 +123,7 @@ export default async function AjustesPage() {
       </div>
 
       {/* ── Logo de la clínica (solo Pro) ── */}
-      <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-800 bg-zinc-950' : 'border-zinc-800/60 bg-zinc-950/50'}`}>
+      <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-800 bg-white dark:bg-zinc-950' : 'border-zinc-800/60 bg-gray-50 dark:bg-zinc-950/50'}`}>
         <div className='mb-4 flex items-center justify-between border-b border-zinc-800 pb-3'>
           <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
             Logo de la clínica
@@ -152,7 +152,7 @@ export default async function AjustesPage() {
       </section>
 
       {/* ── Firma digital (solo Pro) ── */}
-      <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-800 bg-zinc-950' : 'border-zinc-800/60 bg-zinc-950/50'}`}>
+      <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-800 bg-white dark:bg-zinc-950' : 'border-zinc-800/60 bg-gray-50 dark:bg-zinc-950/50'}`}>
         <div className='mb-4 flex items-center justify-between border-b border-zinc-800 pb-3'>
           <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
             Firma digital
@@ -177,7 +177,7 @@ export default async function AjustesPage() {
       </section>
 
       {/* ── Información personal ── */}
-      <section className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
+      <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
         <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
           Información del perfil
         </h2>

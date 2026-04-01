@@ -133,7 +133,7 @@ export function SaveAsRecipeModal({
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
       <div className='fixed inset-0 bg-black/70 backdrop-blur-sm' onClick={onClose} aria-hidden='true' />
-      <div className='relative z-10 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/50'>
+      <div className='relative z-10 w-full max-w-md rounded-2xl border border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl shadow-black/50'>
         <div className='flex items-center justify-between border-b border-zinc-800 px-5 py-4'>
           <h3 className='font-semibold text-zinc-100'>Guardar como receta</h3>
           <button type='button' onClick={onClose} className='rounded-lg p-1 text-zinc-600 transition-colors hover:text-zinc-300'>
@@ -165,7 +165,7 @@ export function SaveAsRecipeModal({
               <option value='snack'>Snack</option>
             </select>
           </div>
-          <div className='rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2.5 text-xs text-zinc-500'>
+          <div className='rounded-lg border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 px-3 py-2.5 text-xs text-zinc-500'>
             Se guardarán los ingredientes, macros e instrucciones de esta comida.
           </div>
         </div>

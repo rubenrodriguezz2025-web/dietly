@@ -25,7 +25,7 @@ export default function RecetasLoading() {
         {[...Array(6)].map((_, i) => (
           <div
             key={i}
-            className='flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4'
+            className='flex flex-col gap-3 rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-4'
           >
             <div className='flex items-center justify-between'>
               <div className='skeleton h-5 w-40' />

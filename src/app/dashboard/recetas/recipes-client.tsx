@@ -94,7 +94,7 @@ function RecipeCard({
   const hasNutritionalInfo = recipe.calories_per_serving !== null;
 
   return (
-    <div className='group relative rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-all duration-200 hover:border-zinc-700 hover:shadow-md hover:shadow-black/20'>
+    <div className='group relative rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-4 transition-all duration-200 hover:border-zinc-700 hover:shadow-md hover:shadow-black/20'>
       {/* Header */}
       <div className='flex items-start justify-between gap-3'>
         <div className='min-w-0 flex-1'>
@@ -147,7 +147,7 @@ function RecipeCard({
 
       {/* Macros */}
       {hasNutritionalInfo ? (
-        <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-zinc-800/80 bg-zinc-900/60 px-3 py-2 text-xs'>
+        <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-zinc-800/80 bg-gray-100 dark:bg-zinc-900/60 px-3 py-2 text-xs'>
           <span className='font-semibold text-zinc-200'>{recipe.calories_per_serving} kcal</span>
           <span className='text-zinc-700'>·</span>
           <span className='text-zinc-400'>{recipe.protein_g_per_serving}g P</span>
@@ -191,7 +191,7 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
         onClick={onClose}
         aria-hidden='true'
       />
-      <div className='relative z-10 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/50'>
+      <div className='relative z-10 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl shadow-black/50'>
         <div className='flex items-center justify-between border-b border-zinc-800 px-6 py-4'>
           <h2 className='font-semibold text-zinc-100'>{title}</h2>
           <button

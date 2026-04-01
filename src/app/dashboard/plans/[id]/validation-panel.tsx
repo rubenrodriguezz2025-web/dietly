@@ -24,14 +24,14 @@ export function ValidationSuggestions({ result }: { result: ValidationResult }) 
       <button
         type='button'
         onClick={() => setOpen(true)}
-        className='inline-flex items-center gap-1.5 rounded-full border border-zinc-700/60 bg-zinc-900/80 px-2.5 py-1 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-300'
+        className='inline-flex items-center gap-1.5 rounded-full border border-zinc-700/60 bg-gray-100 dark:bg-zinc-900/80 px-2.5 py-1 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-300'
       >
         <span aria-hidden='true'>ℹ️</span>
         {n} sugerencia{n !== 1 ? 's' : ''} del sistema
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className='flex w-full flex-col border-zinc-800 bg-zinc-950 sm:max-w-md'>
+        <SheetContent className='flex w-full flex-col border-zinc-800 bg-white dark:bg-zinc-950 sm:max-w-md'>
           <SheetHeader className='border-b border-zinc-800 pb-4'>
             <SheetTitle className='text-zinc-100'>Sugerencias del sistema</SheetTitle>
             <SheetDescription className='text-zinc-500'>
@@ -44,7 +44,7 @@ export function ValidationSuggestions({ result }: { result: ValidationResult }) 
             {result.issues.map((issue) => (
               <div
                 key={issue.code}
-                className='rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3'
+                className='rounded-lg border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 px-4 py-3'
               >
                 <p className='text-sm font-medium text-zinc-300'>{issue.title}</p>
                 <p className='mt-1 text-xs leading-relaxed text-zinc-500'>{issue.detail}</p>

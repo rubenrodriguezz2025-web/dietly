@@ -63,7 +63,7 @@ const TABLE_HEADERS = [
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className='rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4'>
+    <div className='rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 px-4 py-4'>
       <p className='mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500'>
         {label}
       </p>

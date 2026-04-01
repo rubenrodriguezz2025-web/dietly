@@ -143,7 +143,7 @@ export function PatientsSection({ patients }: { patients: PatientWithMeta[] }) {
         <select
           value={sort}
           onChange={(e) => handleSort(e.target.value as SortId)}
-          className='rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-400 focus:border-zinc-600 focus:outline-none'
+          className='rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-400 focus:border-zinc-600 focus:outline-none'
         >
           <option value='recent'>Más recientes</option>
           <option value='name'>Nombre A-Z</option>
@@ -174,7 +174,7 @@ export function PatientsSection({ patients }: { patients: PatientWithMeta[] }) {
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder='Buscar por nombre o email…'
-          className='w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2.5 pl-9 pr-9 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600 [&::-webkit-search-cancel-button]:hidden'
+          className='w-full rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 py-2.5 pl-9 pr-9 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600 [&::-webkit-search-cancel-button]:hidden'
         />
         {search && (
           <button
@@ -217,7 +217,7 @@ export function PatientsSection({ patients }: { patients: PatientWithMeta[] }) {
             <span
               className={[
                 'rounded-full px-1.5 py-px text-[10px] tabular-nums',
-                filter === chip.id ? 'bg-[#1a7a45]/20 text-emerald-500' : 'bg-zinc-900 text-zinc-600',
+                filter === chip.id ? 'bg-[#1a7a45]/20 text-emerald-500' : 'bg-gray-100 dark:bg-zinc-900 text-zinc-600',
               ].join(' ')}
             >
               {chip.count}
@@ -288,7 +288,7 @@ function PatientRow({ patient }: { patient: PatientWithMeta }) {
   return (
     <Link
       href={`/dashboard/patients/${patient.id}`}
-      className='flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-all duration-200 hover:border-zinc-600 hover:bg-zinc-900 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20'
+      className='flex items-center gap-4 rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-none p-4 transition-all duration-200 hover:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-900 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20'
     >
       <div
         className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold'
@@ -300,7 +300,7 @@ function PatientRow({ patient }: { patient: PatientWithMeta }) {
         <div className='flex flex-wrap items-center gap-2'>
           <span className='font-medium text-zinc-100'>{patient.name}</span>
           {patient.has_pending_reminder && (
-            <span className='rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400'>
+            <span className='rounded-full bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400'>
               Seguimiento
             </span>
           )}
@@ -321,7 +321,7 @@ function PatientRow({ patient }: { patient: PatientWithMeta }) {
       </div>
       <div className='hidden items-center gap-2 sm:flex'>
         {patient.goal && (
-          <span className='rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400'>
+          <span className='rounded-full bg-gray-100 dark:bg-zinc-800 px-3 py-1 text-xs text-zinc-400'>
             {GOAL_LABELS[patient.goal as keyof typeof GOAL_LABELS] ?? patient.goal}
           </span>
         )}
@@ -360,7 +360,7 @@ function EmptySearchResult({ onClear }: { onClear: () => void }) {
       <button
         type='button'
         onClick={onClear}
-        className='mt-4 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-sm text-zinc-300 transition-colors hover:border-zinc-600 hover:bg-zinc-800'
+        className='mt-4 rounded-lg border border-zinc-700 bg-gray-100 dark:bg-zinc-900 px-4 py-1.5 text-sm text-zinc-300 transition-colors hover:border-zinc-600 hover:bg-gray-200 dark:hover:bg-zinc-800'
       >
         Limpiar filtros
       </button>
@@ -371,7 +371,7 @@ function EmptySearchResult({ onClear }: { onClear: () => void }) {
 function EmptyPatients() {
   return (
     <div className='flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-800 py-16 text-center'>
-      <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900'>
+      <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-900'>
         <svg
           xmlns='http://www.w3.org/2000/svg'
           width='22'

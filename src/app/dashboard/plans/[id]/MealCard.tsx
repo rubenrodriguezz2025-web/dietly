@@ -97,7 +97,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
 
         {/* Macros block */}
         <div className='flex flex-col items-end gap-1.5'>
-          <div className='flex flex-shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-xs'>
+          <div className='flex flex-shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-lg border border-zinc-800 bg-gray-100 dark:bg-zinc-900/80 px-3 py-2 text-xs'>
             <EditableNumber
               value={meal.calories}
               unit='kcal'
@@ -170,7 +170,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
           <div className='flex items-center justify-between gap-2'>
             <span className='group relative cursor-default text-[10px] italic text-zinc-700'>
               ~ Estimación IA
-              <span className='pointer-events-none absolute bottom-full left-0 z-10 mb-1 w-64 rounded-lg border border-zinc-800 bg-zinc-950 p-2.5 text-[10px] not-italic leading-relaxed text-zinc-400 opacity-0 shadow-xl transition-opacity group-hover:opacity-100'>
+              <span className='pointer-events-none absolute bottom-full left-0 z-10 mb-1 w-64 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 text-[10px] not-italic leading-relaxed text-zinc-400 opacity-0 shadow-xl transition-opacity group-hover:opacity-100'>
                 Valores calculados por IA basándose en bases de datos nutricionales de referencia internacional. Revisados y aprobados por el nutricionista. Próximamente verificados con base de datos BEDCA oficial.
               </span>
             </span>

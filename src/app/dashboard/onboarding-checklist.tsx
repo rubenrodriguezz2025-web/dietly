@@ -122,7 +122,7 @@ export function OnboardingChecklist({ brandVisited, hasPatient, hasPlan, firstPa
                   className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
                     isActive
                       ? 'border-[#1a7a45] bg-[#0d2918] text-[#22c55e]'
-                      : 'border-zinc-700 bg-zinc-900 text-zinc-600'
+                      : 'border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-600'
                   }`}
                 >
                   {i + 1}

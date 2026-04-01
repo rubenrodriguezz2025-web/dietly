@@ -48,7 +48,7 @@ export function SignatureForm({
       {/* Vista previa */}
       {(preview ?? currentSignatureUrl) && (
         <div className='flex items-center gap-4'>
-          <div className='relative flex h-16 w-48 items-center justify-center overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 p-2'>
+          <div className='relative flex h-16 w-48 items-center justify-center overflow-hidden rounded-lg border border-zinc-800 bg-gray-100 dark:bg-zinc-900 p-2'>
             <Image
               src={preview ?? currentSignatureUrl!}
               alt='Firma actual'

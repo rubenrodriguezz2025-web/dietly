@@ -20,7 +20,7 @@ export function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div className='fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 p-4 shadow-2xl'>
+    <div className='fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-lg rounded-2xl border border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-2xl'>
       <p className='text-sm text-zinc-400'>
         Usamos cookies técnicas necesarias para el funcionamiento del servicio.{' '}
         <Link

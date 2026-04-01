@@ -17,7 +17,7 @@ export default function DerechosDatosLoading() {
         {[...Array(2)].map((_, i) => (
           <div
             key={i}
-            className='rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-4'
+            className='rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/40 px-4 py-4'
           >
             <div className='flex flex-wrap items-start justify-between gap-3'>
               <div className='flex flex-col gap-2'>
@@ -42,7 +42,7 @@ export default function DerechosDatosLoading() {
       </section>
 
       {/* Info legal */}
-      <div className='rounded-xl border border-zinc-800/40 bg-zinc-900/20 px-4 py-3'>
+      <div className='rounded-xl border border-zinc-800/40 bg-gray-50/50 dark:bg-zinc-900/20 px-4 py-3'>
         <div className='skeleton h-3 w-full' />
         <div className='skeleton mt-1.5 h-3 w-5/6' />
         <div className='skeleton mt-1.5 h-3 w-3/4' />

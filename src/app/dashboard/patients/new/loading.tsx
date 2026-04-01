@@ -8,7 +8,7 @@ export default function NewPatientLoading() {
       </div>
 
       {/* Form skeleton */}
-      <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-6'>
+      <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
         <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
           {/* Nombre */}
           <div className='flex flex-col gap-2'>

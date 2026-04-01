@@ -231,7 +231,7 @@ export default function PoliticaPrivacidad() {
           </p>
         </LegalSection>
 
-        <div className='mt-4 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 text-xs text-zinc-500'>
+        <div className='mt-4 rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 p-5 text-xs text-zinc-500'>
           ¿Tienes preguntas sobre privacidad?{' '}
           <a href='mailto:privacidad@dietly.es' className='text-zinc-400 hover:underline'>
             privacidad@dietly.es

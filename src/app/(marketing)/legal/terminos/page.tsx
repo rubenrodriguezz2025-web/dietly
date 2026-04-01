@@ -70,7 +70,7 @@ export default function TerminosCondiciones() {
         </LegalSection>
 
         <LegalSection title='3. Responsabilidades del usuario'>
-          <div className='mb-4 rounded-lg border border-zinc-700/50 bg-zinc-900/50 p-4'>
+          <div className='mb-4 rounded-lg border border-zinc-700/50 bg-gray-50 dark:bg-zinc-900/50 p-4'>
             <p>
               El acceso a Dietly está reservado exclusivamente a{' '}
               <strong className='text-zinc-200'>
@@ -108,7 +108,7 @@ export default function TerminosCondiciones() {
             Dietly ofrece los siguientes planes de suscripción mensual:
           </p>
           <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2'>
-            <div className='rounded-xl border border-zinc-800 bg-zinc-900/50 p-4'>
+            <div className='rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 p-4'>
               <p className='font-semibold text-zinc-200'>Plan Básico</p>
               <p className='mt-1 text-2xl font-bold text-white'>46€<span className='text-sm font-normal text-zinc-500'>/mes</span></p>
               <ul className='mt-2 flex flex-col gap-1 text-xs text-zinc-500'>
@@ -298,7 +298,7 @@ export default function TerminosCondiciones() {
               .
             </li>
           </ol>
-          <p className='mt-4 rounded-lg border border-zinc-700/50 bg-zinc-900/50 p-3 text-xs text-zinc-500'>
+          <p className='mt-4 rounded-lg border border-zinc-700/50 bg-gray-50 dark:bg-zinc-900/50 p-3 text-xs text-zinc-500'>
             Esta cláusula constituye el contrato entre responsable (Profesional) y encargado
             (Dietly) exigido por el Art. 28.3 RGPD y sustituye cualquier acuerdo previo de
             encargo del tratamiento. La aceptación de estos Términos implica la firma de la
@@ -323,7 +323,7 @@ export default function TerminosCondiciones() {
           </p>
         </LegalSection>
 
-        <div className='rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 text-xs text-zinc-500'>
+        <div className='rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 p-5 text-xs text-zinc-500'>
           ¿Tienes preguntas legales?{' '}
           <a href='mailto:hola@dietly.es' className='text-zinc-400 hover:underline'>
             hola@dietly.es

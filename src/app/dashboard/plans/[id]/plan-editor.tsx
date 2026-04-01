@@ -62,7 +62,7 @@ function DayTabsNav({
 
   return (
     <div className='sticky top-0 z-20 -mx-4 sm:mx-0'>
-      <div className='border-b border-zinc-800 bg-zinc-950/96 backdrop-blur-sm px-4 sm:px-0 sm:rounded-xl sm:border sm:border-zinc-800'>
+      <div className='border-b border-zinc-800 bg-white/95 dark:bg-zinc-950/96 backdrop-blur-sm px-4 sm:px-0 sm:rounded-xl sm:border sm:border-zinc-800'>
         <div
           ref={listRef}
           className='flex overflow-x-auto scrollbar-none'

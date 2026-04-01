@@ -296,7 +296,7 @@ export function NewPatientForm() {
                 name='dietary_restrictions'
                 value={option}
                 disabled={pending}
-                className='h-4 w-4 rounded border-zinc-700 bg-zinc-900 accent-zinc-400'
+                className='h-4 w-4 rounded border-zinc-700 bg-gray-100 dark:bg-zinc-900 accent-zinc-400'
               />
               {option}
             </label>

@@ -9,13 +9,13 @@ export default function AdminBetaLoading() {
       </div>
 
       {/* Counter */}
-      <div className='flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-4'>
+      <div className='flex items-center gap-3 rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 px-5 py-4'>
         <div className='skeleton h-9 w-10' />
         <div className='skeleton h-4 w-44' />
       </div>
 
       {/* Add form */}
-      <div className='rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-5'>
+      <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 px-5 py-5'>
         <div className='skeleton mb-4 h-3 w-40' />
         <div className='flex gap-3'>
           <div className='skeleton h-10 w-full rounded-lg' />
@@ -25,7 +25,7 @@ export default function AdminBetaLoading() {
       </div>
 
       {/* Whitelist table */}
-      <div className='rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-5'>
+      <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 px-5 py-5'>
         <div className='skeleton mb-4 h-3 w-24' />
         {[...Array(5)].map((_, i) => (
           <div
@@ -41,7 +41,7 @@ export default function AdminBetaLoading() {
       </div>
 
       {/* Metrics */}
-      <div className='rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-5'>
+      <div className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 px-5 py-5'>
         <div className='skeleton mb-5 h-3 w-44' />
         <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
           {[...Array(4)].map((_, i) => (
