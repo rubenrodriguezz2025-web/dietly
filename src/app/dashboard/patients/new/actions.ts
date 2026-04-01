@@ -81,8 +81,14 @@ export async function createPatient(
   const goal = (formData.get('goal') as string) || null;
   const dietary_restrictions_arr = formData.getAll('dietary_restrictions') as string[];
   const dietary_restrictions = dietary_restrictions_arr.length > 0 ? dietary_restrictions_arr : null;
-  const allergies = (formData.get('allergies') as string) || null;
-  const intolerances = (formData.get('intolerances') as string) || null;
+  const allergiesRaw = (formData.get('allergies') as string) || '';
+  const allergies = allergiesRaw.includes('|||')
+    ? allergiesRaw.split('|||').filter(Boolean).join(', ') || null
+    : allergiesRaw || null;
+  const intolerancesRaw = (formData.get('intolerances') as string) || '';
+  const intolerances = intolerancesRaw.includes('|||')
+    ? intolerancesRaw.split('|||').filter(Boolean).join(', ') || null
+    : intolerancesRaw || null;
   const preferences = (formData.get('preferences') as string) || null;
   const medical_notes = (formData.get('medical_notes') as string) || null;
 

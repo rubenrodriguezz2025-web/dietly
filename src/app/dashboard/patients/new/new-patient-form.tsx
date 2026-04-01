@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useCallback, useRef, useState } from 'react';
 
 import { ConsentForm } from '@/components/patients/ConsentForm';
 import { Button } from '@/components/ui/button';
@@ -88,11 +88,91 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ChipInput({
+  name,
+  chips,
+  onAdd,
+  onRemove,
+  placeholder,
+  disabled,
+}: {
+  name: string;
+  chips: string[];
+  onAdd: (value: string) => void;
+  onRemove: (index: number) => void;
+  placeholder: string;
+  disabled?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = (e.target as HTMLInputElement).value.trim();
+        if (val) {
+          onAdd(val);
+          (e.target as HTMLInputElement).value = '';
+        }
+      }
+      if (e.key === 'Backspace' && !(e.target as HTMLInputElement).value && chips.length > 0) {
+        onRemove(chips.length - 1);
+      }
+    },
+    [onAdd, onRemove, chips.length]
+  );
+
+  return (
+    <div>
+      <input type='hidden' name={name} value={chips.join('|||')} />
+      <div
+        className='flex min-h-[40px] flex-wrap items-center gap-1.5 rounded-md border border-zinc-800 bg-black px-2.5 py-1.5 transition-colors focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500'
+        onClick={() => inputRef.current?.focus()}
+      >
+        {chips.map((chip, i) => (
+          <span
+            key={i}
+            className='inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-medium text-zinc-200 transition-colors hover:bg-zinc-700'
+          >
+            {chip}
+            <button
+              type='button'
+              onClick={(e) => { e.stopPropagation(); onRemove(i); }}
+              disabled={disabled}
+              className='ml-0.5 rounded-full p-0.5 text-zinc-500 transition-colors hover:bg-zinc-600 hover:text-zinc-300'
+              aria-label={`Eliminar ${chip}`}
+            >
+              <svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round'>
+                <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
+              </svg>
+            </button>
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          type='text'
+          disabled={disabled}
+          placeholder={chips.length === 0 ? placeholder : ''}
+          onKeyDown={handleKeyDown}
+          onBlur={(e) => {
+            const val = e.target.value.trim();
+            if (val) { onAdd(val); e.target.value = ''; }
+          }}
+          className='min-w-[120px] flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-600 outline-none'
+        />
+      </div>
+      <p className='mt-1 text-xs text-zinc-600'>Escribe y pulsa Enter para añadir</p>
+    </div>
+  );
+}
+
 export function NewPatientForm() {
   const [state, action, pending] = useActionState(createPatient, {});
   const [dob, setDob] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showClinicalNotes, setShowClinicalNotes] = useState(false);
+  const [allergyChips, setAllergyChips] = useState<string[]>([]);
+  const [intoleranceChips, setIntoleranceChips] = useState<string[]>([]);
   const isMinor = dob ? calcAge(dob) < 18 : false;
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
@@ -224,6 +304,33 @@ export function NewPatientForm() {
         </div>
       </section>
 
+      {/* Alergias e intolerancias — visibles siempre */}
+      <section className='flex flex-col gap-4'>
+        <SectionTitle>Alergias e intolerancias</SectionTitle>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+          <Field label='Alergias alimentarias'>
+            <ChipInput
+              name='allergies'
+              chips={allergyChips}
+              onAdd={(v) => setAllergyChips((prev) => [...prev, v])}
+              onRemove={(i) => setAllergyChips((prev) => prev.filter((_, idx) => idx !== i))}
+              placeholder='Ej: frutos secos, marisco, huevo...'
+              disabled={pending}
+            />
+          </Field>
+          <Field label='Intolerancias'>
+            <ChipInput
+              name='intolerances'
+              chips={intoleranceChips}
+              onAdd={(v) => setIntoleranceChips((prev) => [...prev, v])}
+              onRemove={(i) => setIntoleranceChips((prev) => prev.filter((_, idx) => idx !== i))}
+              placeholder='Ej: lactosa, fructosa, gluten...'
+              disabled={pending}
+            />
+          </Field>
+        </div>
+      </section>
+
       {/* Notas clínicas — colapsable */}
       <section className='flex flex-col gap-4'>
         <button
@@ -251,24 +358,6 @@ export function NewPatientForm() {
         </button>
         {showClinicalNotes && (
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            <Field label='Alergias'>
-              <textarea
-                name='allergies'
-                rows={3}
-                placeholder='Ej: alergia a la penicilina, alergia al látex...'
-                disabled={pending}
-                className={textareaClass}
-              />
-            </Field>
-            <Field label='Intolerancias'>
-              <textarea
-                name='intolerances'
-                rows={3}
-                placeholder='Ej: intolerancia a la fructosa...'
-                disabled={pending}
-                className={textareaClass}
-              />
-            </Field>
             <Field label='Preferencias alimentarias'>
               <textarea
                 name='preferences'

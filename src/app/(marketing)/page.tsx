@@ -358,6 +358,20 @@ function HeroSection() {
             Ver cómo funciona →
           </a>
         </div>
+        <div className='fu3 mt-3 flex justify-center'>
+          <a
+            href='/p/demo'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='group inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors duration-200 hover:text-[#22c55e]'
+          >
+            <span className='inline-block transition-transform duration-200 group-hover:scale-110'>📱</span>
+            Ver plan de ejemplo
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='transition-transform duration-200 group-hover:translate-x-0.5'>
+              <path d='M7 17l9.2-9.2M17 17V7.8H7.8' />
+            </svg>
+          </a>
+        </div>
         <p className='fu3 mt-4 text-xs text-zinc-700'>
           ¿Ya tienes cuenta?{' '}
           <Link href='/login' className='text-zinc-500 transition-colors hover:text-zinc-400'>
