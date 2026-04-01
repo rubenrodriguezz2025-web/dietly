@@ -457,7 +457,7 @@ export async function POST(req: NextRequest) {
           .from('patient_consents')
           .select('id')
           .eq('patient_id', patient_id)
-          .eq('consent_type', 'patient_ai_consent')
+          .eq('consent_type', 'ai_processing')
           .is('revoked_at', null)
           .limit(1)
           .maybeSingle();
