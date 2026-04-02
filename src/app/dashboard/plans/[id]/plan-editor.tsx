@@ -81,57 +81,54 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
         </div>
       )}
 
-      {/* Card contenedora: tabs + panel de contenido */}
-      <div className='overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900'>
-        {/* Tabs de días */}
-        <div className='flex gap-1 overflow-x-auto border-b border-gray-200 px-3 py-2 dark:border-zinc-800 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-          {days.map((day) => {
-            const isActive = day.day_number === activeDay;
-            const isDirty = dirtyDays.has(day.day_number);
-            const isApproved = day.day_status === 'approved';
-            const shortName = DAY_SHORT[day.day_name] ?? day.day_name.slice(0, 3);
+      {/* Tabs de días — floating, sin card wrapper */}
+      <div className='flex gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+        {days.map((day) => {
+          const isActive = day.day_number === activeDay;
+          const isDirty = dirtyDays.has(day.day_number);
+          const isApproved = day.day_status === 'approved';
+          const shortName = DAY_SHORT[day.day_name] ?? day.day_name.slice(0, 3);
 
-            return (
-              <button
-                key={day.day_number}
-                type='button'
-                onClick={() => setActiveDay(day.day_number)}
-                className={`relative flex-shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45] ${
-                  isActive
-                    ? 'bg-[#1a7a45] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-                }`}
-              >
-                {shortName}
-                {/* Indicador de cambios sin guardar */}
-                {isDirty && !isActive && (
-                  <span className='absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-white bg-amber-400 dark:border-zinc-900' />
-                )}
-                {/* Indicador de aprobado */}
-                {isApproved && !isActive && !isDirty && (
-                  <span className='absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-white bg-emerald-500 dark:border-zinc-900' />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Panel de contenido — todos los días montados, solo el activo visible */}
-        {days.map((day) => (
-          <div
-            key={day.day_number}
-            className={day.day_number === activeDay ? 'animate-tab-in' : 'hidden'}
-          >
-            <DayEditor
-              day={day}
-              planId={planId}
-              isDraft={isDraft}
-              onDirty={() => handleDirty(day.day_number)}
-              onSaved={() => handleSaved(day.day_number)}
-            />
-          </div>
-        ))}
+          return (
+            <button
+              key={day.day_number}
+              type='button'
+              onClick={() => setActiveDay(day.day_number)}
+              className={`relative flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45] ${
+                isActive
+                  ? 'bg-[#1a7a45] text-white'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200'
+              }`}
+            >
+              {shortName}
+              {/* Indicador de cambios sin guardar */}
+              {isDirty && !isActive && (
+                <span className='absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-gray-50 bg-amber-400 dark:border-zinc-950' />
+              )}
+              {/* Indicador de aprobado */}
+              {isApproved && !isActive && !isDirty && (
+                <span className='absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full border-2 border-gray-50 bg-emerald-500 dark:border-zinc-950' />
+              )}
+            </button>
+          );
+        })}
       </div>
+
+      {/* Panel de contenido — todos los días montados, solo el activo visible */}
+      {days.map((day) => (
+        <div
+          key={day.day_number}
+          className={day.day_number === activeDay ? 'animate-tab-in' : 'hidden'}
+        >
+          <DayEditor
+            day={day}
+            planId={planId}
+            isDraft={isDraft}
+            onDirty={() => handleDirty(day.day_number)}
+            onSaved={() => handleSaved(day.day_number)}
+          />
+        </div>
+      ))}
     </div>
   );
 }

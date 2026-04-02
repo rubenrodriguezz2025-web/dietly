@@ -65,7 +65,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
   }
 
   return (
-    <div className={`px-5 py-4 ${isInvalid ? 'bg-red-950/20' : ''}`}>
+    <div className={`rounded-xl border shadow-sm p-5 ${isInvalid ? 'border-red-500/40 bg-red-950/10 dark:bg-red-950/20' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'}`}>
       {/* Header: tipo + nombre + macros */}
       <div className='flex flex-wrap items-start justify-between gap-2'>
         <div className='min-w-0 flex-1'>
@@ -89,7 +89,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
             <EditableField
               value={meal.meal_name}
               onChange={(meal_name) => onChange({ ...meal, meal_name })}
-              className='text-base font-semibold text-gray-900 dark:text-zinc-100'
+              className='text-lg font-semibold text-gray-900 dark:text-zinc-100'
               placeholder='Nombre del plato…'
             />
           </h4>
@@ -97,7 +97,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
 
         {/* Macros block */}
         <div className='flex flex-col items-end gap-1.5'>
-          <div className='flex flex-shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/80 px-3 py-2 text-xs'>
+          <div className='flex flex-shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-lg border border-gray-200 dark:border-zinc-700/50 bg-gray-100 dark:bg-zinc-800 px-3 py-2 text-xs'>
             <EditableNumber
               value={meal.calories}
               unit='kcal'
@@ -195,7 +195,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
       )}
 
       {/* Ingredientes */}
-      <ul className='mt-3 flex flex-wrap gap-1.5'>
+      <ul className='mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6'>
         {meal.ingredients.map((ing, i) => (
           <IngredientRow
             key={i}
@@ -215,15 +215,15 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
               onCancel={() => setAddingIngredient(false)}
             />
           ) : (
-            <li>
+            <li className='col-span-full'>
               <button
                 type='button'
                 onClick={() => setAddingIngredient(true)}
-                className='flex items-center gap-1 rounded-full border border-dashed border-gray-300 dark:border-zinc-600 px-2.5 py-1 text-[11px] text-gray-500 dark:text-zinc-400 transition-all duration-150 hover:border-[#1a7a45]/60 hover:text-emerald-500'
+                className='flex items-center gap-1 py-1.5 text-xs text-gray-500 dark:text-zinc-400 transition-all duration-150 hover:text-emerald-500'
                 title='Añadir ingrediente'
               >
                 <PlusIcon size={9} />
-                Añadir
+                Añadir ingrediente
               </button>
             </li>
           ))}
@@ -231,28 +231,28 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
 
       {/* Preparación */}
       <div className='mt-3'>
-        <p className='mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-400'>
+        <p className='mb-1 px-1 text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-zinc-500'>
           Preparación
         </p>
         <EditableArea
           value={meal.preparation ?? ''}
           placeholder='Instrucciones de preparación…'
           onChange={(preparation) => onChange({ ...meal, preparation })}
-          textClassName='text-sm text-zinc-500 dark:text-zinc-300'
+          textClassName='text-sm text-gray-600 dark:text-zinc-300'
         />
       </div>
 
       {/* Notas */}
       {meal.notes !== undefined && (
         <div className='mt-1'>
-          <p className='mb-0.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-400'>
+          <p className='mb-0.5 px-1 text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-zinc-500'>
             Notas / sustituciones
           </p>
           <EditableArea
             value={meal.notes ?? ''}
             placeholder='Notas o sustituciones…'
             onChange={(notes) => onChange({ ...meal, notes })}
-            textClassName='text-xs italic text-zinc-600 dark:text-zinc-400'
+            textClassName='text-sm italic text-gray-500 dark:text-zinc-400'
           />
         </div>
       )}

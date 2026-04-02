@@ -104,7 +104,7 @@ export function DayEditor({
 
   return (
     <div
-      className={`transition-[box-shadow] duration-300 ${
+      className={`rounded-xl bg-gray-50 dark:bg-zinc-950 transition-[box-shadow] duration-300 ${
         dirty
           ? 'shadow-[inset_0_0_0_1px_rgba(26,122,69,0.25)]'
           : invalidMealIndexes.length > 0
@@ -123,7 +123,7 @@ export function DayEditor({
       />
 
       {/* Comidas */}
-      <div className='divide-y divide-gray-100 dark:divide-zinc-900'>
+      <div className='flex flex-col gap-4 p-4'>
         {day.meals.map((meal, i) => (
           <MealCard
             key={i}

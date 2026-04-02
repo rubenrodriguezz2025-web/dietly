@@ -399,33 +399,38 @@ export function IngredientRow({
   isDraft?: boolean;
 }) {
   return (
-    <li className='group/ing flex items-center gap-0.5 rounded-full border border-gray-200 bg-gray-50 dark:border-zinc-600 dark:bg-zinc-700 px-2.5 py-1 text-xs transition-colors duration-150 hover:border-gray-300 dark:hover:border-zinc-500'>
-      <EditableField
-        value={ingredient.name}
-        onChange={(name) => onChange({ ...ingredient, name })}
-        className='text-gray-600 dark:text-zinc-100'
-      />
-      <EditableNumber
-        value={ingredient.quantity}
-        onQuantityChanged={onQuantityChanged}
-        onChange={(quantity) => onChange({ ...ingredient, quantity })}
-        size='sm'
-      />
-      <EditableField
-        value={ingredient.unit}
-        onChange={(unit) => onChange({ ...ingredient, unit })}
-        className='text-gray-400 dark:text-zinc-300'
-      />
-      {isDraft && onDelete && (
-        <button
-          type='button'
-          onClick={onDelete}
-          title='Eliminar ingrediente'
-          className='ml-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-gray-400 dark:text-zinc-400 opacity-0 transition-all duration-150 group-hover/ing:opacity-100 hover:bg-red-100 dark:hover:bg-red-950/60 hover:text-red-500 dark:hover:text-red-400'
-        >
-          <XIcon size={8} />
-        </button>
-      )}
+    <li className='group/ing flex items-center justify-between border-b border-gray-100 dark:border-zinc-800/30 py-1.5 text-sm transition-colors duration-150'>
+      <span className='flex items-center gap-1.5 min-w-0'>
+        <span className='text-gray-400 dark:text-zinc-600 select-none'>•</span>
+        <EditableField
+          value={ingredient.name}
+          onChange={(name) => onChange({ ...ingredient, name })}
+          className='text-gray-700 dark:text-zinc-200'
+        />
+      </span>
+      <span className='flex items-center gap-1 flex-shrink-0 text-xs'>
+        <EditableNumber
+          value={ingredient.quantity}
+          onQuantityChanged={onQuantityChanged}
+          onChange={(quantity) => onChange({ ...ingredient, quantity })}
+          size='sm'
+        />
+        <EditableField
+          value={ingredient.unit}
+          onChange={(unit) => onChange({ ...ingredient, unit })}
+          className='text-gray-400 dark:text-zinc-400'
+        />
+        {isDraft && onDelete && (
+          <button
+            type='button'
+            onClick={onDelete}
+            title='Eliminar ingrediente'
+            className='ml-1 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-gray-400 dark:text-zinc-500 opacity-0 transition-all duration-150 group-hover/ing:opacity-100 hover:bg-red-100 dark:hover:bg-red-950/60 hover:text-red-500 dark:hover:text-red-400'
+          >
+            <XIcon size={8} />
+          </button>
+        )}
+      </span>
     </li>
   );
 }
@@ -458,7 +463,7 @@ export function AddIngredientForm({
   }
 
   return (
-    <li className='flex items-center gap-1.5 rounded-full border border-[#1a7a45]/50 bg-white dark:bg-zinc-900/80 px-3 py-1.5 text-xs ring-1 ring-[#1a7a45]/15'>
+    <li className='col-span-full flex items-center gap-1.5 border-b border-[#1a7a45]/30 bg-[#1a7a45]/5 dark:bg-[#1a7a45]/10 px-2 py-1.5 text-xs rounded-md'>
       <input
         ref={nameRef}
         value={name}
