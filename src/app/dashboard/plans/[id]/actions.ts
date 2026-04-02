@@ -1,11 +1,8 @@
 'use server';
 
-import { createElement } from 'react';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { after } from 'next/server';
 
-import { PlanReadyEmail } from '@/features/emails/plan-ready';
 import { generatePlanAccessToken } from '@/lib/auth/plan-tokens';
 import { logAIRequest } from '@/libs/ai/logger';
 import {
@@ -22,8 +19,6 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 import type { Meal, NutritionPlan, Patient, PlanContent, PlanDay, ShoppingList } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
-import { render } from '@react-email/components';
-
 // ── Recalculate meal macros ───────────────────────────────────────────────────
 
 export async function recalculateMealMacros(
@@ -202,69 +197,6 @@ export async function approvePlan(
   }
 
   revalidatePath(`/dashboard/plans/${planId}`);
-
-  // ── Notificación automática al paciente ──────────────────────────────────
-  // No bloquea el flujo de aprobación si falla
-  try {
-    const [planForEmail, profileResult] = await Promise.all([
-      supabaseAdminClient
-        .from('nutrition_plans')
-        .select('patient_token, content, patients(email, name)')
-        .eq('id', planId)
-        .single(),
-      supabaseAdminClient
-        .from('profiles')
-        .select('full_name, clinic_name')
-        .eq('id', user.id)
-        .single(),
-    ]);
-
-    const patientToken = planForEmail.data?.patient_token ?? null;
-    const patient = planForEmail.data?.patients as unknown as { email: string | null; name: string } | null;
-    const patientEmail = patient?.email ?? null;
-    const patientName = patient?.name ?? '';
-    const planContent = planForEmail.data?.content as PlanContent | null;
-    const shoppingList = planContent?.shopping_list ?? null;
-
-    if (patientEmail && patientToken) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-      const hmacData = await generatePlanAccessToken(patientToken);
-      const planUrl = `${appUrl}/p/${patientToken}?h=${hmacData.token}&e=${hmacData.expires}`;
-      const nutritionistName = profileResult.data?.full_name ?? 'Tu nutricionista';
-      const clinicName = profileResult.data?.clinic_name ?? null;
-
-      const emailElement = createElement(PlanReadyEmail, {
-        patientName,
-        nutritionistName,
-        clinicName,
-        planUrl,
-        shoppingList,
-      });
-
-      const [html, text] = await Promise.all([
-        render(emailElement),
-        render(emailElement, { plainText: true }),
-      ]);
-
-      const sendResult = await resendClient.emails.send({
-        from: 'Dietly <hola@dietly.es>',
-        replyTo: 'hola@dietly.es',
-        to: patientEmail,
-        subject: `Tu plan nutricional personalizado está listo – ${clinicName ?? nutritionistName}`,
-        html,
-        text,
-      });
-
-      if (!sendResult.error) {
-        await supabaseAdminClient
-          .from('nutrition_plans')
-          .update({ sent_at: new Date().toISOString() })
-          .eq('id', planId);
-      }
-    }
-  } catch (err) {
-    console.error('[approvePlan] Error en notificación automática:', err);
-  }
 
   // ── Generación de fotos de platos ────────────────────────────────────────────
   // PAUSADO: pendiente de API key Gemini con billing activado
