@@ -104,12 +104,12 @@ export function DayEditor({
 
   return (
     <div
-      className={`rounded-xl border bg-zinc-950 transition-[border-color,box-shadow] duration-300 ${
+      className={`rounded-xl border bg-white dark:bg-zinc-950 transition-[border-color,box-shadow] duration-300 ${
         dirty
           ? 'border-[#1a7a45]/40 shadow-[0_0_0_1px_rgba(26,122,69,0.08)]'
           : invalidMealIndexes.length > 0
-            ? 'border-red-800/70'
-            : 'border-zinc-800'
+            ? 'border-red-400/60 dark:border-red-800/70'
+            : 'border-gray-200 dark:border-zinc-800'
       }`}
     >
       <DayHeader
@@ -123,7 +123,7 @@ export function DayEditor({
       />
 
       {/* Comidas */}
-      <div className='divide-y divide-zinc-900'>
+      <div className='divide-y divide-gray-100 dark:divide-zinc-900'>
         {day.meals.map((meal, i) => (
           <MealCard
             key={i}

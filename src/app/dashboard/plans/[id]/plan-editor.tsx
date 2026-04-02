@@ -15,92 +15,99 @@ interface Props {
   validationResult?: ValidationResult;
 }
 
-// Lun=1 … Dom=7 (mismo índice que day_number en PlanDay)
-const DAY_TABS = [
-  { number: 1, short: 'Lun' },
-  { number: 2, short: 'Mar' },
-  { number: 3, short: 'Mié' },
-  { number: 4, short: 'Jue' },
-  { number: 5, short: 'Vie' },
-  { number: 6, short: 'Sáb' },
-  { number: 7, short: 'Dom' },
-];
+// ── Arrow nav ─────────────────────────────────────────────────────────────────
 
-/** Convierte getDay() (0=Dom,1=Lun…) al day_number del plan (1=Lun…7=Dom). */
-function jsToPlannedDay(jsDay: number): number {
-  return ((jsDay + 6) % 7) + 1;
+function ChevronIcon({ dir }: { dir: 'left' | 'right' }) {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='16'
+      height='16'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      aria-hidden='true'
+    >
+      {dir === 'left' ? (
+        <polyline points='15 18 9 12 15 6' />
+      ) : (
+        <polyline points='9 18 15 12 9 6' />
+      )}
+    </svg>
+  );
 }
 
-// ── Tabs nav ──────────────────────────────────────────────────────────────────
-
-function DayTabsNav({
+function DayArrowNav({
   activeDay,
-  todayDay,
+  animDir,
+  days,
   onSelect,
 }: {
   activeDay: number;
-  todayDay: number;
-  onSelect: (day: number) => void;
+  animDir: 'left' | 'right';
+  days: PlanDay[];
+  onSelect: (day: number, dir: 'left' | 'right') => void;
 }) {
-  const listRef = useRef<HTMLDivElement>(null);
+  const totalDays = days.length;
+  const currentDayData = days.find((d) => d.day_number === activeDay) ?? days[0];
+  const dayName = currentDayData?.day_name ?? `Día ${activeDay}`;
 
-  // Auto-scroll the tab strip so the active tab is visible on mobile
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const activeEl = list.querySelector<HTMLButtonElement>(`[data-day="${activeDay}"]`);
-    if (!activeEl) return;
-    const { offsetLeft, offsetWidth } = activeEl;
-    const { scrollLeft, clientWidth } = list;
-    if (
-      offsetLeft < scrollLeft ||
-      offsetLeft + offsetWidth > scrollLeft + clientWidth
-    ) {
-      list.scrollTo({ left: offsetLeft - clientWidth / 2 + offsetWidth / 2, behavior: 'smooth' });
-    }
-  }, [activeDay]);
+  const canGoPrev = activeDay > 1;
+  const canGoNext = activeDay < totalDays;
+
+  const btnBase =
+    'flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45]';
+  const btnEnabled =
+    'text-gray-500 hover:bg-gray-100 hover:text-[#1a7a45] dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-[#1a7a45]';
+  const btnDisabled =
+    'cursor-not-allowed opacity-25 text-gray-400 dark:text-zinc-600 pointer-events-none';
 
   return (
     <div className='sticky top-0 z-20 -mx-4 sm:mx-0'>
-      <div className='border-b border-zinc-200 dark:border-zinc-800 bg-gray-50/95 dark:bg-zinc-950/96 backdrop-blur-sm px-4 sm:px-0 sm:rounded-xl sm:border sm:border-zinc-200 dark:sm:border-zinc-800'>
-        <div
-          ref={listRef}
-          className='flex overflow-x-auto scrollbar-none'
-          role='tablist'
-          aria-label='Días del plan'
-        >
-          {DAY_TABS.map(({ number, short }) => {
-            const isActive = activeDay === number;
-            const isToday = todayDay === number;
-            return (
-              <button
-                key={number}
-                type='button'
-                role='tab'
-                aria-selected={isActive}
-                data-day={number}
-                onClick={() => onSelect(number)}
-                className={[
-                  'relative flex flex-shrink-0 flex-col items-center gap-0.5 px-3 py-2 my-1.5 mx-0.5 rounded-lg text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45] focus-visible:ring-inset sm:flex-1',
-                  isActive
-                    ? 'bg-[#1a7a45] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200',
-                ].join(' ')}
-              >
-                {short}
-                {/* Indicador "hoy" */}
-                {isToday && (
-                  <span
-                    className={[
-                      'h-1 w-1 rounded-full',
-                      isActive ? 'bg-white/70' : 'bg-gray-400 dark:bg-zinc-600',
-                    ].join(' ')}
-                    aria-label='Hoy'
-                  />
-                )}
-              </button>
-            );
-          })}
+      <div className='border-b border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/96 backdrop-blur-sm px-4 sm:px-2 sm:rounded-xl sm:border sm:border-gray-200 dark:sm:border-zinc-800'>
+        <div className='flex items-center justify-between py-2'>
+          {/* Flecha izquierda */}
+          <button
+            type='button'
+            aria-label='Día anterior'
+            disabled={!canGoPrev}
+            onClick={() => canGoPrev && onSelect(activeDay - 1, 'left')}
+            className={`${btnBase} ${canGoPrev ? btnEnabled : btnDisabled}`}
+          >
+            <ChevronIcon dir='left' />
+          </button>
+
+          {/* Día actual */}
+          <div className='flex flex-col items-center gap-0.5 overflow-hidden text-center'>
+            <span
+              key={`${activeDay}-name`}
+              className={`text-sm font-semibold text-gray-900 dark:text-zinc-100 ${
+                animDir === 'right' ? 'animate-tab-in' : 'animate-tab-in-reverse'
+              }`}
+            >
+              {dayName}
+            </span>
+            <span
+              key={`${activeDay}-count`}
+              className='text-xs tabular-nums text-gray-500 dark:text-zinc-500'
+            >
+              Día {activeDay} de {totalDays}
+            </span>
+          </div>
+
+          {/* Flecha derecha */}
+          <button
+            type='button'
+            aria-label='Día siguiente'
+            disabled={!canGoNext}
+            onClick={() => canGoNext && onSelect(activeDay + 1, 'right')}
+            className={`${btnBase} ${canGoNext ? btnEnabled : btnDisabled}`}
+          >
+            <ChevronIcon dir='right' />
+          </button>
         </div>
       </div>
     </div>
@@ -112,7 +119,7 @@ function DayTabsNav({
 export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
   const [dirtyDays, setDirtyDays] = useState<Set<number>>(new Set());
   const [activeDay, setActiveDay] = useState<number>(days[0]?.day_number ?? 1);
-  const todayDay = jsToPlannedDay(new Date().getDay());
+  const [animDir, setAnimDir] = useState<'left' | 'right'>('right');
 
   const approvedCount = days.filter((d) => d.day_status === 'approved').length;
   const totalDays = days.length;
@@ -130,14 +137,19 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
   }
 
   // ── Scroll spy via IntersectionObserver ──────────────────────────────────────
+  const activeDayRef = useRef(activeDay);
+  useEffect(() => { activeDayRef.current = activeDay; }, [activeDay]);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        // Pick the first intersecting entry (topmost visible day)
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const n = Number(entry.target.getAttribute('data-plan-day'));
-            if (n) setActiveDay(n);
+            if (n) {
+              setAnimDir(n > activeDayRef.current ? 'right' : 'left');
+              setActiveDay(n);
+            }
             break;
           }
         }
@@ -153,12 +165,12 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
     return () => observer.disconnect();
   }, [days]);
 
-  // ── Scroll to day on tab click ────────────────────────────────────────────
-  function handleTabSelect(dayNumber: number) {
+  // ── Scroll to day on arrow click ────────────────────────────────────────────
+  function handleArrowSelect(dayNumber: number, dir: 'left' | 'right') {
+    setAnimDir(dir);
     setActiveDay(dayNumber);
     const el = document.getElementById(`plan-day-${dayNumber}`);
     if (!el) return;
-    // Offset to account for sticky tabs bar (~52px) + a bit of breathing room
     const top = el.getBoundingClientRect().top + window.scrollY - 70;
     window.scrollTo({ top, behavior: 'smooth' });
   }
@@ -168,14 +180,20 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
       {/* Progreso de revisión por día — solo en borrador */}
       {isDraft && (
         <div className='flex items-center gap-3'>
-          <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800'>
+          <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-800'>
             <div
               className='h-full rounded-full bg-[#1a7a45] transition-all duration-500'
               style={{ width: totalDays > 0 ? `${(approvedCount / totalDays) * 100}%` : '0%' }}
             />
           </div>
-          <span className='flex-shrink-0 text-xs tabular-nums text-zinc-500'>
-            <span className={approvedCount === totalDays ? 'text-emerald-400' : 'text-zinc-300'}>
+          <span className='flex-shrink-0 text-xs tabular-nums text-gray-500 dark:text-zinc-500'>
+            <span
+              className={
+                approvedCount === totalDays
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-gray-800 dark:text-zinc-300'
+              }
+            >
               {approvedCount}
             </span>
             /{totalDays} días revisados
@@ -190,11 +208,12 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
         </div>
       )}
 
-      {/* Tabs de navegación */}
-      <DayTabsNav
+      {/* Navegación con flechas */}
+      <DayArrowNav
         activeDay={activeDay}
-        todayDay={todayDay}
-        onSelect={handleTabSelect}
+        animDir={animDir}
+        days={days}
+        onSelect={handleArrowSelect}
       />
 
       {days.map((day) => (
@@ -212,7 +231,6 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
           />
         </div>
       ))}
-
     </div>
   );
 }

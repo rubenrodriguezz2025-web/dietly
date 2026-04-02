@@ -133,29 +133,29 @@ export function SaveAsRecipeModal({
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
       <div className='fixed inset-0 bg-black/70 backdrop-blur-sm' onClick={onClose} aria-hidden='true' />
-      <div className='relative z-10 w-full max-w-md rounded-2xl border border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl shadow-black/50'>
-        <div className='flex items-center justify-between border-b border-zinc-800 px-5 py-4'>
-          <h3 className='font-semibold text-zinc-100'>Guardar como receta</h3>
-          <button type='button' onClick={onClose} className='rounded-lg p-1 text-zinc-600 transition-colors hover:text-zinc-300'>
+      <div className='relative z-10 w-full max-w-md rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl shadow-black/20 dark:shadow-black/50'>
+        <div className='flex items-center justify-between border-b border-gray-200 dark:border-zinc-800 px-5 py-4'>
+          <h3 className='font-semibold text-gray-900 dark:text-zinc-100'>Guardar como receta</h3>
+          <button type='button' onClick={onClose} className='rounded-lg p-1 text-gray-500 dark:text-zinc-600 transition-colors hover:text-gray-800 dark:hover:text-zinc-300'>
             <XModalIcon />
           </button>
         </div>
         <div className='px-5 py-5 flex flex-col gap-4'>
           <div>
-            <label className='mb-1.5 block text-sm font-medium text-zinc-300'>Nombre de la receta</label>
+            <label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300'>Nombre de la receta</label>
             <input
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className='w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+              className='w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-zinc-100 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
             />
           </div>
           <div>
-            <label className='mb-1.5 block text-sm font-medium text-zinc-300'>Categoría</label>
+            <label className='mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300'>Categoría</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as RecipeCategory | '')}
-              className='w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 focus:border-[#1a7a45]/60 focus:outline-none'
+              className='w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-zinc-100 focus:border-[#1a7a45]/60 focus:outline-none'
             >
               <option value=''>Sin categoría</option>
               <option value='desayuno'>Desayuno</option>
@@ -165,12 +165,12 @@ export function SaveAsRecipeModal({
               <option value='snack'>Snack</option>
             </select>
           </div>
-          <div className='rounded-lg border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 px-3 py-2.5 text-xs text-zinc-500'>
+          <div className='rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 px-3 py-2.5 text-xs text-gray-500 dark:text-zinc-500'>
             Se guardarán los ingredientes, macros e instrucciones de esta comida.
           </div>
         </div>
-        <div className='flex items-center justify-end gap-3 border-t border-zinc-800 px-5 py-4'>
-          <button type='button' onClick={onClose} disabled={isSaving} className='rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200'>
+        <div className='flex items-center justify-end gap-3 border-t border-gray-200 dark:border-zinc-800 px-5 py-4'>
+          <button type='button' onClick={onClose} disabled={isSaving} className='rounded-lg border border-gray-200 dark:border-zinc-700 px-4 py-2 text-sm text-gray-500 dark:text-zinc-400 transition-colors hover:border-gray-300 dark:hover:border-zinc-600 hover:text-gray-800 dark:hover:text-zinc-200'>
             Cancelar
           </button>
           <button
@@ -223,12 +223,12 @@ export function EditableField({
             if (e.key === 'Enter') { e.preventDefault(); confirm(); }
             if (e.key === 'Escape') cancel();
           }}
-          className={`min-w-[100px] rounded-md border border-[#1a7a45]/50 bg-zinc-900 px-2 py-1 text-sm ring-1 ring-[#1a7a45]/30 focus:border-[#1a7a45]/70 focus:outline-none focus:ring-[#1a7a45]/50 ${className}`}
+          className={`min-w-[100px] rounded-md border border-[#1a7a45]/50 bg-white dark:bg-zinc-900 px-2 py-1 text-sm ring-1 ring-[#1a7a45]/30 focus:border-[#1a7a45]/70 focus:outline-none focus:ring-[#1a7a45]/50 ${className}`}
         />
         <button type='button' onClick={confirm} title='Confirmar (Enter)' className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[#1a7a45]/20 text-emerald-400 transition-colors hover:bg-[#1a7a45]/35'>
           <CheckIcon />
         </button>
-        <button type='button' onClick={cancel} title='Cancelar (Esc)' className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-zinc-800 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-300'>
+        <button type='button' onClick={cancel} title='Cancelar (Esc)' className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-500 transition-colors hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-700 dark:hover:text-zinc-300'>
           <XIcon />
         </button>
       </span>
@@ -240,12 +240,12 @@ export function EditableField({
       type='button'
       onClick={startEdit}
       title='Haz clic para editar'
-      className={`group/ef inline-flex cursor-text items-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-left transition-all duration-150 hover:border-zinc-700 hover:bg-zinc-900 ${className}`}
+      className={`group/ef inline-flex cursor-text items-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-left transition-all duration-150 hover:border-gray-200 hover:bg-gray-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 ${className}`}
     >
-      <span className='border-b border-dashed border-zinc-700/60'>
-        {value || <span className='italic text-zinc-600'>{placeholder}</span>}
+      <span className='border-b border-dashed border-gray-300 dark:border-zinc-700/60'>
+        {value || <span className='italic text-gray-400 dark:text-zinc-600'>{placeholder}</span>}
       </span>
-      <span className='flex-shrink-0 text-zinc-600 opacity-35 transition-opacity duration-150 group-hover/ef:opacity-100'>
+      <span className='flex-shrink-0 text-gray-400 dark:text-zinc-600 opacity-35 transition-opacity duration-150 group-hover/ef:opacity-100'>
         <PencilIcon size={10} />
       </span>
     </button>
@@ -296,12 +296,12 @@ export function EditableNumber({
             if (e.key === 'Enter') confirm();
             if (e.key === 'Escape') cancel();
           }}
-          className={`rounded-md border border-[#1a7a45]/50 bg-zinc-900 px-1.5 py-0.5 text-zinc-100 ring-1 ring-[#1a7a45]/30 focus:outline-none focus:ring-[#1a7a45]/50 ${size === 'sm' ? 'w-12 text-xs' : 'w-16 text-sm'}`}
+          className={`rounded-md border border-[#1a7a45]/50 bg-white dark:bg-zinc-900 px-1.5 py-0.5 text-gray-900 dark:text-zinc-100 ring-1 ring-[#1a7a45]/30 focus:outline-none focus:ring-[#1a7a45]/50 ${size === 'sm' ? 'w-12 text-xs' : 'w-16 text-sm'}`}
         />
         <button type='button' onClick={confirm} className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-[#1a7a45]/20 text-emerald-400 transition-colors hover:bg-[#1a7a45]/35'>
           <CheckIcon size={9} />
         </button>
-        <button type='button' onClick={cancel} className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-zinc-800 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-300'>
+        <button type='button' onClick={cancel} className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-500 transition-colors hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-700 dark:hover:text-zinc-300'>
           <XIcon size={9} />
         </button>
       </span>
@@ -313,11 +313,11 @@ export function EditableNumber({
       type='button'
       onClick={startEdit}
       title='Haz clic para editar'
-      className={`group/en inline-flex cursor-text items-center gap-0.5 rounded border border-transparent px-0.5 py-0.5 transition-all duration-150 hover:border-zinc-700 hover:bg-zinc-900 ${bold ? 'font-semibold text-zinc-100' : size === 'sm' ? 'text-zinc-400' : 'text-zinc-300'}`}
+      className={`group/en inline-flex cursor-text items-center gap-0.5 rounded border border-transparent px-0.5 py-0.5 transition-all duration-150 hover:border-gray-200 hover:bg-gray-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 ${bold ? 'font-semibold text-gray-900 dark:text-zinc-100' : size === 'sm' ? 'text-gray-500 dark:text-zinc-400' : 'text-gray-600 dark:text-zinc-300'}`}
     >
-      <span className='border-b border-dashed border-zinc-700/60 tabular-nums'>{value}</span>
-      {unit && <span className='ml-0.5 text-zinc-600'>{unit}</span>}
-      <span className='ml-0.5 text-zinc-600 opacity-0 transition-opacity duration-150 group-hover/en:opacity-100'>
+      <span className='border-b border-dashed border-gray-300 dark:border-zinc-700/60 tabular-nums'>{value}</span>
+      {unit && <span className='ml-0.5 text-gray-400 dark:text-zinc-600'>{unit}</span>}
+      <span className='ml-0.5 text-gray-400 dark:text-zinc-600 opacity-0 transition-opacity duration-150 group-hover/en:opacity-100'>
         <PencilIcon size={8} />
       </span>
     </button>
@@ -344,7 +344,7 @@ export function EditableArea({
 
   if (editing) {
     return (
-      <div className='rounded-lg border border-[#1a7a45]/40 bg-zinc-900 ring-1 ring-[#1a7a45]/20'>
+      <div className='rounded-lg border border-[#1a7a45]/40 bg-white dark:bg-zinc-900 ring-1 ring-[#1a7a45]/20'>
         <textarea
           autoFocus
           value={draft}
@@ -352,10 +352,10 @@ export function EditableArea({
           onKeyDown={(e) => e.key === 'Escape' && cancel()}
           rows={4}
           placeholder={placeholder}
-          className='w-full resize-none rounded-t-lg bg-transparent px-3 py-2.5 text-sm text-zinc-300 placeholder:text-zinc-700 focus:outline-none'
+          className='w-full resize-none rounded-t-lg bg-transparent px-3 py-2.5 text-sm text-gray-700 dark:text-zinc-300 placeholder:text-gray-400 dark:placeholder:text-zinc-700 focus:outline-none'
         />
-        <div className='flex items-center justify-end gap-1.5 border-t border-zinc-800/80 px-3 py-2'>
-          <button type='button' onClick={cancel} className='rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200'>
+        <div className='flex items-center justify-end gap-1.5 border-t border-gray-200 dark:border-zinc-800/80 px-3 py-2'>
+          <button type='button' onClick={cancel} className='rounded-md border border-gray-200 dark:border-zinc-700 px-2.5 py-1 text-xs text-gray-500 dark:text-zinc-400 transition-colors hover:border-gray-300 dark:hover:border-zinc-600 hover:text-gray-700 dark:hover:text-zinc-200'>
             Cancelar
           </button>
           <button type='button' onClick={confirm} className='rounded-md bg-[#1a7a45]/20 px-2.5 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-[#1a7a45]/30'>
@@ -371,12 +371,12 @@ export function EditableArea({
       type='button'
       onClick={startEdit}
       title='Haz clic para editar'
-      className='group/ea relative w-full cursor-text rounded-lg border border-transparent px-3 py-2 text-left transition-all duration-150 hover:border-zinc-700 hover:bg-zinc-900/60'
+      className='group/ea relative w-full cursor-text rounded-lg border border-transparent px-3 py-2 text-left transition-all duration-150 hover:border-gray-200 hover:bg-gray-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/60'
     >
       <span className={`block leading-relaxed ${textClassName}`}>
-        {value || <span className='italic text-zinc-700'>{placeholder}</span>}
+        {value || <span className='italic text-gray-400 dark:text-zinc-700'>{placeholder}</span>}
       </span>
-      <span className='absolute right-2.5 top-2.5 text-zinc-600 opacity-30 transition-opacity duration-150 group-hover/ea:opacity-100'>
+      <span className='absolute right-2.5 top-2.5 text-gray-400 dark:text-zinc-600 opacity-30 transition-opacity duration-150 group-hover/ea:opacity-100'>
         <PencilIcon size={11} />
       </span>
     </button>
@@ -399,11 +399,11 @@ export function IngredientRow({
   isDraft?: boolean;
 }) {
   return (
-    <li className='group/ing flex items-center gap-0.5 rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs transition-colors duration-150 hover:border-zinc-700'>
+    <li className='group/ing flex items-center gap-0.5 rounded-full border border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-900 px-2.5 py-1 text-xs transition-colors duration-150 hover:border-gray-300 dark:hover:border-zinc-700'>
       <EditableField
         value={ingredient.name}
         onChange={(name) => onChange({ ...ingredient, name })}
-        className='text-zinc-400'
+        className='text-gray-600 dark:text-zinc-400'
       />
       <EditableNumber
         value={ingredient.quantity}
@@ -414,14 +414,14 @@ export function IngredientRow({
       <EditableField
         value={ingredient.unit}
         onChange={(unit) => onChange({ ...ingredient, unit })}
-        className='text-zinc-600'
+        className='text-gray-400 dark:text-zinc-600'
       />
       {isDraft && onDelete && (
         <button
           type='button'
           onClick={onDelete}
           title='Eliminar ingrediente'
-          className='ml-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-zinc-700 opacity-0 transition-all duration-150 group-hover/ing:opacity-100 hover:bg-red-950/60 hover:text-red-400'
+          className='ml-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-gray-400 dark:text-zinc-700 opacity-0 transition-all duration-150 group-hover/ing:opacity-100 hover:bg-red-100 dark:hover:bg-red-950/60 hover:text-red-500 dark:hover:text-red-400'
         >
           <XIcon size={8} />
         </button>
@@ -458,16 +458,16 @@ export function AddIngredientForm({
   }
 
   return (
-    <li className='flex items-center gap-1.5 rounded-full border border-[#1a7a45]/50 bg-zinc-900/80 px-3 py-1.5 text-xs ring-1 ring-[#1a7a45]/15'>
+    <li className='flex items-center gap-1.5 rounded-full border border-[#1a7a45]/50 bg-white dark:bg-zinc-900/80 px-3 py-1.5 text-xs ring-1 ring-[#1a7a45]/15'>
       <input
         ref={nameRef}
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={handleKey}
         placeholder='Ingrediente'
-        className='w-24 bg-transparent text-zinc-300 outline-none placeholder:text-zinc-600'
+        className='w-24 bg-transparent text-gray-700 dark:text-zinc-300 outline-none placeholder:text-gray-400 dark:placeholder:text-zinc-600'
       />
-      <span className='select-none text-zinc-700'>·</span>
+      <span className='select-none text-gray-300 dark:text-zinc-700'>·</span>
       <input
         type='number'
         min={0}
@@ -475,19 +475,19 @@ export function AddIngredientForm({
         onChange={(e) => setQty(e.target.value)}
         onKeyDown={handleKey}
         placeholder='100'
-        className='w-10 bg-transparent text-right text-zinc-300 outline-none'
+        className='w-10 bg-transparent text-right text-gray-700 dark:text-zinc-300 outline-none'
       />
       <input
         value={unit}
         onChange={(e) => setUnit(e.target.value)}
         onKeyDown={handleKey}
         placeholder='g'
-        className='w-8 bg-transparent text-zinc-500 outline-none'
+        className='w-8 bg-transparent text-gray-500 dark:text-zinc-500 outline-none'
       />
       <button type='button' onClick={confirm} className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#1a7a45]/25 text-emerald-400 transition-colors hover:bg-[#1a7a45]/40'>
         <CheckIcon size={9} />
       </button>
-      <button type='button' onClick={onCancel} className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-300'>
+      <button type='button' onClick={onCancel} className='flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-500 transition-colors hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-700 dark:hover:text-zinc-300'>
         <XIcon size={9} />
       </button>
     </li>
