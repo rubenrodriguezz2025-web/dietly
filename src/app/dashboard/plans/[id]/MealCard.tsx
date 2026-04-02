@@ -76,11 +76,11 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
                 Error
               </span>
             )}
-            <span className='text-[11px] font-semibold uppercase tracking-widest text-gray-500 dark:text-zinc-600'>
+            <span className='text-[11px] font-semibold uppercase tracking-widest text-gray-500 dark:text-zinc-400'>
               {MEAL_TYPE_LABELS[meal.meal_type] ?? meal.meal_type}
             </span>
             {meal.time_suggestion && (
-              <span className='text-xs text-gray-400 dark:text-zinc-700'>{meal.time_suggestion}</span>
+              <span className='text-xs text-gray-400 dark:text-zinc-500'>{meal.time_suggestion}</span>
             )}
           </div>
 
@@ -153,7 +153,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
               type='button'
               onClick={handleRecalculate}
               disabled={isRecalculating}
-              className='flex items-center gap-1 text-[10px] text-gray-500 dark:text-zinc-600 transition-colors hover:text-emerald-500 disabled:opacity-50'
+              className='flex items-center gap-1 text-[10px] text-gray-500 dark:text-zinc-400 transition-colors hover:text-emerald-500 disabled:opacity-50'
             >
               {isRecalculating ? (
                 <span className='inline-block h-2.5 w-2.5 animate-spin rounded-full border border-gray-400 dark:border-zinc-500 border-t-transparent' />
@@ -168,7 +168,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
 
           {/* Badge transparencia IA */}
           <div className='flex items-center justify-between gap-2'>
-            <span className='group relative cursor-default text-[10px] italic text-gray-400 dark:text-zinc-700'>
+            <span className='group relative cursor-default text-[10px] italic text-gray-400 dark:text-zinc-500'>
               ~ Estimación IA
               <span className='pointer-events-none absolute bottom-full left-0 z-10 mb-1 w-64 rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 text-[10px] not-italic leading-relaxed text-gray-500 dark:text-zinc-400 opacity-0 shadow-xl transition-opacity group-hover:opacity-100'>
                 Valores calculados por IA basándose en bases de datos nutricionales de referencia internacional. Revisados y aprobados por el nutricionista. Próximamente verificados con base de datos BEDCA oficial.
@@ -179,7 +179,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
                 type='button'
                 onClick={() => setShowSaveModal(true)}
                 title='Guardar como receta personal'
-                className='flex items-center gap-1 rounded-full border border-gray-200 dark:border-zinc-800 px-2 py-0.5 text-[10px] text-gray-500 dark:text-zinc-600 transition-all duration-150 hover:border-gray-300 dark:hover:border-zinc-600 hover:text-emerald-500'
+                className='flex items-center gap-1 rounded-full border border-gray-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] text-gray-500 dark:text-zinc-400 transition-all duration-150 hover:border-gray-300 dark:hover:border-zinc-600 hover:text-emerald-500'
               >
                 <BookmarkIcon size={10} />
                 Guardar receta
@@ -219,7 +219,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
               <button
                 type='button'
                 onClick={() => setAddingIngredient(true)}
-                className='flex items-center gap-1 rounded-full border border-dashed border-gray-300 dark:border-zinc-700/70 px-2.5 py-1 text-[11px] text-gray-500 dark:text-zinc-600 transition-all duration-150 hover:border-[#1a7a45]/60 hover:text-emerald-500'
+                className='flex items-center gap-1 rounded-full border border-dashed border-gray-300 dark:border-zinc-600 px-2.5 py-1 text-[11px] text-gray-500 dark:text-zinc-400 transition-all duration-150 hover:border-[#1a7a45]/60 hover:text-emerald-500'
                 title='Añadir ingrediente'
               >
                 <PlusIcon size={9} />
@@ -231,28 +231,28 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
 
       {/* Preparación */}
       <div className='mt-3'>
-        <p className='mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-700'>
+        <p className='mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-400'>
           Preparación
         </p>
         <EditableArea
           value={meal.preparation ?? ''}
           placeholder='Instrucciones de preparación…'
           onChange={(preparation) => onChange({ ...meal, preparation })}
-          textClassName='text-sm text-zinc-500'
+          textClassName='text-sm text-zinc-500 dark:text-zinc-300'
         />
       </div>
 
       {/* Notas */}
       {meal.notes !== undefined && (
         <div className='mt-1'>
-          <p className='mb-0.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-700'>
+          <p className='mb-0.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-400'>
             Notas / sustituciones
           </p>
           <EditableArea
             value={meal.notes ?? ''}
             placeholder='Notas o sustituciones…'
             onChange={(notes) => onChange({ ...meal, notes })}
-            textClassName='text-xs italic text-zinc-600'
+            textClassName='text-xs italic text-zinc-600 dark:text-zinc-400'
           />
         </div>
       )}

@@ -136,7 +136,7 @@ export function SaveAsRecipeModal({
       <div className='relative z-10 w-full max-w-md rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl shadow-black/20 dark:shadow-black/50'>
         <div className='flex items-center justify-between border-b border-gray-200 dark:border-zinc-800 px-5 py-4'>
           <h3 className='font-semibold text-gray-900 dark:text-zinc-100'>Guardar como receta</h3>
-          <button type='button' onClick={onClose} className='rounded-lg p-1 text-gray-500 dark:text-zinc-600 transition-colors hover:text-gray-800 dark:hover:text-zinc-300'>
+          <button type='button' onClick={onClose} className='rounded-lg p-1 text-gray-500 dark:text-zinc-400 transition-colors hover:text-gray-800 dark:hover:text-zinc-200'>
             <XModalIcon />
           </button>
         </div>
@@ -316,8 +316,8 @@ export function EditableNumber({
       className={`group/en inline-flex cursor-text items-center gap-0.5 rounded border border-transparent px-0.5 py-0.5 transition-all duration-150 hover:border-gray-200 hover:bg-gray-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 ${bold ? 'font-semibold text-gray-900 dark:text-zinc-100' : size === 'sm' ? 'text-gray-500 dark:text-zinc-400' : 'text-gray-600 dark:text-zinc-300'}`}
     >
       <span className='border-b border-dashed border-gray-300 dark:border-zinc-700/60 tabular-nums'>{value}</span>
-      {unit && <span className='ml-0.5 text-gray-400 dark:text-zinc-600'>{unit}</span>}
-      <span className='ml-0.5 text-gray-400 dark:text-zinc-600 opacity-0 transition-opacity duration-150 group-hover/en:opacity-100'>
+      {unit && <span className='ml-0.5 text-gray-400 dark:text-zinc-500'>{unit}</span>}
+      <span className='ml-0.5 text-gray-400 dark:text-zinc-500 opacity-0 transition-opacity duration-150 group-hover/en:opacity-100'>
         <PencilIcon size={8} />
       </span>
     </button>
@@ -374,9 +374,9 @@ export function EditableArea({
       className='group/ea relative w-full cursor-text rounded-lg border border-transparent px-3 py-2 text-left transition-all duration-150 hover:border-gray-200 hover:bg-gray-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/60'
     >
       <span className={`block leading-relaxed ${textClassName}`}>
-        {value || <span className='italic text-gray-400 dark:text-zinc-700'>{placeholder}</span>}
+        {value || <span className='italic text-gray-400 dark:text-zinc-500'>{placeholder}</span>}
       </span>
-      <span className='absolute right-2.5 top-2.5 text-gray-400 dark:text-zinc-600 opacity-30 transition-opacity duration-150 group-hover/ea:opacity-100'>
+      <span className='absolute right-2.5 top-2.5 text-gray-400 dark:text-zinc-500 opacity-30 transition-opacity duration-150 group-hover/ea:opacity-100'>
         <PencilIcon size={11} />
       </span>
     </button>
@@ -399,11 +399,11 @@ export function IngredientRow({
   isDraft?: boolean;
 }) {
   return (
-    <li className='group/ing flex items-center gap-0.5 rounded-full border border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-900 px-2.5 py-1 text-xs transition-colors duration-150 hover:border-gray-300 dark:hover:border-zinc-700'>
+    <li className='group/ing flex items-center gap-0.5 rounded-full border border-gray-200 bg-gray-50 dark:border-zinc-600 dark:bg-zinc-700 px-2.5 py-1 text-xs transition-colors duration-150 hover:border-gray-300 dark:hover:border-zinc-500'>
       <EditableField
         value={ingredient.name}
         onChange={(name) => onChange({ ...ingredient, name })}
-        className='text-gray-600 dark:text-zinc-400'
+        className='text-gray-600 dark:text-zinc-100'
       />
       <EditableNumber
         value={ingredient.quantity}
@@ -414,14 +414,14 @@ export function IngredientRow({
       <EditableField
         value={ingredient.unit}
         onChange={(unit) => onChange({ ...ingredient, unit })}
-        className='text-gray-400 dark:text-zinc-600'
+        className='text-gray-400 dark:text-zinc-300'
       />
       {isDraft && onDelete && (
         <button
           type='button'
           onClick={onDelete}
           title='Eliminar ingrediente'
-          className='ml-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-gray-400 dark:text-zinc-700 opacity-0 transition-all duration-150 group-hover/ing:opacity-100 hover:bg-red-100 dark:hover:bg-red-950/60 hover:text-red-500 dark:hover:text-red-400'
+          className='ml-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-gray-400 dark:text-zinc-400 opacity-0 transition-all duration-150 group-hover/ing:opacity-100 hover:bg-red-100 dark:hover:bg-red-950/60 hover:text-red-500 dark:hover:text-red-400'
         >
           <XIcon size={8} />
         </button>

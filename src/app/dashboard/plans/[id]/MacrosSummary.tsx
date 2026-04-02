@@ -14,7 +14,7 @@ export function MacrosSummary({ saveStatus }: MacrosSummaryProps) {
   return (
     <div className='flex justify-end border-t border-gray-200 dark:border-zinc-800/60 px-5 py-2'>
       {saveStatus === 'saving' && (
-        <span className='flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-600'>
+        <span className='flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-400'>
           <span className='inline-block h-2.5 w-2.5 animate-spin rounded-full border border-gray-400 dark:border-zinc-600 border-t-transparent' />
           Guardando…
         </span>

@@ -36,7 +36,7 @@ export function DayHeader({
               <span className='text-xs text-gray-500 dark:text-zinc-500'>· {day.day_theme}</span>
             )}
           </div>
-          <div className='mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-600'>
+          <div className='mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-400'>
             <EditableNumber
               value={day.total_calories}
               unit='kcal'
@@ -106,7 +106,7 @@ export function DayHeader({
           <button
             type='button'
             onClick={onDismissHint}
-            className='text-gray-400 dark:text-zinc-700 transition-colors hover:text-gray-600 dark:hover:text-zinc-500'
+            className='text-gray-400 dark:text-zinc-500 transition-colors hover:text-gray-600 dark:hover:text-zinc-300'
             aria-label='Cerrar ayuda'
           >
             <XIcon size={9} />
