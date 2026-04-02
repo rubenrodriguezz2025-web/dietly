@@ -104,12 +104,12 @@ export function DayEditor({
 
   return (
     <div
-      className={`rounded-xl border bg-white dark:bg-zinc-950 transition-[border-color,box-shadow] duration-300 ${
+      className={`transition-[box-shadow] duration-300 ${
         dirty
-          ? 'border-[#1a7a45]/40 shadow-[0_0_0_1px_rgba(26,122,69,0.08)]'
+          ? 'shadow-[inset_0_0_0_1px_rgba(26,122,69,0.25)]'
           : invalidMealIndexes.length > 0
-            ? 'border-red-400/60 dark:border-red-800/70'
-            : 'border-gray-200 dark:border-zinc-800'
+            ? 'shadow-[inset_0_0_0_1px_rgba(239,68,68,0.3)]'
+            : ''
       }`}
     >
       <DayHeader
