@@ -402,7 +402,7 @@ export function OnboardingWizard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               {/* Nombre */}
               <div>
-                <label className={labelClass} style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
                   Nombre completo *
                 </label>
                 <input
