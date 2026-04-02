@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-import { OnboardingForm } from './onboarding-form';
+import { OnboardingWizard } from './onboarding-form';
 
 export default async function OnboardingPage() {
   const supabase = await createSupabaseServerClient();
@@ -15,28 +15,20 @@ export default async function OnboardingPage() {
     redirect('/login');
   }
 
-  // Si ya tiene perfil, no necesita onboarding
+  // Solo redirigir si el onboarding ya fue completado
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id')
+    .select('onboarding_completed_at')
     .eq('id', user.id)
     .single();
 
-  if (profile) {
+  if (profile?.onboarding_completed_at) {
     redirect('/dashboard');
   }
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-[#050a05] p-4'>
-      <div className='w-full max-w-md'>
-        <div className='mb-8 text-center'>
-          <h1 className='text-2xl font-bold text-white'>Bienvenido a Dietly</h1>
-          <p className='mt-2 text-zinc-400'>
-            Cuéntanos un poco sobre ti para personalizar tu experiencia.
-          </p>
-        </div>
-        <OnboardingForm />
-      </div>
+    <main style={{ backgroundColor: '#050a05', minHeight: '100vh' }}>
+      <OnboardingWizard />
     </main>
   );
 }
