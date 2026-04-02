@@ -6,7 +6,7 @@ import { useState } from 'react';
  * Versión del texto de consentimiento. Incrementar cuando cambie el contenido
  * del aviso — permite auditar qué texto leyó el nutricionista en cada registro.
  */
-export const CONSENT_TEXT_VERSION = 'v2-2026-03-22';
+export const CONSENT_TEXT_VERSION = 'v3-2026-04-02';
 
 /**
  * Sección de consentimiento informado para el tratamiento de datos de salud
@@ -56,9 +56,8 @@ export function ConsentForm({ disabled }: { disabled?: boolean }) {
           </span>
           <p className='text-sm leading-relaxed text-zinc-400'>
             Los datos de salud del paciente (peso, edad, patologías, alergias e intolerancias)
-            serán enviados de forma <strong className='text-zinc-300'>pseudonimizada</strong> a{' '}
-            <strong className='text-zinc-300'>Claude (Anthropic)</strong>, un modelo de inteligencia
-            artificial, para generar automáticamente un{' '}
+            serán procesados de forma <strong className='text-zinc-300'>pseudonimizada</strong>{' '}
+            mediante herramientas digitales de asistencia para generar automáticamente un{' '}
             <strong className='text-zinc-300'>borrador</strong> de plan nutricional personalizado.
           </p>
         </li>
@@ -110,8 +109,7 @@ export function ConsentForm({ disabled }: { disabled?: boolean }) {
           aria-describedby='consent-description'
         />
         <span id='consent-description' className='text-sm leading-relaxed text-zinc-300'>
-          Confirmo que informaré al paciente de que se utilizan herramientas digitales
-          de asistencia para elaborar su plan nutricional.
+          Confirmo que tengo el consentimiento del paciente para tratar sus datos de salud.
           <span className='ml-1 text-red-400' aria-hidden='true'>*</span>
         </span>
       </label>
