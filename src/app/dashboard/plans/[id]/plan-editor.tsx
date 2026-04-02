@@ -61,13 +61,13 @@ function DayArrowNav({
   const btnBase =
     'flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45]';
   const btnEnabled =
-    'text-gray-500 hover:bg-gray-100 hover:text-[#1a7a45] dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-[#1a7a45]';
+    'text-gray-500 hover:bg-gray-100 hover:text-[#1a7a45] dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-[#1a7a45]';
   const btnDisabled =
     'cursor-not-allowed opacity-25 text-gray-400 dark:text-zinc-600 pointer-events-none';
 
   return (
     <div className='sticky top-0 z-20 -mx-4 sm:mx-0'>
-      <div className='border-b border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/96 backdrop-blur-sm px-4 sm:px-2 sm:rounded-xl sm:border sm:border-gray-200 dark:sm:border-zinc-800'>
+      <div className='border-b border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 backdrop-blur-sm px-4 sm:px-2 sm:rounded-xl sm:border sm:border-gray-200 dark:sm:border-zinc-700'>
         <div className='flex items-center justify-between py-2'>
           {/* Flecha izquierda */}
           <button
@@ -84,7 +84,7 @@ function DayArrowNav({
           <div className='flex flex-col items-center gap-0.5 overflow-hidden text-center'>
             <span
               key={`${activeDay}-name`}
-              className={`text-sm font-semibold text-gray-900 dark:text-zinc-100 ${
+              className={`text-sm font-semibold text-gray-900 dark:text-white ${
                 animDir === 'right' ? 'animate-tab-in' : 'animate-tab-in-reverse'
               }`}
             >
@@ -92,7 +92,7 @@ function DayArrowNav({
             </span>
             <span
               key={`${activeDay}-count`}
-              className='text-xs tabular-nums text-gray-500 dark:text-zinc-500'
+              className='text-xs tabular-nums text-gray-500 dark:text-zinc-400'
             >
               Día {activeDay} de {totalDays}
             </span>
