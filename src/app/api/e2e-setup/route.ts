@@ -63,12 +63,14 @@ export async function POST(request: Request) {
 
   // Crear o actualizar perfil (upsert para manejar filas creadas por triggers con full_name null)
   // NOTA: subscription_tier no existe en el schema — la columna real es subscription_status
+  // onboarding_completed_at: null para poder testear el wizard de onboarding
   const { error: profileError } = await supabase.from('profiles').upsert({
     id: userId,
     full_name: 'Nutricionista E2E',
     specialty: 'general',
     clinic_name: 'Clínica E2E Test',
     subscription_status: 'active',
+    onboarding_completed_at: null,
   });
 
   if (profileError) {
