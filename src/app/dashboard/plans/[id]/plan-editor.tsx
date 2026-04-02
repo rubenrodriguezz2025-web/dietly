@@ -15,99 +15,55 @@ interface Props {
   validationResult?: ValidationResult;
 }
 
-// ── Arrow nav ─────────────────────────────────────────────────────────────────
+// ── Day tabs nav ───────────────────────────────────────────────────────────────
 
-function ChevronIcon({ dir }: { dir: 'left' | 'right' }) {
-  return (
-    <svg
-      xmlns='http://www.w3.org/2000/svg'
-      width='16'
-      height='16'
-      viewBox='0 0 24 24'
-      fill='none'
-      stroke='currentColor'
-      strokeWidth='2.5'
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden='true'
-    >
-      {dir === 'left' ? (
-        <polyline points='15 18 9 12 15 6' />
-      ) : (
-        <polyline points='9 18 15 12 9 6' />
-      )}
-    </svg>
-  );
-}
+const DAY_SHORT: Record<string, string> = {
+  Lunes: 'Lun',
+  Martes: 'Mar',
+  Miércoles: 'Mié',
+  Jueves: 'Jue',
+  Viernes: 'Vie',
+  Sábado: 'Sáb',
+  Domingo: 'Dom',
+};
 
-function DayArrowNav({
+function DayTabsNav({
   activeDay,
-  animDir,
   days,
+  dirtyDays,
   onSelect,
 }: {
   activeDay: number;
-  animDir: 'left' | 'right';
   days: PlanDay[];
-  onSelect: (day: number, dir: 'left' | 'right') => void;
+  dirtyDays: Set<number>;
+  onSelect: (dayNumber: number) => void;
 }) {
-  const totalDays = days.length;
-  const currentDayData = days.find((d) => d.day_number === activeDay) ?? days[0];
-  const dayName = currentDayData?.day_name ?? `Día ${activeDay}`;
-
-  const canGoPrev = activeDay > 1;
-  const canGoNext = activeDay < totalDays;
-
-  const btnBase =
-    'flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45]';
-  const btnEnabled =
-    'text-gray-500 hover:bg-gray-100 hover:text-[#1a7a45] dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-[#1a7a45]';
-  const btnDisabled =
-    'cursor-not-allowed opacity-25 text-gray-400 dark:text-zinc-600 pointer-events-none';
-
   return (
     <div className='sticky top-0 z-20 -mx-4 sm:mx-0'>
-      <div className='border-b border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 backdrop-blur-sm px-4 sm:px-2 sm:rounded-xl sm:border sm:border-gray-200 dark:sm:border-zinc-700'>
-        <div className='flex items-center justify-between py-2'>
-          {/* Flecha izquierda */}
-          <button
-            type='button'
-            aria-label='Día anterior'
-            disabled={!canGoPrev}
-            onClick={() => canGoPrev && onSelect(activeDay - 1, 'left')}
-            className={`${btnBase} ${canGoPrev ? btnEnabled : btnDisabled}`}
-          >
-            <ChevronIcon dir='left' />
-          </button>
-
-          {/* Día actual */}
-          <div className='flex flex-col items-center gap-0.5 overflow-hidden text-center'>
-            <span
-              key={`${activeDay}-name`}
-              className={`text-sm font-semibold text-gray-900 dark:text-white ${
-                animDir === 'right' ? 'animate-tab-in' : 'animate-tab-in-reverse'
-              }`}
-            >
-              {dayName}
-            </span>
-            <span
-              key={`${activeDay}-count`}
-              className='text-xs tabular-nums text-gray-500 dark:text-zinc-400'
-            >
-              Día {activeDay} de {totalDays}
-            </span>
-          </div>
-
-          {/* Flecha derecha */}
-          <button
-            type='button'
-            aria-label='Día siguiente'
-            disabled={!canGoNext}
-            onClick={() => canGoNext && onSelect(activeDay + 1, 'right')}
-            className={`${btnBase} ${canGoNext ? btnEnabled : btnDisabled}`}
-          >
-            <ChevronIcon dir='right' />
-          </button>
+      <div className='border-b border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 sm:px-2 sm:rounded-xl sm:border sm:border-gray-200 dark:sm:border-zinc-700'>
+        <div className='flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+          {days.map((day) => {
+            const isActive = day.day_number === activeDay;
+            const isDirty = dirtyDays.has(day.day_number);
+            const shortName = DAY_SHORT[day.day_name] ?? day.day_name.slice(0, 3);
+            return (
+              <button
+                key={day.day_number}
+                type='button'
+                onClick={() => onSelect(day.day_number)}
+                className={`relative flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45] ${
+                  isActive
+                    ? 'bg-[#1a7a45] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+                }`}
+              >
+                {shortName}
+                {isDirty && (
+                  <span className='absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400' />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -119,7 +75,7 @@ function DayArrowNav({
 export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
   const [dirtyDays, setDirtyDays] = useState<Set<number>>(new Set());
   const [activeDay, setActiveDay] = useState<number>(days[0]?.day_number ?? 1);
-  const [animDir, setAnimDir] = useState<'left' | 'right'>('right');
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   const approvedCount = days.filter((d) => d.day_status === 'approved').length;
   const totalDays = days.length;
@@ -146,10 +102,7 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const n = Number(entry.target.getAttribute('data-plan-day'));
-            if (n) {
-              setAnimDir(n > activeDayRef.current ? 'right' : 'left');
-              setActiveDay(n);
-            }
+            if (n) setActiveDay(n);
             break;
           }
         }
@@ -165,13 +118,14 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
     return () => observer.disconnect();
   }, [days]);
 
-  // ── Scroll to day on arrow click ────────────────────────────────────────────
-  function handleArrowSelect(dayNumber: number, dir: 'left' | 'right') {
-    setAnimDir(dir);
+  // ── Scroll to day on tab click ────────────────────────────────────────────
+  function handleTabSelect(dayNumber: number) {
     setActiveDay(dayNumber);
     const el = document.getElementById(`plan-day-${dayNumber}`);
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - 70;
+    // Offset: tabs bar height (~52px) + small gap
+    const tabsHeight = tabsRef.current?.offsetHeight ?? 52;
+    const top = el.getBoundingClientRect().top + window.scrollY - tabsHeight - 12;
     window.scrollTo({ top, behavior: 'smooth' });
   }
 
@@ -208,13 +162,15 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
         </div>
       )}
 
-      {/* Navegación con flechas */}
-      <DayArrowNav
-        activeDay={activeDay}
-        animDir={animDir}
-        days={days}
-        onSelect={handleArrowSelect}
-      />
+      {/* Tabs de días */}
+      <div ref={tabsRef}>
+        <DayTabsNav
+          activeDay={activeDay}
+          days={days}
+          dirtyDays={dirtyDays}
+          onSelect={handleTabSelect}
+        />
+      </div>
 
       {days.map((day) => (
         <div
