@@ -405,11 +405,7 @@ export function PlanActionsBar({
         {emailState.ok && (
           <p className='text-xs text-emerald-500'>✓ Email enviado correctamente</p>
         )}
-        {autoNotified && !emailState.ok && !emailState.error && (
-          <p className='max-w-xs text-right text-[11px] text-zinc-600'>
-            El paciente ya fue notificado automáticamente al aprobar el plan. Este botón reenvía el plan con el PDF adjunto.
-          </p>
-        )}
+
         {!hasEmail && !isDraft && (
           <p className='text-xs text-zinc-600'>
             Sin email — usa &quot;Copiar enlace&quot; o &quot;WhatsApp&quot;
