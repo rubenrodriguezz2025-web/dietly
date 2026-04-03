@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { generatePlanAccessToken } from '@/libs/auth/plan-tokens';
 import { logAIRequest } from '@/libs/ai/logger';
 import {
   buildShoppingListPrompt,
@@ -13,6 +12,7 @@ import {
   SYSTEM_PROMPT_DIETISTA,
 } from '@/libs/ai/plan-prompts';
 import { pseudonymizePatient } from '@/libs/ai/pseudonymize';
+import { generatePlanAccessToken } from '@/libs/auth/plan-tokens';
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';

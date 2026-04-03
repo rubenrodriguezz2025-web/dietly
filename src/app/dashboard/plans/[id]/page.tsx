@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import type React from 'react';
 
-import { validateNutritionPlan, type ValidatorPatient } from '@/libs/validation/nutrition-validator';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import { validateNutritionPlan, type ValidatorPatient } from '@/libs/validation/nutrition-validator';
 import type { NutritionPlan, Patient, PlanContent } from '@/types/dietly';
 import { GOAL_LABELS, PLAN_STATUS_LABELS } from '@/types/dietly';
 
