@@ -136,8 +136,8 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className='flex items-start justify-between gap-4'>
         <div>
-          <p className='text-xs font-medium capitalize text-zinc-600'>
-            {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+          <p className='text-xs font-medium text-zinc-600'>
+            {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, c => c.toUpperCase())}
           </p>
           <h1 className='mt-0.5 text-2xl font-bold text-zinc-100'>
             Hola, {profile.full_name.split(' ')[0]}
