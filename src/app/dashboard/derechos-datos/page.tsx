@@ -182,6 +182,26 @@ export default async function DerechosDatosPage() {
         </section>
       )}
 
+      {/* Plantilla consentimiento */}
+      <div className='rounded-xl border border-zinc-800/40 bg-zinc-900/20 px-4 py-3'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
+          <div>
+            <p className='text-sm font-medium text-zinc-300'>Plantilla de consentimiento informado</p>
+            <p className='mt-0.5 text-xs text-zinc-600'>
+              Documento para imprimir y dar a firmar al paciente antes de la primera consulta (Art. 9(2)(a) RGPD).
+            </p>
+          </div>
+          <Link
+            href='/legal/consentimiento'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='flex-shrink-0 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-200'
+          >
+            Ver plantilla →
+          </Link>
+        </div>
+      </div>
+
       {/* Info legal */}
       <div className='rounded-xl border border-zinc-800/40 bg-gray-50/50 dark:bg-zinc-900/20 px-4 py-3'>
         <p className='text-xs leading-relaxed text-zinc-600'>
