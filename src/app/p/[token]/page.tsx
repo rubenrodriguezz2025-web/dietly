@@ -146,6 +146,7 @@ const PWA_STYLES = `
   @media print {
     [data-pwa-theme] { --bg: #ffffff; --card: #ffffff; --text: #18181b; --text-muted: #71717a; --border: #e4e4e7; }
     button, .pwa-banner, .pwa-bv-backdrop, .pwa-bv-card, [aria-label="Contactar con tu nutricionista por WhatsApp"] { display: none !important; }
+    .pwa-header-sticky { display: none !important; }
   }
 `;
 
@@ -348,36 +349,46 @@ export default async function PaginaPaciente({
         className={jakarta.className}
         style={{ minHeight: '100vh', background: 'var(--bg)', scrollBehavior: 'smooth' }}
       >
-        {/* ── Branding header del nutricionista ───────────────────────────── */}
-        <header
-          className='mx-auto flex max-w-lg items-center gap-3 px-4 pt-4 pb-2'
-          style={{ maxHeight: 56 }}
+        {/* ── Branding header del nutricionista — sticky ───────────────────── */}
+        <div
+          className='pwa-header-sticky sticky top-0 z-20 w-full'
+          style={{
+            background: 'var(--nav-bg)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderBottom: '1px solid var(--border)',
+          }}
         >
-          {logoUrl ? (
-            <Image
-              src={logoUrl}
-              alt={clinicName ?? nombreDN ?? ''}
-              width={36}
-              height={36}
-              className='h-9 w-9 flex-shrink-0 rounded-full object-cover'
-              style={{ border: `2px solid ${primaryColor}` }}
-            />
-          ) : (nombreDN || clinicName) ? (
+          <header className='mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5'>
+            {logoUrl ? (
+              <Image
+                src={logoUrl}
+                alt={clinicName ?? nombreDN ?? ''}
+                width={32}
+                height={32}
+                className='h-8 w-8 flex-shrink-0 rounded-full object-cover'
+                style={{ border: `2px solid ${primaryColor}` }}
+              />
+            ) : (nombreDN || clinicName) ? (
+              <span
+                className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white'
+                style={{ background: primaryColor }}
+                aria-hidden='true'
+              >
+                {(clinicName ?? nombreDN ?? '').charAt(0).toUpperCase()}
+              </span>
+            ) : null}
             <span
-              className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white'
-              style={{ background: primaryColor }}
-              aria-hidden='true'
+              className='truncate text-sm font-semibold'
+              style={{ color: 'var(--text)' }}
             >
-              {(clinicName ?? nombreDN ?? '').charAt(0).toUpperCase()}
+              {clinicName ?? nombreDN ?? ''}
             </span>
-          ) : null}
-          <span
-            className='truncate text-sm font-semibold'
-            style={{ color: 'var(--text)' }}
-          >
-            {clinicName ?? nombreDN ?? ''}
-          </span>
-        </header>
+            <div className='ml-auto flex-shrink-0'>
+              <BotonDescargar variant='compact' />
+            </div>
+          </header>
+        </div>
 
         {/* ── CONTENIDO ────────────────────────────────────────────────────── */}
         <main className='mx-auto max-w-lg px-4 pb-24'>
