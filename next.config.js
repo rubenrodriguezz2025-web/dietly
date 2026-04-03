@@ -31,6 +31,23 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          // M-01: Content Security Policy
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://vercel.live",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.stripe.com wss://*.supabase.co",
+              "frame-src https://js.stripe.com https://hooks.stripe.com",
+              "font-src 'self' data:",
+            ].join('; '),
+          },
+          // M-07: Additional security headers
+          { key: 'X-DNS-Prefetch-Control', value: 'off' },
+          { key: 'X-Download-Options', value: 'noopen' },
+          { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
         ],
       },
     ];

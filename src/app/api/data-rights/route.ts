@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
-const VALID_TYPES = ['access', 'rectification', 'erasure', 'restriction', 'portability', 'objection'];
+const VALID_TYPES = ['access', 'rectification', 'erasure', 'restriction', 'portability', 'objection'] as const;
+
+const dataRightsSchema = z.object({
+  name: z.string().min(1, 'El nombre es obligatorio.').max(200),
+  email: z.string().email('Email inválido.').max(254),
+  request_type: z.enum(VALID_TYPES, { errorMap: () => ({ message: 'Tipo de solicitud no válido.' }) }),
+  notes: z.string().max(2000).optional(),
+});
 
 // Rate limiting por IP usando DB — 3 solicitudes por hora
 const RATE_LIMIT_MAX = 3;
@@ -34,23 +42,20 @@ export async function POST(req: NextRequest) {
     attempted_at: new Date().toISOString(),
   });
 
-  let body: { name?: string; email?: string; request_type?: string; notes?: string };
-
+  let rawBody: unknown;
   try {
-    body = await req.json();
+    rawBody = await req.json();
   } catch {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
   }
 
-  const { name, email, request_type, notes } = body;
-
-  if (!name || !email || !request_type) {
-    return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
+  const result = dataRightsSchema.safeParse(rawBody);
+  if (!result.success) {
+    const msg = result.error.issues.map((i) => i.message).join('; ');
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  if (!VALID_TYPES.includes(request_type)) {
-    return NextResponse.json({ error: 'Tipo de solicitud no válido' }, { status: 400 });
-  }
+  const { name, email, request_type, notes } = result.data;
 
   // Buscar al paciente por email (puede haber más de uno si varias clínicas lo tienen)
   const { data: patients } = await supabaseAdminClient

@@ -10,6 +10,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
+  // M-03: bloquear en producción a nivel de código (además del redirect en next.config.js)
+  if (process.env.NODE_ENV === 'production') {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+
   // Solo disponible si el secret está configurado en el entorno
   const setupSecret = process.env.E2E_SETUP_SECRET;
   if (!setupSecret) {
@@ -32,7 +37,7 @@ export async function POST(request: Request) {
   const password: string = body.password;
 
   // Validar que sea un email de test (seguridad extra)
-  if (!email || !email.includes('e2e') && !email.includes('playwright') && !email.includes('test')) {
+  if (!email || (!email.includes('e2e') && !email.includes('playwright') && !email.includes('test'))) {
     return Response.json({ error: 'Only test emails allowed' }, { status: 400 });
   }
 

@@ -3,6 +3,9 @@ import React from "react";
 import { Document, Page, renderToBuffer, Text } from "@react-pdf/renderer";
 
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return Response.json({}, { status: 404 });
+  }
   const doc = React.createElement(
     Document,
     null,

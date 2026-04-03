@@ -89,9 +89,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'El cuestionario ya fue enviado.' }, { status: 409 });
   }
 
+  // M-06: sanitizar campos de texto libre antes de persistir
+  const sanitizedAnswers: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(answers)) {
+    if (typeof value === 'string') {
+      sanitizedAnswers[key] = value.replace(/[<>]/g, '').slice(0, 2000);
+    } else {
+      sanitizedAnswers[key] = value;
+    }
+  }
+
   const { error } = await supabaseAdminClient.from('intake_forms').insert({
     patient_id,
-    answers: answers as Record<string, Json>,
+    answers: sanitizedAnswers as Record<string, Json>,
     completed_at: new Date().toISOString(),
   });
 

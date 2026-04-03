@@ -67,6 +67,7 @@ export async function recalculateMealMacros(
   try {
     const anthropic = new Anthropic({
       apiKey: getEnvVar(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC_API_KEY'),
+      timeout: 30_000,
     });
 
     const calcPrompt = `Calcula los macronutrientes y calorías totales de esta comida basándote en sus ingredientes:\n\nComida: ${meal.meal_name}\nIngredientes:\n${ingredientsList}\n\nUsa la herramienta calculate_macros para devolver el resultado.`;
@@ -269,6 +270,24 @@ export async function sendPlanToPatient(
   if (plan.status !== 'approved' && plan.status !== 'sent')
     return { error: 'Solo se pueden enviar planes aprobados.' };
   if (!plan.patients?.email) return { error: 'El paciente no tiene email registrado. Añádelo en su ficha.' };
+
+  // M-09: rate limiting — máximo 3 envíos por plan en los últimos 30 minutos
+  const sendWindowStart = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { count: recentSends } = await supabaseAdminClient
+    .from('plan_access_attempts')
+    .select('id', { count: 'exact', head: true })
+    .eq('patient_token', `send_plan_${planId}`)
+    .gte('attempted_at', sendWindowStart);
+
+  if ((recentSends ?? 0) >= 3) {
+    return { error: 'Has enviado este plan demasiadas veces en los últimos 30 minutos. Inténtalo más tarde.' };
+  }
+
+  await supabaseAdminClient.from('plan_access_attempts').insert({
+    ip_address: null,
+    patient_token: `send_plan_${planId}`,
+    attempted_at: new Date().toISOString(),
+  });
 
   const { data: profile } = (await supabase
     .from('profiles')
@@ -590,6 +609,7 @@ Todas las comidas deben tener calorías > 0 e ingredientes completos.`;
   try {
     const anthropic = new Anthropic({
       apiKey: getEnvVar(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC_API_KEY'),
+      timeout: 60_000,
     });
 
     const response = await anthropic.messages.create({

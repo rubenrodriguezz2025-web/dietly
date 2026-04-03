@@ -5,6 +5,9 @@ function sleep(ms: number) {
 }
 
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return new Response(null, { status: 404 });
+  }
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
