@@ -348,30 +348,27 @@ function HeroSection() {
 
         {/* CTA */}
         <div className='fu3 mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center'>
-          <CtaButton href='/signup'>
-            Empezar gratis →
-          </CtaButton>
           <a
-            href='#como-funciona'
-            className='cursor-pointer rounded-xl border border-[#1a2e1a] px-7 py-3.5 text-sm font-medium text-zinc-400 transition-colors hover:border-[#1a7a45]/50 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500'
+            href='https://ig.me/m/dietly.ia'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#1a7a45] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#1a7a45]/25 transition-all duration-200 hover:bg-[#22c55e] hover:shadow-[#22c55e]/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a7a45]'
           >
-            Ver cómo funciona →
+            Unirte a la beta →
           </a>
-        </div>
-        <div className='fu3 mt-3 flex justify-center'>
           <a
             href='/p/demo'
             target='_blank'
             rel='noopener noreferrer'
-            className='group inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors duration-200 hover:text-[#22c55e]'
+            className='group inline-flex items-center gap-1.5 cursor-pointer rounded-xl border border-[#1a2e1a] px-7 py-3.5 text-sm font-medium text-zinc-400 transition-colors hover:border-[#1a7a45]/50 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500'
           >
             <span className='inline-block transition-transform duration-200 group-hover:scale-110'>📱</span>
-            Ver plan de ejemplo
-            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='transition-transform duration-200 group-hover:translate-x-0.5'>
-              <path d='M7 17l9.2-9.2M17 17V7.8H7.8' />
-            </svg>
+            Ver plan de ejemplo →
           </a>
         </div>
+        <p className='fu3 mt-3 text-center text-xs text-zinc-400'>
+          Responderemos en menos de 24h · Acceso gratuito durante la beta
+        </p>
         <p className='fu3 mt-4 text-xs text-zinc-700'>
           ¿Ya tienes cuenta?{' '}
           <Link href='/login' className='text-zinc-500 transition-colors hover:text-zinc-400'>
