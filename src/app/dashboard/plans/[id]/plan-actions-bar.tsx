@@ -107,6 +107,7 @@ interface Props {
   planId: string;
   status: string;
   patientToken: string;
+  signedPlanUrl?: string;
   patientName: string;
   patientEmail: string;
   planTitle: string;
@@ -122,7 +123,8 @@ interface Props {
 export function PlanActionsBar({
   planId,
   status,
-  patientToken,
+  patientToken: _patientToken,
+  signedPlanUrl,
   patientName,
   patientEmail,
   planTitle,
@@ -159,11 +161,8 @@ export function PlanActionsBar({
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
 
-  // ── Plan URL (solo disponible en cliente) ─────────────────────────────────
-  const [planUrl, setPlanUrl] = useState('');
-  useEffect(() => {
-    setPlanUrl(`${window.location.origin}/p/${patientToken}`);
-  }, [patientToken]);
+  // ── Plan URL — firmada con HMAC-SHA256 (generada en el servidor) ──────────
+  const planUrl = signedPlanUrl ?? '';
 
   // ── Copiar enlace ─────────────────────────────────────────────────────────
   const [copied, setCopied] = useState(false);

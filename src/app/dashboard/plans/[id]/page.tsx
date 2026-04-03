@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import type React from 'react';
 
+import { generatePlanAccessToken } from '@/libs/auth/plan-tokens';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { validateNutritionPlan, type ValidatorPatient } from '@/libs/validation/nutrition-validator';
 import type { NutritionPlan, Patient, PlanContent } from '@/types/dietly';
@@ -69,6 +70,15 @@ export default async function PlanPage({
 
   const hasCollegeNumber = !!profile?.college_number && profile.college_number.trim().length >= 4;
 
+  // Generar URL firmada con HMAC-SHA256 para los botones "Copiar enlace" y "WhatsApp"
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const hmacData = plan.patient_token
+    ? await generatePlanAccessToken(plan.patient_token)
+    : null;
+  const signedPlanUrl = hmacData
+    ? `${appUrl}/p/${plan.patient_token}?h=${hmacData.token}&e=${hmacData.expires}`
+    : '';
+
   return (
     <div className='flex flex-col gap-8'>
       {/* Modal de recordatorio post-aprobación */}
@@ -123,6 +133,7 @@ export default async function PlanPage({
             planId={id}
             status={plan.status}
             patientToken={plan.patient_token}
+            signedPlanUrl={signedPlanUrl}
             patientName={plan.patients?.name ?? ''}
             patientEmail={plan.patients?.email ?? ''}
             planTitle={`Semana del ${new Date(plan.week_start_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`}
