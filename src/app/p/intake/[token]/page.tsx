@@ -102,7 +102,7 @@ export default async function PaginaIntake({
       </header>
 
       <main className='mx-auto max-w-lg px-4 py-6 pb-16'>
-        <IntakeForm patientId={paciente.id} />
+        <IntakeForm patientId={paciente.id} intakeToken={token} />
       </main>
     </div>
   );

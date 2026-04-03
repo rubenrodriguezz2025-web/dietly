@@ -8,7 +8,7 @@ const inputClass =
 const textareaClass = `${inputClass} resize-none`;
 const selectClass = `${inputClass} cursor-pointer`;
 
-export function IntakeForm({ patientId }: { patientId: string }) {
+export function IntakeForm({ patientId, intakeToken }: { patientId: string; intakeToken: string }) {
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +44,7 @@ export function IntakeForm({ patientId }: { patientId: string }) {
       const res = await fetch('/api/intake/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patient_id: patientId, answers, consent: true }),
+        body: JSON.stringify({ patient_id: patientId, intake_token: intakeToken, answers, consent: true }),
       });
 
       if (!res.ok) {
