@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { generatePlanAccessToken } from '@/lib/auth/plan-tokens';
+import { generatePlanAccessToken } from '@/libs/auth/plan-tokens';
 import { logAIRequest } from '@/libs/ai/logger';
 import {
   buildShoppingListPrompt,
@@ -175,8 +175,6 @@ export async function approvePlan(
     return { error: 'Necesitas añadir tu número de colegiado en Ajustes antes de aprobar un plan.' };
   }
 
-  console.log('[approvePlan] Usuario:', user.id, 'Plan:', planId);
-
   const { error, count } = await supabase
     .from('nutrition_plans')
     .update(
@@ -191,7 +189,6 @@ export async function approvePlan(
     return { error: 'Error al aprobar el plan. Inténtalo de nuevo.' };
   }
 
-  console.log('[approvePlan] Filas actualizadas:', count);
   if (count === 0) {
     return { error: 'No se encontró el plan o no tienes permiso para aprobarlo.' };
   }

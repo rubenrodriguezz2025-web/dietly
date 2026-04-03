@@ -4,7 +4,7 @@ import { createElement } from 'react';
 import { redirect } from 'next/navigation';
 
 import { PatientWelcomeEmail } from '@/features/emails/patient-welcome';
-import { generateIntakeAccessToken } from '@/lib/auth/intake-tokens';
+import { generateIntakeAccessToken } from '@/libs/auth/intake-tokens';
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';

@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 
-import { generateIntakeAccessToken } from '@/lib/auth/intake-tokens';
+import { generateIntakeAccessToken } from '@/libs/auth/intake-tokens';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { MealSwap, NutritionPlan, Patient, PatientProgress } from '@/types/dietly';

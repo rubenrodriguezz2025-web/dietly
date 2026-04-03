@@ -9,7 +9,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { ValidationResult } from '@/lib/validation/nutrition-validator';
+import type { ValidationResult } from '@/libs/validation/nutrition-validator';
 
 // ── Sugerencias del sistema ────────────────────────────────────────────────────
 // Badge discreto + panel lateral informativo.

@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { PatientWelcomeEmail } from '@/features/emails/patient-welcome';
-import { generateIntakeAccessToken } from '@/lib/auth/intake-tokens';
+import { generateIntakeAccessToken } from '@/libs/auth/intake-tokens';
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
@@ -161,14 +161,6 @@ export async function createPatient(
     });
   }
 
-  // Enviar email de bienvenida al paciente (no bloquea si falla)
-  console.log('[createPatient:email] Iniciando envío de bienvenida', {
-    hasEmail: !!email,
-    patientId,
-    resendKeyExists: !!process.env.RESEND_API_KEY,
-    appUrl: process.env.NEXT_PUBLIC_APP_URL ?? '(vacío)',
-  });
-
   if (email) {
     try {
       const [profileResult, patientTokenResult] = await Promise.all([
@@ -183,13 +175,6 @@ export async function createPatient(
           .eq('id', patientId)
           .single(),
       ]);
-
-      console.log('[createPatient:email] Datos obtenidos', {
-        profileOk: !!profileResult.data,
-        profileError: profileResult.error?.message ?? null,
-        intakeTokenOk: !!patientTokenResult.data?.intake_token,
-        intakeTokenError: patientTokenResult.error?.message ?? null,
-      });
 
       const nutritionistName = profileResult.data?.full_name ?? 'Tu nutricionista';
       const clinicName = profileResult.data?.clinic_name ?? null;
@@ -208,12 +193,6 @@ export async function createPatient(
       } else {
         intakeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/patients/${patientId}`;
       }
-
-      console.log('[createPatient:email] Enviando a Resend', {
-        to: email,
-        from: 'hola@dietly.es',
-        intakeUrlPrefix: intakeUrl.slice(0, 60),
-      });
 
       const emailElement = createElement(PatientWelcomeEmail, {
         patientName: name,
@@ -236,10 +215,6 @@ export async function createPatient(
         text,
       });
 
-      console.log('[createPatient:email] Respuesta de Resend', {
-        id: sendResult.data?.id ?? null,
-        error: sendResult.error ?? null,
-      });
     } catch (emailError) {
       console.error('[createPatient:email] Excepción al enviar email de bienvenida:', emailError);
     }

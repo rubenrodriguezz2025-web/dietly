@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 
-import { validatePlanAccessToken } from '@/lib/auth/plan-tokens';
+import { validatePlanAccessToken } from '@/libs/auth/plan-tokens';
 import { aggregateShoppingList } from '@/libs/shopping-list';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { PlanContent } from '@/types/dietly';

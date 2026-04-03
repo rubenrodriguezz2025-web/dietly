@@ -598,7 +598,6 @@ export async function POST(req: NextRequest) {
           }
 
           send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1] });
-          console.log(`[plans/generate] plan=${planId} — iniciando día ${dayNum}`);
 
           let dayData: PlanDay | null = null;
 
@@ -621,8 +620,6 @@ export async function POST(req: NextRequest) {
             const outputTok = response.usage.output_tokens;
             totalTokensInput += inputTok;
             totalTokensOutput += outputTok;
-            console.log(`[plans/generate] plan=${planId} día=${dayNum} — Claude OK (in=${inputTok} out=${outputTok} stop=${response.stop_reason})`);
-
             void supabaseAdminClient.from('plan_generations').insert({
               plan_id: planId,
               nutritionist_id: user.id,
@@ -636,7 +633,6 @@ export async function POST(req: NextRequest) {
             if (toolUse?.type === 'tool_use') {
               const candidate = toolUse.input as PlanDay;
               const invalidMeals = validateDay(candidate);
-              console.log(`[plans/generate] plan=${planId} día=${dayNum} — meals=${candidate.meals?.length ?? 0} invalidMeals=${invalidMeals.length}`);
 
               // Si pasa validación, lo aceptamos directamente
               if (invalidMeals.length === 0) {
@@ -725,12 +721,10 @@ export async function POST(req: NextRequest) {
           }
 
           days.push(dayData);
-          console.log(`[plans/generate] plan=${planId} — día ${dayNum} guardado en memoria (total días: ${days.length})`);
         }
 
         // Generar lista de la compra
         send({ type: 'progress', day: 8, day_name: 'Lista de la compra' });
-        console.log(`[plans/generate] plan=${planId} — generando lista de la compra`);
         let shoppingList: ShoppingList = { produce: [], protein: [], dairy: [], grains: [], pantry: [] };
         try {
           const shoppingPrompt = buildShoppingListPrompt(days);
@@ -750,7 +744,6 @@ export async function POST(req: NextRequest) {
           const slOutput = shoppingResponse.usage.output_tokens;
           totalTokensInput += slInput;
           totalTokensOutput += slOutput;
-          console.log(`[plans/generate] plan=${planId} — shopping list OK (in=${slInput} out=${slOutput})`);
 
           void supabaseAdminClient.from('plan_generations').insert({
             plan_id: planId,
@@ -806,7 +799,6 @@ export async function POST(req: NextRequest) {
           shopping_list: shoppingList,
         };
 
-        console.log(`[plans/generate] plan=${planId} — guardando plan en Supabase (días=${days.length})`);
         const { error: finalUpdateError } = await supabaseAdminClient
           .from('nutrition_plans')
           .update({
@@ -823,7 +815,6 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        console.log(`[plans/generate] plan=${planId} — UPDATE final OK → enviando done`);
         send({ type: 'done', plan_id: planId });
       } catch (err) {
         console.error('[plans/generate] error:', err);

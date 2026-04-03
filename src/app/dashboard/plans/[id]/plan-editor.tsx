@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import type { ValidationResult } from '@/lib/validation/nutrition-validator';
+import type { ValidationResult } from '@/libs/validation/nutrition-validator';
 import type { PlanDay } from '@/types/dietly';
 
 import { DayEditor } from './day-editor';

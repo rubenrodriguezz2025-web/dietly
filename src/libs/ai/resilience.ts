@@ -59,7 +59,6 @@ function isCircuitOpen(): boolean {
     // Tras 60 s, permite un intento de prueba (half-open automático)
     circuit.openedAt = null;
     circuit.consecutiveFailures = 0;
-    console.log('[resilience] Circuit breaker → HALF-OPEN (probando recuperación)');
     return false;
   }
   return true;
@@ -166,7 +165,6 @@ export async function notifyTeamCriticalError(
       html,
     });
 
-    console.log(`[resilience] Alerta enviada al equipo: ${type}`);
   } catch (emailErr) {
     // El fallo al enviar la alerta NUNCA debe bloquear el flujo principal
     console.error('[resilience] Error enviando alerta al equipo:', emailErr);
