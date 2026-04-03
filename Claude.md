@@ -94,6 +94,9 @@ Deploy:    Vercel
 - TypeScript estricto · sin `any` · Zod para todos los inputs
 - Server Actions para mutaciones (no fetch desde cliente)
 - Feature-based: `src/features/<feature>/` con components/, actions/, models/, utils/
+- ESLint: `npm run lint` antes de cada commit · sin warnings en producción
+- Git commits: mensajes en inglés, formato `type: descripción` (feat/fix/refactor/chore)
+- Migraciones: crear con `npm run migration:new`, aplicar con `npm run migration:up` (o Supabase Studio para hotfixes en producción)
 
 ### Supabase
 - **RLS en TODAS las tablas** · patrón: `(select auth.uid()) = nutritionist_id`
@@ -185,7 +188,7 @@ init→Stripe boilerplate · 001→schema core · 002→subscription_status · 0
 
 ## Estado actual
 
-**Semana 5 · Beta privada activa · MVP completo en Vercel**
+**Semana 5 · Beta privada activa · objetivo 8 usuarios beta · MVP completo en Vercel**
 
 **Completado**: Auth + onboarding · CRUD pacientes + intake + seguimiento · Generación IA día a día · Editor plan + validación clínica (19 checks) · PDF server-side · Email Resend · PWA paciente `/p/[token]` · Panel admin beta · RGPD (consentimientos, ARCO, audit logs, rate limiting) · Skeletons Suspense · MacroTransparencyCard · Auditoría completa (abr 2026)
 
@@ -201,6 +204,20 @@ init→Stripe boilerplate · 001→schema core · 002→subscription_status · 0
 3. Plantilla consentimiento informado descargable
 4. Fotos de comida con Nano Banana 2 (post-beta)
 5. BEDCA integrada (post-beta)
+
+---
+
+## Sesión 1 abril 2026 — Auditoría y fixes aplicados
+
+**Sprint 1 — Seguridad**: `/api/health` no expone keys · XSS sanitizado en emails (`escapeHtml`) · HMAC-SHA256 en tokens `/p/[token]` · RLS en `plan_views` (migración 032) · Auth en `/api/meal-image` · Endpoints test bloqueados en producción · Headers HSTS + CSP en `next.config.js`
+
+**Sprint 2 — Rendimiento**: `force-dynamic` eliminado del root layout · `error.tsx` creados (global, dashboard, PWA) · Storage downloads en `Promise.all` · Caché PDF con `pdf_generated_at` (migración 033)
+
+**Sprint 3 — Validación**: Zod en 5 rutas API críticas · Rate limiting real (10 planes/día Básico, 30/día Pro) · Verificación consentimiento `ai_processing` antes de Claude · AbortController + timeout 5 min + reconexión SSE
+
+**Sprint 4 — UX**: 4 `loading.tsx` con skeletons · Header branding nutricionista en PWA · Cookie banner no bloqueante (slide-up, 600ms delay) · 8 queries dashboard → `Promise.all` paralelo
+
+**Infra**: bucket `plan-pdfs` (privado) creado · `PLAN_TOKEN_SECRET` añadida a Vercel + .env.local
 
 ---
 
