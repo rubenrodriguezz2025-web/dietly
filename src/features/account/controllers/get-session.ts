@@ -3,11 +3,13 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 export async function getSession() {
   const supabase = await createSupabaseServerClient();
 
-  const { data, error } = await supabase.auth.getSession();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error) {
     console.error(error);
   }
 
-  return data.session;
+  if (!user) return null;
+
+  return { user };
 }

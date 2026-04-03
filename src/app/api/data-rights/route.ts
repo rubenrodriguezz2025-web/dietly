@@ -4,31 +4,35 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 const VALID_TYPES = ['access', 'rectification', 'erasure', 'restriction', 'portability', 'objection'];
 
-// Rate limiting simple por IP — 3 solicitudes por hora
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+// Rate limiting por IP usando DB — 3 solicitudes por hora
 const RATE_LIMIT_MAX = 3;
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-  entry.count++;
-  return true;
-}
+const RATE_LIMIT_WINDOW_HOURS = 1;
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  if (!checkRateLimit(ip)) {
+
+  // Rate limiting basado en DB (plan_access_attempts como tabla genérica)
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
+  const { count: recentAttempts } = await supabaseAdminClient
+    .from('plan_access_attempts')
+    .select('id', { count: 'exact', head: true })
+    .eq('ip_address', ip)
+    .eq('patient_token', 'data_rights')
+    .gte('attempted_at', windowStart);
+
+  if ((recentAttempts ?? 0) >= RATE_LIMIT_MAX) {
     return NextResponse.json(
       { error: 'Demasiadas solicitudes. Inténtalo de nuevo en una hora.' },
-      { status: 429 }
+      { status: 429 },
     );
   }
+
+  // Registrar intento
+  await supabaseAdminClient.from('plan_access_attempts').insert({
+    ip_address: ip,
+    patient_token: 'data_rights',
+    attempted_at: new Date().toISOString(),
+  });
 
   let body: { name?: string; email?: string; request_type?: string; notes?: string };
 
@@ -54,8 +58,9 @@ export async function POST(req: NextRequest) {
     .select('id, name, email, nutritionist_id')
     .eq('email', email.toLowerCase().trim());
 
+  // Siempre devolver 201 para evitar enumeración de emails (H-06)
   if (!patients || patients.length === 0) {
-    return NextResponse.json({ error: 'No se encontraron datos para ese email' }, { status: 404 });
+    return NextResponse.json({ ok: true }, { status: 201 });
   }
 
   // Crear una solicitud por cada registro encontrado

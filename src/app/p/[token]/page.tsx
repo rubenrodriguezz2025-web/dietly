@@ -214,12 +214,14 @@ export default async function PaginaPaciente({
   const { token } = await params;
   const { dia, h: hmac, e: expires } = await searchParams;
 
-  // Si la URL incluye HMAC, verificarlo criptográficamente
-  if (hmac && expires) {
-    const result = await validatePlanAccessToken(token, hmac, expires);
-    if (!result.valid) {
-      notFound();
-    }
+  // HMAC obligatorio — sin firma criptográfica no se accede al plan
+  if (!hmac || !expires) {
+    notFound();
+  }
+
+  const result = await validatePlanAccessToken(token, hmac, expires);
+  if (!result.valid) {
+    notFound();
   }
 
   const { data: plan } = await (supabaseAdminClient as any)

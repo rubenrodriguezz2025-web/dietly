@@ -60,6 +60,22 @@ export async function POST(req: NextRequest) {
     // Lazy import para evitar error en build time
     const { supabaseAdminClient } = await import('@/libs/supabase/supabase-admin');
 
+    // Rate limiting: máximo 10 swaps por plan por día
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { count: swapsToday } = await (supabaseAdminClient as any)
+      .from('meal_swaps')
+      .select('id', { count: 'exact', head: true })
+      .eq('plan_id', plan_id)
+      .gte('created_at', todayStart.toISOString());
+
+    if ((swapsToday ?? 0) >= 10) {
+      return NextResponse.json(
+        { error: 'Has alcanzado el límite de 10 intercambios por día para este plan.' },
+        { status: 429 },
+      );
+    }
+
     // Verificar plan
     const { data: plan, error: planError } = await (supabaseAdminClient as any)
       .from('nutrition_plans')

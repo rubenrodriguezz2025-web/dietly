@@ -166,10 +166,9 @@ async function handleIntakeRoute(request: NextRequest): Promise<NextResponse> {
   const token = searchParams.get('token');
   const expires = searchParams.get('expires');
 
-  // Compatibilidad hacia atrás: si no hay parámetros HMAC, permitir el acceso.
-  // Los enlaces antiguos (solo UUID) siguen funcionando temporalmente.
+  // HMAC obligatorio — sin firma criptográfica no se accede al intake
   if (!token || !expires) {
-    return NextResponse.next({ request });
+    return forbiddenResponse('Enlace de acceso inválido. Solicita un nuevo enlace a tu nutricionista.');
   }
 
   // Validar token HMAC + expiración + coincidencia de intakeToken

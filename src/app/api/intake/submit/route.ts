@@ -6,8 +6,12 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { Json } from '@/libs/supabase/types';
 import { escapeHtml } from '@/utils/escape-html';
 
+const RATE_LIMIT_MAX = 3; // 3 submissions por IP por hora
+const RATE_LIMIT_WINDOW_HOURS = 1;
+
 const intakeSubmitSchema = z.object({
   patient_id: z.string().uuid('patient_id debe ser un UUID válido.'),
+  intake_token: z.string().min(1, 'intake_token es obligatorio.'),
   answers: z.record(z.string(), z.unknown()).refine((v) => Object.keys(v).length > 0, {
     message: 'El cuestionario debe contener al menos una respuesta.',
   }),
@@ -15,6 +19,36 @@ const intakeSubmitSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // Rate limiting por IP usando Supabase
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
+
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
+
+  // Rate limiting basado en DB (plan_access_attempts como tabla genérica)
+  const { count: recentAttempts } = await supabaseAdminClient
+    .from('plan_access_attempts')
+    .select('id', { count: 'exact', head: true })
+    .eq('ip_address', ip)
+    .eq('patient_token', 'intake_submit')
+    .gte('attempted_at', windowStart);
+
+  if ((recentAttempts ?? 0) >= RATE_LIMIT_MAX) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Inténtalo de nuevo en una hora.' },
+      { status: 429 },
+    );
+  }
+
+  // Registrar intento de rate limiting
+  await supabaseAdminClient.from('plan_access_attempts').insert({
+    ip_address: ip,
+    patient_token: 'intake_submit',
+    attempted_at: new Date().toISOString(),
+  });
+
   let parsed: z.infer<typeof intakeSubmitSchema>;
 
   try {
@@ -29,17 +63,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Cuerpo de petición inválido.' }, { status: 400 });
   }
 
-  const { patient_id, answers, consent } = parsed;
+  const { patient_id, intake_token, answers, consent } = parsed;
 
-  // Obtener nombre del paciente y su nutricionista
+  // Validar que el intake_token corresponde al paciente
   const { data: paciente } = await supabaseAdminClient
     .from('patients')
-    .select('id, name, nutritionist_id')
+    .select('id, name, nutritionist_id, intake_token')
     .eq('id', patient_id)
-    .single() as { data: { id: string; name: string; nutritionist_id: string } | null };
+    .eq('intake_token', intake_token)
+    .single() as { data: { id: string; name: string; nutritionist_id: string; intake_token: string } | null };
 
   if (!paciente) {
-    return NextResponse.json({ error: 'Paciente no encontrado.' }, { status: 404 });
+    return NextResponse.json({ error: 'Token de intake inválido o paciente no encontrado.' }, { status: 403 });
   }
 
   // Comprobar si ya existe una respuesta (no permitir duplicados)
