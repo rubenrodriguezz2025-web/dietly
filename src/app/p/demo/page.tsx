@@ -208,6 +208,7 @@ export default function DemoPage() {
             showMacros={true}
             primaryColor='#1a7a45'
             planId='demo'
+            patientToken='demo'
           />
 
           <ListaCompraInteractiva

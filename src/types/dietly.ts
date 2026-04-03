@@ -206,6 +206,21 @@ export const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {
   error: 'Error',
 };
 
+export type MealSwap = {
+  id: string;
+  plan_id: string;
+  patient_id: string;
+  nutritionist_id: string;
+  day_number: number;
+  meal_index: number;
+  original_meal: Meal;
+  selected_meal: Meal;
+  alternatives: Meal[];
+  reason: string | null;
+  reverted_at: string | null;
+  created_at: string;
+};
+
 export const SEX_LABELS = {
   male: 'Hombre',
   female: 'Mujer',

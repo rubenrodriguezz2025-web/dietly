@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { generateIntakeAccessToken } from '@/lib/auth/intake-tokens';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
+import { MealSwap, NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
 import { CalcTargets, calcTargets,CalcTargetsError } from '@/utils/calc-targets';
 
 import { GenerateButton } from './generate-button';
@@ -39,7 +39,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   }
 
   // Consultas en paralelo para minimizar latencia
-  const [plansResult, progressResult, patientExtraResult, followupFormsResult, nextReminderResult, overdueReminderResult] = await Promise.all([
+  const [plansResult, progressResult, patientExtraResult, followupFormsResult, nextReminderResult, overdueReminderResult, mealSwapsResult] = await Promise.all([
     (supabase as any)
       .from('nutrition_plans')
       .select('id, status, week_start_date, created_at')
@@ -84,6 +84,13 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       .order('remind_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+
+    (supabase as any)
+      .from('meal_swaps')
+      .select('*')
+      .eq('patient_id', id)
+      .eq('nutritionist_id', user.id)
+      .order('created_at', { ascending: false }),
   ]);
 
   const plans = plansResult.data as NutritionPlan[] | null;
@@ -97,6 +104,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   }>;
   const nextReminder = nextReminderResult.data as { id: string; remind_at: string; status: string } | null;
   const overdueReminder = overdueReminderResult.data as { id: string; remind_at: string } | null;
+  const mealSwaps = (mealSwapsResult.data ?? []) as MealSwap[];
 
   const [intakeFormResult, consentResult] = await Promise.all([
     (supabaseAdminClient as any)
@@ -289,6 +297,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         followupForms={followupForms}
         nextReminder={nextReminder}
         overdueReminder={overdueReminder}
+        mealSwaps={mealSwaps}
       />
     </div>
   );

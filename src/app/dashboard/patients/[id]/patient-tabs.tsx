@@ -10,13 +10,14 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
+import type { MealSwap, NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
 import { calcTargets } from '@/utils/calc-targets';
 import { cn } from '@/utils/cn';
 
 import { sendFollowupQuestionnaire } from './followup-patient-actions';
 import { PatientCuestionarioTab } from './PatientCuestionarioTab';
 import { PatientFichaTab } from './PatientFichaTab';
+import { PatientIntercambiosTab } from './PatientIntercambiosTab';
 import { PatientProgresoTab } from './PatientProgresoTab';
 import { PatientSeguimientosTab } from './PatientSeguimientosTab';
 
@@ -65,6 +66,7 @@ type Props = {
   followupForms?: FollowupFormData[];
   nextReminder?: NextReminderData;
   overdueReminder?: { id: string; remind_at: string } | null;
+  mealSwaps?: MealSwap[];
 };
 
 // ── Orquestador ───────────────────────────────────────────────────────────────
@@ -78,6 +80,7 @@ export function PatientTabs({
   followupForms = [],
   nextReminder,
   overdueReminder,
+  mealSwaps = [],
 }: Props) {
   const [activeTab, setActiveTab] = useState('ficha');
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -146,6 +149,14 @@ export function PatientTabs({
             <span className='ml-1.5 h-1.5 w-1.5 rounded-full bg-amber-500' />
           )}
         </TabsTrigger>
+        <TabsTrigger value='intercambios' className={cn(triggerClass, 'relative')}>
+          Intercambios
+          {mealSwaps.length > 0 && (
+            <span className='ml-1.5 rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-zinc-400'>
+              {mealSwaps.length}
+            </span>
+          )}
+        </TabsTrigger>
       </TabsList>
 
       {/* ── Ficha ── */}
@@ -196,6 +207,11 @@ export function PatientTabs({
           onFollowupSheetOpenChange={setFollowupSheetOpen}
           onSendFollowup={handleSendFollowup}
         />
+      </TabsContent>
+
+      {/* ── Intercambios ── */}
+      <TabsContent value='intercambios' className='mt-6 animate-tab-in'>
+        <PatientIntercambiosTab swaps={mealSwaps} />
       </TabsContent>
 
       {/* ── Sheet: preview preguntas del cuestionario de inicio ── */}

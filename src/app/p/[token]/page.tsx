@@ -123,6 +123,25 @@ const PWA_STYLES = `
   .pwa-instruc-wrap.open { grid-template-rows: 1fr; }
   .pwa-instruc-inner { min-height: 0; }
 
+  /* Animaciones bottom sheet intercambio de platos */
+  @keyframes swapBackdropIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes swapBackdropOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes swapSheetIn     { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes swapSheetOut    { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(100%); } }
+  @keyframes swapCheckIn     { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+  .pwa-swap-backdrop-in  { animation: swapBackdropIn  0.22s ease both; }
+  .pwa-swap-backdrop-out { animation: swapBackdropOut 0.22s ease both; }
+  .pwa-swap-sheet-in     { animation: swapSheetIn     0.32s cubic-bezier(0.32,0.72,0,1) both; }
+  .pwa-swap-sheet-out    { animation: swapSheetOut    0.28s cubic-bezier(0.32,0.72,0,1) both; }
+  .pwa-swap-check-in     { animation: swapCheckIn     0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pwa-swap-backdrop-in, .pwa-swap-backdrop-out,
+    .pwa-swap-sheet-in, .pwa-swap-sheet-out,
+    .pwa-swap-check-in { animation-duration: 0.01ms !important; }
+  }
+
   /* Ocultar elementos no imprimibles al guardar como PDF */
   @media print {
     [data-pwa-theme] { --bg: #ffffff; --card: #ffffff; --text: #18181b; --text-muted: #71717a; --border: #e4e4e7; }
@@ -367,6 +386,7 @@ export default async function PaginaPaciente({
             showMacros={showMacros}
             primaryColor={primaryColor}
             planId={plan.id as string}
+            patientToken={token}
           />
 
           {/* Lista de la compra interactiva */}

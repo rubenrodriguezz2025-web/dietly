@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Meal, PlanDay } from '@/types/dietly';
 
+import { IntercambioPlato } from './intercambio-plato';
+
 // ── Constantes de estilos por tipo de comida ──────────────────────────────────
 
 const ACENTO_TIPO: Record<string, { borde: string; etiqueta: string; emoji: string }> = {
@@ -30,16 +32,33 @@ type Props = {
   showMacros: boolean;
   primaryColor: string;
   planId: string;
+  patientToken: string;
 };
 
-export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props) {
+export function VisorDias({ days: initialDays, initialDay, showMacros, primaryColor, planId, patientToken }: Props) {
+  // Estado local mutable de los días — se actualiza al confirmar un intercambio
+  const [days, setDays] = useState(initialDays);
   const [currentDay, setCurrentDay] = useState(initialDay);
   const [animKey, setAnimKey] = useState(0);
   const [animDir, setAnimDir] = useState<'right' | 'left'>('right');
   const touchStartX = useRef<number | null>(null);
   const mealsContainerRef = useRef<HTMLDivElement>(null);
 
+  // Tracking de comidas intercambiadas — key: "day-mealIndex"
+  const [swappedMeals, setSwappedMeals] = useState<Set<string>>(new Set());
+
   const diaData = days.find((d) => d.day_number === currentDay) ?? days[0];
+
+  // Callback cuando se confirma un intercambio
+  const handleSwapComplete = useCallback(
+    (dayNum: number, mealIdx: number, _newMeal: Meal, updatedDay: PlanDay) => {
+      setDays((prev) =>
+        prev.map((d) => (d.day_number === dayNum ? updatedDay : d)),
+      );
+      setSwappedMeals((prev) => new Set(prev).add(`${dayNum}-${mealIdx}`));
+    },
+    [],
+  );
 
   // Actualizar hash de URL al cambiar de día (back button funciona)
   useEffect(() => {
@@ -225,6 +244,18 @@ export function VisorDias({ days, initialDay, showMacros, primaryColor }: Props)
               comida={comida}
               showMacros={showMacros}
               delay={i * 0.055}
+              swapped={swappedMeals.has(`${currentDay}-${i}`)}
+              swapButton={
+                <IntercambioPlato
+                  planId={planId}
+                  patientToken={patientToken}
+                  dayNumber={currentDay}
+                  mealIndex={i}
+                  meal={comida}
+                  primaryColor={primaryColor}
+                  onSwapComplete={handleSwapComplete}
+                />
+              }
             />
           ))}
         </div>
@@ -318,10 +349,14 @@ function TarjetaComida({
   comida,
   showMacros,
   delay,
+  swapped,
+  swapButton,
 }: {
   comida: Meal;
   showMacros: boolean;
   delay: number;
+  swapped: boolean;
+  swapButton: React.ReactNode;
 }) {
   const acento = ACENTO_TIPO[comida.meal_type] ?? { borde: '#16a34a', etiqueta: '#15803d', emoji: '🍴' };
 
@@ -340,18 +375,28 @@ function TarjetaComida({
       {/* Cabecera de comida */}
       <div className='flex items-start justify-between gap-3 px-4 pb-2 pt-3.5'>
         <div className='min-w-0 flex-1'>
-          <p
-            className='mb-0.5 text-[10px] font-bold uppercase tracking-widest'
-            style={{ color: acento.etiqueta }}
-          >
-            <span className='mr-1 text-sm not-italic' aria-hidden='true'>{acento.emoji}</span>
-            {NOMBRE_TIPO[comida.meal_type] ?? comida.meal_type}
-            {comida.time_suggestion && (
-              <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                {' '}· {comida.time_suggestion}
+          <div className='mb-0.5 flex items-center gap-1.5'>
+            <p
+              className='text-[10px] font-bold uppercase tracking-widest'
+              style={{ color: acento.etiqueta }}
+            >
+              <span className='mr-1 text-sm not-italic' aria-hidden='true'>{acento.emoji}</span>
+              {NOMBRE_TIPO[comida.meal_type] ?? comida.meal_type}
+              {comida.time_suggestion && (
+                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                  {' '}· {comida.time_suggestion}
+                </span>
+              )}
+            </p>
+            {swapped && (
+              <span
+                className='rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide'
+                style={{ background: 'var(--kcal-bg)', color: 'var(--kcal-fg)' }}
+              >
+                Cambiado
               </span>
             )}
-          </p>
+          </div>
           <h3
             className='text-[15px] font-bold leading-snug'
             style={{ color: 'var(--text)' }}
@@ -455,6 +500,11 @@ function TarjetaComida({
           </p>
         </div>
       )}
+
+      {/* Botón intercambio */}
+      <div className='px-4 py-3' style={{ borderTop: '1px solid var(--border)' }}>
+        {swapButton}
+      </div>
     </article>
   );
 }
