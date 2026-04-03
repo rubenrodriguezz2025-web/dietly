@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
 
     const alternatives = await callAnthropicWithResilience(async () => {
       const response = await anthropicClient.messages.create({
-        model: 'claude-sonnet-4-6-20250929',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2048,
         system:
           'Eres un dietista-nutricionista experto en nutrición mediterránea española. ' +
