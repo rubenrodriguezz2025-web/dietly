@@ -257,3 +257,16 @@ npm run stripe:listen  # Webhooks local
 5. `.agents/skills/colorize/SKILL.md` — si hay cambios de color
 
 Marketing: `.agents/skills/competitive-ads-extractor.md` · `.agents/skills/lead-research-assistant.md` · `.agents/skills/meta-ads-analyzer.md`
+
+---
+
+## Verificación obligatoria en cada endpoint nuevo
+
+Antes de hacer commit de cualquier API route o server action nueva, verificar siempre:
+
+1. **Rate limiting**: ¿tiene límite de peticiones por usuario/IP? Si no, añadirlo usando el patrón existente (consulta a Supabase con ventana de tiempo).
+
+2. **Cuellos de botella DB**:
+   - ¿Hay queries N+1? (queries dentro de loops)
+   - ¿Se usa select('*') cuando solo hacen falta algunos campos?
+   - ¿Las columnas filtradas en WHERE tienen índice en Supabase?
