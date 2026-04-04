@@ -205,17 +205,19 @@ export async function GET(
     }
 
     // L-06: Audit log — generación de PDF (RGPD Art. 30)
-    supabaseAdminClient
-      .from('audit_logs')
-      .insert({
-        user_id: user.id,
-        action: 'read',
-        resource_type: 'plan',
-        resource_id: id,
-        metadata: { action: 'pdf_generated', patient_id: plan.patient_id },
-      })
-      .then(() => {})
-      .catch(() => {});
+    try {
+      await supabaseAdminClient
+        .from('audit_logs')
+        .insert({
+          user_id: user.id,
+          action: 'read',
+          resource_type: 'plan',
+          resource_id: id,
+          metadata: { action: 'pdf_generated', patient_id: plan.patient_id },
+        });
+    } catch {
+      // silenciar error de audit log
+    }
 
     const fechaStr = new Date(plan.week_start_date as string)
       .toISOString()

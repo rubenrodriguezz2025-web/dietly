@@ -85,17 +85,19 @@ export async function GET(
   };
 
   // L-06: Audit log — exportación de datos (RGPD Art. 20 — portabilidad)
-  supabaseAdminClient
-    .from('audit_logs')
-    .insert({
-      user_id: user.id,
-      action: 'read',
-      resource_type: 'patient',
-      resource_id: patientId,
-      metadata: { action: 'data_export', legal_basis: 'RGPD Art. 20' },
-    })
-    .then(() => {})
-    .catch(() => {});
+  try {
+    await supabaseAdminClient
+      .from('audit_logs')
+      .insert({
+        user_id: user.id,
+        action: 'read',
+        resource_type: 'patient',
+        resource_id: patientId,
+        metadata: { action: 'data_export', legal_basis: 'RGPD Art. 20' },
+      });
+  } catch {
+    // silenciar error de audit log
+  }
 
   const filename = `datos-paciente-${patientId}-${new Date().toISOString().slice(0, 10)}.json`;
 
