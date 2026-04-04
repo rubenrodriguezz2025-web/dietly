@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error('[swap-meal] Error:', err);
-    const message = err instanceof Error ? err.message : 'Error generando alternativas';
+    const message = process.env.NODE_ENV === 'development' && err instanceof Error ? err.message : 'Error generando alternativas';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -583,7 +583,7 @@ export async function POST(req: NextRequest) {
 
         if (createError || !planRecord) {
           console.error('[plans/generate] createError:', createError?.message);
-          send({ type: 'error', message: `Error creando el plan: ${createError?.message ?? 'unknown'}` });
+          send({ type: 'error', message: process.env.NODE_ENV === 'development' ? `Error creando el plan: ${createError?.message ?? 'unknown'}` : 'Error interno al crear el plan' });
           controller.close();
           return;
         }
@@ -830,7 +830,7 @@ export async function POST(req: NextRequest) {
 
         if (finalUpdateError) {
           console.error(`[plans/generate] plan=${planId} — ERROR en UPDATE final:`, finalUpdateError.message, finalUpdateError);
-          send({ type: 'error', message: `Error guardando el plan: ${finalUpdateError.message}` });
+          send({ type: 'error', message: process.env.NODE_ENV === 'development' ? `Error guardando el plan: ${finalUpdateError.message}` : 'Error interno al guardar el plan' });
           controller.close();
           return;
         }

@@ -204,6 +204,19 @@ export async function GET(
       console.error('[PDF] Error guardando caché:', cacheErr);
     }
 
+    // L-06: Audit log — generación de PDF (RGPD Art. 30)
+    supabaseAdminClient
+      .from('audit_logs')
+      .insert({
+        user_id: user.id,
+        action: 'read',
+        resource_type: 'plan',
+        resource_id: id,
+        metadata: { action: 'pdf_generated', patient_id: plan.patient_id },
+      })
+      .then(() => {})
+      .catch(() => {});
+
     const fechaStr = new Date(plan.week_start_date as string)
       .toISOString()
       .split('T')[0]; // YYYY-MM-DD

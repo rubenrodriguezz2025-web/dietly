@@ -84,6 +84,19 @@ export async function GET(
     followup_forms: followupResult.data ?? [],
   };
 
+  // L-06: Audit log — exportación de datos (RGPD Art. 20 — portabilidad)
+  supabaseAdminClient
+    .from('audit_logs')
+    .insert({
+      user_id: user.id,
+      action: 'read',
+      resource_type: 'patient',
+      resource_id: patientId,
+      metadata: { action: 'data_export', legal_basis: 'RGPD Art. 20' },
+    })
+    .then(() => {})
+    .catch(() => {});
+
   const filename = `datos-paciente-${patientId}-${new Date().toISOString().slice(0, 10)}.json`;
 
   return new NextResponse(JSON.stringify(exportData, null, 2), {
