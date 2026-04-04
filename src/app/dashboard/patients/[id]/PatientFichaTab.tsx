@@ -282,6 +282,7 @@ export type PatientFichaTabProps = {
   age: number | null;
   onGoToCuestionario: () => void;
   onOpenQuestionsPreview: () => void;
+  rejectedMeals?: string[];
 };
 
 export function PatientFichaTab({
@@ -293,6 +294,7 @@ export function PatientFichaTab({
   age,
   onGoToCuestionario,
   onOpenQuestionsPreview,
+  rejectedMeals = [],
 }: PatientFichaTabProps) {
   return (
     <div className='flex flex-col gap-6'>
@@ -520,6 +522,13 @@ export function PatientFichaTab({
             })()}
           </Section>
 
+          <Section title='Configuración del plan'>
+            <SwapToggle
+              patientId={patient.id}
+              initialValue={patient.allow_meal_swaps}
+            />
+          </Section>
+
           <Section title='Notas clínicas'>
             <div className='flex flex-col gap-4'>
               <InlineField
@@ -577,6 +586,7 @@ export function PatientFichaTab({
                   patientGoal={patient.goal ?? 'health'}
                   hasIntake={!!intakeForm}
                   onGoToIntake={intakeUrl ? onGoToCuestionario : undefined}
+                  rejectedMeals={rejectedMeals}
                 />
               </div>
             </div>
@@ -589,6 +599,47 @@ export function PatientFichaTab({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Toggle intercambios ──────────────────────────────────────────────────────
+
+function SwapToggle({ patientId, initialValue }: { patientId: string; initialValue: boolean }) {
+  const [enabled, setEnabled] = useState(initialValue);
+  const [saving, startSaving] = useTransition();
+
+  function toggle() {
+    const next = !enabled;
+    setEnabled(next);
+    startSaving(async () => {
+      const result = await updatePatientField(patientId, 'allow_meal_swaps', next as unknown as string | number | null);
+      if (result.error) setEnabled(!next);
+    });
+  }
+
+  return (
+    <div className='flex items-center justify-between'>
+      <div className='flex flex-col gap-0.5'>
+        <span className='text-sm text-zinc-200'>Permitir intercambio de platos</span>
+        <span className='text-xs text-zinc-500'>
+          El paciente podrá cambiar platos desde su plan. Serás notificado de cada cambio.
+        </span>
+      </div>
+      <button
+        type='button'
+        role='switch'
+        aria-checked={enabled}
+        onClick={toggle}
+        disabled={saving}
+        className='relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:opacity-50'
+        style={{ background: enabled ? '#1a7a45' : '#3f3f46' }}
+      >
+        <span
+          className='pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform duration-200'
+          style={{ transform: enabled ? 'translateX(20px)' : 'translateX(0)' }}
+        />
+      </button>
     </div>
   );
 }

@@ -24,9 +24,10 @@ interface Props {
   hasIntake?: boolean;
   hasConsent?: boolean;
   onGoToIntake?: () => void;
+  rejectedMeals?: string[];
 }
 
-export function GenerateButton({ patientId, initialTargets, patientWeight, patientGoal, hasIntake, hasConsent = true, onGoToIntake }: Props) {
+export function GenerateButton({ patientId, initialTargets, patientWeight, patientGoal, hasIntake, hasConsent = true, onGoToIntake, rejectedMeals = [] }: Props) {
   const router = useRouter();
   const [state, setState] = useState<State>('idle');
   const [currentDay, setCurrentDay] = useState(0);
@@ -231,6 +232,26 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Banner platos rechazados */}
+          {rejectedMeals.length > 0 && (
+            <div className='mb-3 flex gap-2 rounded-lg border border-violet-900/50 bg-violet-950/20 px-3 py-2.5'>
+              <svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' className='mt-0.5 flex-shrink-0 text-violet-400' aria-hidden='true'>
+                <polyline points='17 1 21 5 17 9' />
+                <path d='M3 11V9a4 4 0 014-4h14' />
+                <polyline points='7 23 3 19 7 15' />
+                <path d='M21 13v2a4 4 0 01-4 4H3' />
+              </svg>
+              <div className='flex flex-col gap-1'>
+                <p className='text-[11px] leading-snug text-violet-300'>
+                  El paciente ha rechazado {rejectedMeals.length} plato{rejectedMeals.length !== 1 ? 's' : ''} en planes anteriores
+                </p>
+                <p className='text-[10px] leading-snug text-violet-400/60'>
+                  {rejectedMeals.slice(0, 3).join(', ')}{rejectedMeals.length > 3 ? ` y ${rejectedMeals.length - 3} más` : ''}. Se evitarán en el nuevo plan.
+                </p>
               </div>
             </div>
           )}

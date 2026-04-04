@@ -227,7 +227,7 @@ export default async function PaginaPaciente({
 
   const { data: plan } = await (supabaseAdminClient as any)
     .from('nutrition_plans')
-    .select('*, patients(id, name, nutritionist_id)')
+    .select('*, patients(id, name, nutritionist_id, allow_meal_swaps)')
     .eq('patient_token', token)
     .in('status', ['approved', 'sent'])
     .single();
@@ -274,6 +274,7 @@ export default async function PaginaPaciente({
     id: string;
     name: string;
     nutritionist_id: string;
+    allow_meal_swaps: boolean;
   } | null;
 
   // Ajustes de marca + verificación de consentimiento previo (en paralelo)
@@ -400,6 +401,7 @@ export default async function PaginaPaciente({
             primaryColor={primaryColor}
             planId={plan.id as string}
             patientToken={token}
+            allowSwaps={pacienteData?.allow_meal_swaps ?? true}
           />
 
           {/* Lista de la compra interactiva */}

@@ -178,6 +178,9 @@ export function IntercambioPlato({
         </svg>
         Cambiar este plato
       </button>
+      <p className="mt-1.5 text-center text-[10px] leading-snug" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
+        La alternativa mantiene calorías y macros similares. Tu nutricionista será notificado del cambio.
+      </p>
 
       {/* Bottom Sheet Overlay */}
       {sheetVisible && (
@@ -239,6 +242,11 @@ export function IntercambioPlato({
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     Alternativas para <span className="font-semibold" style={{ color: 'var(--text)' }}>{meal.meal_name}</span> ({meal.calories} kcal)
                   </p>
+                  <div className="rounded-xl px-3 py-2.5" style={{ background: 'var(--chip-off)', border: '1px solid var(--border)' }}>
+                    <p className="text-[11px] leading-snug" style={{ color: 'var(--text-muted)' }}>
+                      Estas alternativas son generadas por IA con calorías y macros equivalentes. Tu nutricionista revisará el cambio.
+                    </p>
+                  </div>
 
                   {state.alternatives.map((alt, i) => {
                     const isSelected = state.phase === 'confirming' && state.selectedIndex === i;

@@ -217,7 +217,8 @@ function buildDayPrompt(
   targets: ReturnType<typeof calcTargets>,
   previousDays: PlanDay[],
   intakeAnswers?: IntakeAnswers,
-  nutritionistRecipes?: Recipe[]
+  nutritionistRecipes?: Recipe[],
+  rejectedMealNames?: string[]
 ): string {
   const restrictions = [
     patient.dietary_restrictions?.length ? patient.dietary_restrictions.join(', ') : null,
@@ -236,6 +237,9 @@ function buildDayPrompt(
 
   const intakeSection = intakeAnswers ? buildIntakeSection(intakeAnswers) : '';
   const recipesSection = nutritionistRecipes ? buildRecipesSection(nutritionistRecipes) : '';
+  const rejectedSection = rejectedMealNames?.length
+    ? `\nPLATOS RECHAZADOS POR EL PACIENTE (evita estos platos o variantes muy similares):\n${rejectedMealNames.map((n) => `  - ${n}`).join('\n')}`
+    : '';
 
   const carbsPctDisplay = Math.round(targets.carbs_pct * 100);
   const fatPctDisplay = Math.round(targets.fat_pct * 100);
@@ -253,7 +257,7 @@ PERFIL DEL PACIENTE:
 - Calorías diarias objetivo: ${targets.calories} kcal
 - Proteína objetivo: ${targets.protein_g}g (${targets.protein_per_kg}g/kg peso corporal)
 - Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
-- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${recipesSection}${variety}
+- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${recipesSection}${rejectedSection}${variety}
 
 Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}.
 
@@ -496,6 +500,22 @@ export async function POST(req: NextRequest) {
         const intakeAnswers: IntakeAnswers | undefined = intakeFormData?.answers ?? undefined;
         send({ type: 'progress', step: 'intake_ok' });
 
+        // ── Platos rechazados por el paciente (de intercambios previos) ───────
+        let rejectedMealNames: string[] = [];
+        try {
+          const { data: swapsData } = await supabaseAdminClient
+            .from('meal_swaps')
+            .select('original_meal')
+            .eq('patient_id', patient_id);
+          if (swapsData) {
+            rejectedMealNames = [...new Set(
+              swapsData.map((s: { original_meal: { meal_name: string } }) => s.original_meal.meal_name),
+            )];
+          }
+        } catch {
+          // No bloqueante
+        }
+
         // ── Recetas personales del nutricionista ──────────────────────────────
         // Cargamos hasta 20 recetas para inyectar contexto en el prompt.
         // No bloqueamos la generación si falla (fire-and-continue).
@@ -602,7 +622,7 @@ export async function POST(req: NextRequest) {
           let dayData: PlanDay | null = null;
 
           // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
-          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, filterRecipesForPatient(nutritionistRecipes, pseudoPatient));
+          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, filterRecipesForPatient(nutritionistRecipes, pseudoPatient), rejectedMealNames);
           try {
             const response = await callAnthropicWithResilience(
               () => anthropic.messages.create({

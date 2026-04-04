@@ -33,9 +33,10 @@ type Props = {
   primaryColor: string;
   planId: string;
   patientToken: string;
+  allowSwaps?: boolean;
 };
 
-export function VisorDias({ days: initialDays, initialDay, showMacros, primaryColor, planId, patientToken }: Props) {
+export function VisorDias({ days: initialDays, initialDay, showMacros, primaryColor, planId, patientToken, allowSwaps = true }: Props) {
   // Estado local mutable de los días — se actualiza al confirmar un intercambio
   const [days, setDays] = useState(initialDays);
   const [currentDay, setCurrentDay] = useState(initialDay);
@@ -246,15 +247,17 @@ export function VisorDias({ days: initialDays, initialDay, showMacros, primaryCo
               delay={i * 0.055}
               swapped={swappedMeals.has(`${currentDay}-${i}`)}
               swapButton={
-                <IntercambioPlato
-                  planId={planId}
-                  patientToken={patientToken}
-                  dayNumber={currentDay}
-                  mealIndex={i}
-                  meal={comida}
-                  primaryColor={primaryColor}
-                  onSwapComplete={handleSwapComplete}
-                />
+                allowSwaps ? (
+                  <IntercambioPlato
+                    planId={planId}
+                    patientToken={patientToken}
+                    dayNumber={currentDay}
+                    mealIndex={i}
+                    meal={comida}
+                    primaryColor={primaryColor}
+                    onSwapComplete={handleSwapComplete}
+                  />
+                ) : null
               }
             />
           ))}
@@ -356,7 +359,7 @@ function TarjetaComida({
   showMacros: boolean;
   delay: number;
   swapped: boolean;
-  swapButton: React.ReactNode;
+  swapButton: React.ReactNode | null;
 }) {
   const acento = ACENTO_TIPO[comida.meal_type] ?? { borde: '#16a34a', etiqueta: '#15803d', emoji: '🍴' };
 
@@ -502,9 +505,11 @@ function TarjetaComida({
       )}
 
       {/* Botón intercambio */}
-      <div className='px-4 py-3' style={{ borderTop: '1px solid var(--border)' }}>
-        {swapButton}
-      </div>
+      {swapButton && (
+        <div className='px-4 py-3' style={{ borderTop: '1px solid var(--border)' }}>
+          {swapButton}
+        </div>
+      )}
     </article>
   );
 }

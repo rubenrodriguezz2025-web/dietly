@@ -1,6 +1,10 @@
 'use client';
 
+import { useState, useTransition } from 'react';
+
 import type { Meal, MealSwap } from '@/types/dietly';
+
+import { updatePatientField } from './update-actions';
 
 const NOMBRE_DIA: Record<number, string> = {
   1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves',
@@ -14,9 +18,27 @@ const NOMBRE_TIPO: Record<string, string> = {
 
 type Props = {
   swaps: MealSwap[];
+  patientId: string;
+  medicalNotes: string | null;
 };
 
-export function PatientIntercambiosTab({ swaps }: Props) {
+/** Analiza los swaps y devuelve los platos rechazados ordenados por frecuencia */
+function getRejectedMeals(swaps: MealSwap[]): { name: string; count: number }[] {
+  const freq = new Map<string, number>();
+  for (const s of swaps) {
+    const original = s.original_meal as Meal;
+    const key = original.meal_name.toLowerCase().trim();
+    freq.set(key, (freq.get(key) ?? 0) + 1);
+  }
+  return Array.from(freq.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export function PatientIntercambiosTab({ swaps, patientId, medicalNotes }: Props) {
+  const [saved, setSaved] = useState(false);
+  const [saving, startSaving] = useTransition();
+
   if (swaps.length === 0) {
     return (
       <div className='flex flex-col items-center gap-3 py-16'>
@@ -35,9 +57,72 @@ export function PatientIntercambiosTab({ swaps }: Props) {
     );
   }
 
+  const rejected = getRejectedMeals(swaps);
+  const topRejected = rejected.slice(0, 5);
+
+  function handleSaveToNotes() {
+    const insight = `[Intercambios] Platos rechazados: ${topRejected.map((r) => `${r.name} (×${r.count})`).join(', ')}. Considerar evitar en futuros planes.`;
+    const updated = medicalNotes
+      ? `${medicalNotes}\n${insight}`
+      : insight;
+    startSaving(async () => {
+      const result = await updatePatientField(patientId, 'medical_notes', updated);
+      if (!result.error) setSaved(true);
+    });
+  }
+
   return (
-    <div className='flex flex-col gap-3'>
-      <div className='mb-2 flex items-center justify-between'>
+    <div className='flex flex-col gap-4'>
+      {/* Insight: platos más rechazados */}
+      {topRejected.length > 0 && (
+        <div className='rounded-xl border border-amber-900/40 bg-amber-950/20 p-4'>
+          <div className='mb-2 flex items-center gap-2'>
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-500'>
+              <circle cx='12' cy='12' r='10' />
+              <line x1='12' y1='8' x2='12' y2='12' />
+              <line x1='12' y1='16' x2='12.01' y2='16' />
+            </svg>
+            <h3 className='text-xs font-semibold uppercase tracking-wider text-amber-400'>
+              Platos más rechazados
+            </h3>
+          </div>
+          <div className='mb-3 flex flex-wrap gap-2'>
+            {topRejected.map((r) => (
+              <span
+                key={r.name}
+                className='inline-flex items-center gap-1.5 rounded-full bg-amber-950/60 px-2.5 py-1 text-xs text-amber-300'
+              >
+                {r.name}
+                <span className='rounded-full bg-amber-900/50 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-amber-400'>
+                  ×{r.count}
+                </span>
+              </span>
+            ))}
+          </div>
+          <p className='mb-3 text-[11px] leading-relaxed text-amber-200/60'>
+            Estos platos han sido sustituidos por el paciente. Considera tenerlo en cuenta en futuros planes.
+          </p>
+          {saved ? (
+            <div className='flex items-center gap-1.5 text-xs text-emerald-400'>
+              <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'>
+                <polyline points='20 6 9 17 4 12' />
+              </svg>
+              Guardado en notas clínicas
+            </div>
+          ) : (
+            <button
+              type='button'
+              onClick={handleSaveToNotes}
+              disabled={saving}
+              className='rounded-lg border border-amber-700/40 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:border-amber-600 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-500 disabled:opacity-50'
+            >
+              {saving ? 'Guardando…' : 'Tener en cuenta →'}
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className='flex items-center justify-between'>
         <p className='text-sm text-zinc-400'>
           {swaps.length} intercambio{swaps.length !== 1 ? 's' : ''} realizados
         </p>

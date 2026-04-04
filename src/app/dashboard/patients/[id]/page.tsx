@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { generateIntakeAccessToken } from '@/libs/auth/intake-tokens';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { MealSwap, NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
+import { Meal, MealSwap, NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
 import { CalcTargets, calcTargets,CalcTargetsError } from '@/utils/calc-targets';
 
 import { GenerateButton } from './generate-button';
@@ -105,6 +105,11 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const nextReminder = nextReminderResult.data as { id: string; remind_at: string; status: string } | null;
   const overdueReminder = overdueReminderResult.data as { id: string; remind_at: string } | null;
   const mealSwaps = (mealSwapsResult.data ?? []) as MealSwap[];
+
+  // Platos rechazados (únicos) para el banner de generación
+  const rejectedMealNames = [...new Set(
+    mealSwaps.map((s) => (s.original_meal as Meal).meal_name),
+  )];
 
   const [intakeFormResult, consentResult] = await Promise.all([
     (supabaseAdminClient as any)
@@ -220,6 +225,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             patientGoal={patient.goal ?? 'health'}
             hasIntake={!!intakeForm}
             hasConsent={hasConsent}
+            rejectedMeals={rejectedMealNames}
           />
         </div>
       </div>

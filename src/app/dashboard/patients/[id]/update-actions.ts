@@ -11,7 +11,7 @@ const ALLOWED_FIELDS = new Set([
   'name', 'email', 'phone', 'date_of_birth', 'sex',
   'weight_kg', 'height_cm', 'activity_level', 'goal',
   'dietary_restrictions', 'allergies', 'intolerances',
-  'preferences', 'medical_notes',
+  'preferences', 'medical_notes', 'allow_meal_swaps',
 ]);
 
 const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
@@ -35,9 +35,11 @@ export async function updatePatientField(
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  // dietary_restrictions se edita como texto libre (separado por comas) pero se guarda como text[]
+  // allow_meal_swaps llega como booleano casteado
   let dbValue: unknown = value;
-  if (field === 'dietary_restrictions' && typeof value === 'string') {
+  if (field === 'allow_meal_swaps') {
+    dbValue = value === 'true' || value === 1;
+  } else if (field === 'dietary_restrictions' && typeof value === 'string') {
     const items = value.split(',').map((s) => s.trim()).filter(Boolean);
     dbValue = items.length > 0 ? items : null;
   } else if (field === 'dietary_restrictions' && value === null) {

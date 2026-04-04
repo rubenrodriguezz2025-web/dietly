@@ -101,6 +101,7 @@ export type Patient = {
   intolerances: string | null;
   preferences: string | null;
   medical_notes: string | null;
+  allow_meal_swaps: boolean;
   tmb: number | null;
   tdee: number | null;
   created_at: string;

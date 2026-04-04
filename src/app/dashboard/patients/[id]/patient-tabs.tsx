@@ -10,7 +10,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { MealSwap, NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
+import type { Meal, MealSwap, NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
 import { calcTargets } from '@/utils/calc-targets';
 import { cn } from '@/utils/cn';
 
@@ -89,6 +89,10 @@ export function PatientTabs({
   const [sendingFollowup, startFollowupTransition] = useTransition();
   const [followupSendError, setFollowupSendError] = useState<string | null>(null);
   const [followupSent, setFollowupSent] = useState(false);
+
+  const rejectedMealNames = [...new Set(
+    mealSwaps.map((s) => (s.original_meal as Meal).meal_name),
+  )];
 
   const patientTargets = (() => {
     try { return calcTargets(patient); } catch { return null; }
@@ -170,6 +174,7 @@ export function PatientTabs({
           age={age}
           onGoToCuestionario={() => setActiveTab('cuestionario')}
           onOpenQuestionsPreview={() => setSheetOpen(true)}
+          rejectedMeals={rejectedMealNames}
         />
       </TabsContent>
 
@@ -211,7 +216,7 @@ export function PatientTabs({
 
       {/* ── Intercambios ── */}
       <TabsContent value='intercambios' className='mt-6 animate-tab-in'>
-        <PatientIntercambiosTab swaps={mealSwaps} />
+        <PatientIntercambiosTab swaps={mealSwaps} patientId={patient.id} medicalNotes={patient.medical_notes ?? null} />
       </TabsContent>
 
       {/* ── Sheet: preview preguntas del cuestionario de inicio ── */}

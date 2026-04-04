@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { Meal, PlanContent } from '@/types/dietly';
+import { escapeHtml } from '@/utils/escape-html';
 
 // ── Zod schema ──────────────────────────────────────────────────────────────
 
@@ -144,6 +145,104 @@ export async function POST(req: NextRequest) {
       console.error('[confirm-swap] Error insertando swap:', swapResult.error);
       // El plan ya se actualizó, no bloqueamos — el swap se registrará como huérfano
     }
+
+    // ── Notificación email al nutricionista (fire-and-forget, rate limited) ──
+    void (async () => {
+      try {
+        // Rate limit: 1 email por paciente cada 6 horas
+        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+        const { count: recentNotifs } = await (supabaseAdminClient as any)
+          .from('meal_swaps')
+          .select('id', { count: 'exact', head: true })
+          .eq('patient_id', plan.patient_id)
+          .not('notification_sent_at', 'is', null)
+          .gte('notification_sent_at', sixHoursAgo);
+
+        if ((recentNotifs ?? 0) > 0) return; // Ya se notificó recientemente
+
+        // Obtener datos del nutricionista y paciente
+        const [nutResult, patResult] = await Promise.all([
+          (supabaseAdminClient as any).auth.admin.getUserById(plan.nutritionist_id),
+          (supabaseAdminClient as any)
+            .from('patients')
+            .select('name')
+            .eq('id', plan.patient_id)
+            .single(),
+        ]);
+
+        const emailNutricionista = nutResult.data?.user?.email;
+        if (!emailNutricionista) return;
+
+        const patientName = escapeHtml(patResult.data?.name ?? 'Paciente');
+        const originalName = escapeHtml(original_meal.meal_name);
+        const newName = escapeHtml(selected_meal.meal_name);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+        const fichaUrl = `${appUrl}/dashboard/patients/${encodeURIComponent(plan.patient_id)}`;
+
+        const NOMBRE_DIA: Record<number, string> = {
+          1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves',
+          5: 'Viernes', 6: 'Sábado', 7: 'Domingo',
+        };
+        const diaNombre = NOMBRE_DIA[day_number] ?? `Día ${day_number}`;
+
+        const { resendClient } = await import('@/libs/resend/resend-client');
+        await resendClient.emails.send({
+          from: 'Dietly <noreply@dietly.es>',
+          to: emailNutricionista,
+          subject: `Intercambio de plato — ${patientName}`,
+          html: `
+            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#18181b">
+              <div style="margin-bottom:24px">
+                <span style="display:inline-block;background:#dbeafe;color:#1e40af;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:0.05em">
+                  INTERCAMBIO DE PLATO
+                </span>
+              </div>
+              <h2 style="margin:0 0 6px;font-size:22px;color:#18181b">
+                ${patientName} ha cambiado un plato
+              </h2>
+              <p style="margin:0 0 24px;color:#52525b;font-size:15px">
+                El paciente ha utilizado el intercambio de platos en su plan nutricional.
+              </p>
+              <table style="width:100%;border-collapse:collapse;border:1px solid #e4e4e7;border-radius:8px;overflow:hidden">
+                <tr style="background:#f4f4f5">
+                  <td style="padding:12px 16px;color:#71717a;font-size:13px;width:35%">Día</td>
+                  <td style="padding:12px 16px;font-weight:600;color:#18181b;font-size:13px">${diaNombre}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;color:#71717a;font-size:13px;border-top:1px solid #e4e4e7">Original</td>
+                  <td style="padding:12px 16px;color:#18181b;font-size:13px;border-top:1px solid #e4e4e7">${originalName} (${original_meal.calories} kcal)</td>
+                </tr>
+                <tr style="background:#f0fdf4">
+                  <td style="padding:12px 16px;color:#71717a;font-size:13px;border-top:1px solid #e4e4e7">Nuevo</td>
+                  <td style="padding:12px 16px;font-weight:600;color:#047857;font-size:13px;border-top:1px solid #e4e4e7">${newName} (${selected_meal.calories} kcal)</td>
+                </tr>
+              </table>
+              <div style="margin-top:28px">
+                <a
+                  href="${fichaUrl}"
+                  style="display:inline-block;background:#1a7a45;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px"
+                >
+                  Ver ficha del paciente →
+                </a>
+              </div>
+              <p style="margin-top:32px;color:#a1a1aa;font-size:12px;border-top:1px solid #e4e4e7;padding-top:16px">
+                Email generado automáticamente por Dietly · No respondas a este mensaje.
+              </p>
+            </div>
+          `,
+        });
+
+        // Marcar notificación enviada
+        if (swapResult.data?.id) {
+          await (supabaseAdminClient as any)
+            .from('meal_swaps')
+            .update({ notification_sent_at: new Date().toISOString() })
+            .eq('id', swapResult.data.id);
+        }
+      } catch (emailErr) {
+        console.error('[confirm-swap] email notification error:', emailErr);
+      }
+    })();
 
     return NextResponse.json({
       success: true,
