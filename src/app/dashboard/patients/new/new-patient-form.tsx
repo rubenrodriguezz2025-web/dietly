@@ -56,11 +56,13 @@ const textareaClass =
 function Field({
   label,
   required,
+  optional,
   error,
   children,
 }: {
   label: string;
   required?: boolean;
+  optional?: boolean;
   error?: string;
   children: React.ReactNode;
 }) {
@@ -70,6 +72,7 @@ function Field({
         <span className='text-sm font-medium text-zinc-300'>
           {label}
           {required && <span className='ml-1 text-red-500'>*</span>}
+          {optional && <span className='ml-1 font-normal text-zinc-600'>(opcional)</span>}
         </span>
         {children}
       </label>
@@ -202,7 +205,7 @@ export function NewPatientForm() {
               className={inputClass('name')}
             />
           </Field>
-          <Field label='Email' error={errors['email']}>
+          <Field label='Email' optional error={errors['email']}>
             <Input
               name='email'
               type='email'

@@ -286,16 +286,27 @@ html:not(.dark) [data-dashboard] .bg-black { background-color: #ffffff; }
 
 /* ── Dashboard sidebar light mode ──────────────────────────────────────────────── */
 html:not(.dark) [data-dashboard] aside {
-  background-color: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  background-color: #fafafa;
+  border-right: 1px solid #d4d4d8;
   border-radius: 0.75rem;
   padding: 0.75rem 0;
 }
 
-/* Dashboard cards — add subtle shadow in light mode */
+/* Dashboard cards — add visible shadow in light mode */
 html:not(.dark) [data-dashboard] .border.border-zinc-800.bg-white,
 html:not(.dark) [data-dashboard] .border.border-zinc-800.rounded-xl {
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+}
+
+/* Sidebar nav links — lighter hover in light mode */
+html:not(.dark) [data-dashboard] aside a:hover,
+html:not(.dark) [data-dashboard] aside button:hover {
+  background-color: #f4f4f5 !important;
+}
+
+/* Sidebar section dividers */
+html:not(.dark) [data-dashboard] aside .border-zinc-800\/50 {
+  border-color: #e4e4e7;
 }
 
 /* Mobile nav bottom border */

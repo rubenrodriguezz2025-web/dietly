@@ -192,7 +192,7 @@ export default async function AgendaPage({
       {/* Cabecera con navegación de mes */}
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <h1 className='text-2xl font-bold capitalize text-zinc-100'>{mesLabel}</h1>
+          <h1 className='text-2xl font-bold text-zinc-100'>{mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1)}</h1>
           <p className='mt-0.5 text-sm text-zinc-500'>
             {citas?.length ?? 0} cita{citas?.length !== 1 ? 's' : ''} este mes
           </p>

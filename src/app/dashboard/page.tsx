@@ -171,7 +171,7 @@ export default async function DashboardPage() {
         <MetricCard
           label='Pacientes activos'
           value={patients?.length ?? 0}
-          accent='zinc'
+          accent='emerald'
           tooltip='Total de pacientes en tu base de datos'
           icon={
             <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
@@ -219,7 +219,7 @@ export default async function DashboardPage() {
       {/* Kanban de planes */}
       {(allPlans?.length ?? 0) > 0 && (
         <div id='borradores'>
-          <h2 className='mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500'>
+          <h2 className='mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
             Estado de los planes
           </h2>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>

@@ -137,7 +137,7 @@ export function PatientsSection({ patients }: { patients: PatientWithMeta[] }) {
     <div className='flex flex-col gap-4'>
       {/* Header */}
       <div className='flex flex-wrap items-center justify-between gap-3'>
-        <h2 className='text-sm font-semibold uppercase tracking-wider text-zinc-500'>Pacientes</h2>
+        <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>Pacientes</h2>
 
         {/* Sort */}
         <select
