@@ -83,5 +83,26 @@ export async function updatePatientField(
   if (error) return { error: error.message };
 
   revalidatePath(`/dashboard/patients/${patientId}`);
+
+  // Revalidar PWA cuando cambia allow_meal_swaps para que el paciente
+  // vea el cambio sin esperar a que expire la caché de Next.js
+  if (field === 'allow_meal_swaps') {
+    const { data: plan } = await supabase
+      .from('nutrition_plans')
+      .select('patient_token')
+      .eq('patient_id', patientId)
+      .in('status', ['approved', 'sent'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (plan?.patient_token) {
+      revalidatePath(`/p/${plan.patient_token}`);
+    } else {
+      // Fallback: revalidar todas las páginas PWA si no hay plan con token
+      revalidatePath('/p/[token]', 'page');
+    }
+  }
+
   return {};
 }
