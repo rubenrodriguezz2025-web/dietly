@@ -6,6 +6,9 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { PlanContent, Profile } from '@/types/dietly';
 import { renderToBuffer } from '@react-pdf/renderer';
 
+// Vercel: permitir hasta 30s para generación de PDF
+export const maxDuration = 30;
+
 // Rate limit: máx 5 descargas por plan por día
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h

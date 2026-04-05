@@ -32,6 +32,15 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
       .eq('status', 'draft') as Promise<{ count: number | null }>,
   ]);
 
+  // Generar signed URL para la foto de perfil del sidebar
+  let profilePhotoUrl: string | null = null;
+  if (profile?.profile_photo_url) {
+    const { data: signedData } = await supabase.storage
+      .from('nutritionist-photos')
+      .createSignedUrl(profile.profile_photo_url as string, 3600);
+    profilePhotoUrl = signedData?.signedUrl ?? null;
+  }
+
   return (
     <div data-dashboard className='min-h-screen'>
       <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-10'>
@@ -44,7 +53,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
                 draftCount={draftCount ?? 0}
                 profileName={profile?.full_name ?? ''}
                 profileSpecialty={profile?.specialty ?? null}
-                profilePhoto={profile?.profile_photo_url ?? null}
+                profilePhoto={profilePhotoUrl}
               />
             </div>
           </aside>
