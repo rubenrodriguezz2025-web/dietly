@@ -151,22 +151,33 @@ export async function uploadProfilePhoto(
   const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
   const path = `${user.id}/photo.${ext}`;
 
-  const arrayBuffer = await file.arrayBuffer();
-  const { error: uploadError } = await supabase.storage
-    .from(PHOTO_BUCKET)
-    .upload(path, arrayBuffer, { contentType: file.type, upsert: true });
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const { error: uploadError } = await supabase.storage
+      .from(PHOTO_BUCKET)
+      .upload(path, arrayBuffer, { contentType: file.type, upsert: true });
 
-  if (uploadError) return { error: uploadError.message };
+    if (uploadError) {
+      console.error('[ProfilePhoto] Error subiendo foto:', uploadError.message, uploadError);
+      return { error: `Error al subir la foto: ${uploadError.message}` };
+    }
 
-  const { error: dbError } = await supabase
-    .from('profiles')
-    .update({ profile_photo_url: path })
-    .eq('id', user.id);
+    const { error: dbError } = await supabase
+      .from('profiles')
+      .update({ profile_photo_url: path })
+      .eq('id', user.id);
 
-  if (dbError) return { error: dbError.message };
+    if (dbError) {
+      console.error('[ProfilePhoto] Error actualizando perfil:', dbError.message);
+      return { error: `Error al guardar en perfil: ${dbError.message}` };
+    }
 
-  revalidatePath('/dashboard/ajustes');
-  return { success: true };
+    revalidatePath('/dashboard/ajustes');
+    return { success: true };
+  } catch (err) {
+    console.error('[ProfilePhoto] Error inesperado:', err);
+    return { error: 'Error inesperado al subir la foto. Inténtalo de nuevo.' };
+  }
 }
 
 // ── Marcar primera visita a Mi marca ─────────────────────────────────────────
