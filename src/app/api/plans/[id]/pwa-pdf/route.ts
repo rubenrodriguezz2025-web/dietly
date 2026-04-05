@@ -166,7 +166,16 @@ export async function POST(
       approved_at,
     });
 
-    const buffer = await renderToBuffer(elemento as unknown as React.JSX.Element);
+    let buffer: Buffer;
+    try {
+      buffer = await renderToBuffer(elemento as unknown as React.JSX.Element);
+    } catch (renderErr) {
+      console.error('[PWA-PDF] Error en renderToBuffer:', renderErr);
+      return Response.json(
+        { error: 'Error al renderizar el PDF. Inténtalo de nuevo.' },
+        { status: 500 }
+      );
+    }
 
     const fechaStr = new Date(plan.week_start_date as string).toISOString().split('T')[0];
     const nombrePaciente = paciente.name
@@ -184,9 +193,9 @@ export async function POST(
       },
     });
   } catch (err) {
-    console.error('[PWA-PDF] Error generando PDF:', err);
+    console.error('[PWA-PDF] Error inesperado:', err);
     return Response.json(
-      { error: 'Error al generar el PDF. Inténtalo de nuevo.' },
+      { error: 'Error inesperado al generar el PDF. Inténtalo de nuevo.' },
       { status: 500 }
     );
   }

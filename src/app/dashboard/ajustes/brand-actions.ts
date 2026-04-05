@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 type ActionResult = { error?: string; success?: boolean };
@@ -152,8 +153,18 @@ export async function uploadProfilePhoto(
   const path = `${user.id}/photo.${ext}`;
 
   try {
+    // Garantizar que el bucket existe (autocreación si no está en Supabase)
+    const { data: buckets } = await supabaseAdminClient.storage.listBuckets();
+    const bucketExists = buckets?.some((b) => b.id === PHOTO_BUCKET);
+    if (!bucketExists) {
+      await supabaseAdminClient.storage.createBucket(PHOTO_BUCKET, {
+        public: false,
+        fileSizeLimit: 2097152, // 2 MB
+      });
+    }
+
     const arrayBuffer = await file.arrayBuffer();
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabaseAdminClient.storage
       .from(PHOTO_BUCKET)
       .upload(path, arrayBuffer, { contentType: file.type, upsert: true });
 
