@@ -310,6 +310,27 @@ function MealBlock({
   );
 }
 
+// ── Helpers portada ────────────────────────────────────────────────────────────
+
+/** Genera iniciales (máx 2 letras) a partir de un nombre completo */
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join('');
+}
+
+/** Hace un color más oscuro (para fondo de portada) — mezcla con negro al 25% */
+function darken(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const f = 0.75;
+  return `#${Math.round(r * f).toString(16).padStart(2, '0')}${Math.round(g * f).toString(16).padStart(2, '0')}${Math.round(b * f).toString(16).padStart(2, '0')}`;
+}
+
 // ── PORTADA ────────────────────────────────────────────────────────────────────
 
 function CoverPage({
@@ -318,6 +339,7 @@ function CoverPage({
   patient,
   profile,
   logo_uri,
+  profile_photo_uri,
   is_pro,
   approved_at,
   color,
@@ -329,6 +351,7 @@ function CoverPage({
   patient: PropsPDF['patient'];
   profile: PropsPDF['profile'];
   logo_uri?: string | null;
+  profile_photo_uri?: string | null;
   is_pro?: boolean;
   approved_at?: string;
   color: string;
@@ -338,53 +361,87 @@ function CoverPage({
   const targets = content.week_summary?.target_macros ?? { protein_g: 0, carbs_g: 0, fat_g: 0 };
   const targetCals = content.week_summary?.target_daily_calories ?? 0;
   const nutritionistName = profile.full_name || 'Nutricionista';
+  const darkColor = darken(color);
 
   return (
     <Page size="A4" style={[S.page, { fontFamily }]}>
-      {/* Header banda — height 80 */}
-      <View style={{ backgroundColor: color, height: 80, paddingHorizontal: 40, flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        {is_pro && logo_uri ? (
-          <Image src={logo_uri} style={{ height: 48, maxWidth: 180, objectFit: 'contain' }} />
+      {/* ── Mitad superior: fondo de marca ── */}
+      <View style={{
+        backgroundColor: color,
+        height: 340,
+        paddingHorizontal: 40,
+        paddingTop: 48,
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
+        {/* Foto del nutricionista — circular */}
+        {profile_photo_uri ? (
+          <View style={{ width: 96, height: 96, borderRadius: 48, overflow: 'hidden', borderWidth: 3, borderColor: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
+            <Image src={profile_photo_uri} style={{ width: 96, height: 96, objectFit: 'cover' }} />
+          </View>
         ) : (
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontWeight: 700, fontSize: 20, color: '#ffffff' }}>
-              {profile.clinic_name || nutritionistName}
+          <View style={{
+            width: 96, height: 96, borderRadius: 48,
+            backgroundColor: darkColor,
+            borderWidth: 3, borderColor: 'rgba(255,255,255,0.35)',
+            alignItems: 'center', justifyContent: 'center',
+            marginBottom: 14,
+          }}>
+            <Text style={{ fontWeight: 700, fontSize: 32, color: '#ffffff' }}>
+              {initials(nutritionistName)}
             </Text>
-            {profile.clinic_name ? (
-              <Text style={{ fontWeight: 400, fontSize: 9, color: 'rgba(255,255,255,0.72)', marginTop: 3 }}>
-                {nutritionistName}
-              </Text>
-            ) : null}
           </View>
         )}
+
+        {/* Logo de la clínica */}
+        {is_pro && logo_uri ? (
+          <Image src={logo_uri} style={{ height: 36, maxWidth: 160, objectFit: 'contain', marginBottom: 10 }} />
+        ) : (
+          <Text style={{ fontWeight: 700, fontSize: 16, color: '#ffffff', marginBottom: 4, textAlign: 'center' }}>
+            {profile.clinic_name || ''}
+          </Text>
+        )}
+
+        {/* Nombre del nutricionista */}
+        <Text style={{ fontWeight: 500, fontSize: 11, color: 'rgba(255,255,255,0.85)', marginBottom: 20, textAlign: 'center' }}>
+          {(is_pro && logo_uri && profile.clinic_name) ? nutritionistName : (!profile.clinic_name ? nutritionistName : nutritionistName)}
+        </Text>
+
+        {/* Separador */}
+        <View style={{ width: 48, height: 2, backgroundColor: 'rgba(255,255,255,0.35)', borderRadius: 1, marginBottom: 20 }} />
+
+        {/* Título del plan */}
+        <Text style={{ fontWeight: 700, fontSize: 20, color: '#ffffff', textAlign: 'center', letterSpacing: 0.3 }}>
+          Plan Nutricional Personalizado
+        </Text>
       </View>
 
-      {/* Cuerpo */}
-      <View style={{ flex: 1, paddingHorizontal: 40, paddingTop: 48, flexDirection: 'column' }}>
+      {/* ── Mitad inferior: datos del paciente ── */}
+      <View style={{ flex: 1, paddingHorizontal: 40, paddingTop: 36, flexDirection: 'column', alignItems: 'center' }}>
 
         {/* Nombre del paciente */}
-        <Text style={{ fontWeight: 700, fontSize: 28, color: '#1a1a1a', marginBottom: 6 }}>
+        <Text style={{ fontWeight: 400, fontSize: 10, color: '#999999', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>
+          Preparado para
+        </Text>
+        <Text style={{ fontWeight: 700, fontSize: 26, color: '#1a1a1a', marginBottom: 8, textAlign: 'center' }}>
           {patient.name}
         </Text>
-        <Text style={{ fontWeight: 400, fontSize: 11, color: '#888888', marginBottom: 4 }}>
-          Plan nutricional personalizado
-        </Text>
-        <Text style={{ fontWeight: 400, fontSize: 9, color: '#aaaaaa', marginBottom: 32 }}>
+        <Text style={{ fontWeight: 400, fontSize: 10, color: '#aaaaaa', marginBottom: 28 }}>
           {weekLabel(plan.week_start_date)}
         </Text>
 
         {/* 4 píldoras de macros objetivo */}
         {showMacros && (
-          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 32 }}>
+          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 28 }}>
             {[
               { label: 'kcal / día', value: String(targetCals) },
               { label: 'Proteína', value: `${targets.protein_g}g` },
               { label: 'Carbohidratos', value: `${targets.carbs_g}g` },
               { label: 'Grasas', value: `${targets.fat_g}g` },
             ].map((p) => (
-              <View key={p.label} style={{ backgroundColor: hex15(color), borderWidth: 1, borderColor: color, borderRadius: 5, paddingHorizontal: 14, paddingVertical: 8 }}>
-                <Text style={{ fontWeight: 700, fontSize: 13, color, marginBottom: 1 }}>{p.value}</Text>
-                <Text style={{ fontWeight: 400, fontSize: 8, color: '#666666' }}>{p.label}</Text>
+              <View key={p.label} style={{ backgroundColor: hex08(color), borderWidth: 0.5, borderColor: hex15(color), borderRadius: 5, paddingHorizontal: 12, paddingVertical: 7 }}>
+                <Text style={{ fontWeight: 700, fontSize: 12, color, marginBottom: 1, textAlign: 'center' }}>{p.value}</Text>
+                <Text style={{ fontWeight: 400, fontSize: 7.5, color: '#777777', textAlign: 'center' }}>{p.label}</Text>
               </View>
             ))}
           </View>
@@ -392,7 +449,7 @@ function CoverPage({
 
         {/* Mensaje de bienvenida */}
         {profile.welcome_message ? (
-          <View style={{ borderLeftWidth: 2, borderLeftColor: color, paddingLeft: 12, paddingVertical: 6, backgroundColor: hex08(color), borderRadius: 2, marginBottom: 24 }}>
+          <View style={{ borderLeftWidth: 2, borderLeftColor: color, paddingLeft: 12, paddingVertical: 6, backgroundColor: hex08(color), borderRadius: 2, marginBottom: 20, alignSelf: 'stretch' }}>
             <Text style={{ fontWeight: 400, fontSize: 9.5, color: '#444444', lineHeight: 1.65 }}>
               {trunc(profile.welcome_message, 500)}
             </Text>
@@ -403,7 +460,7 @@ function CoverPage({
       {/* Footer de portada */}
       <View style={[S.footer, { borderTopColor: hex15(color) }]}>
         <Text style={S.footerText}>
-          Elaborado por {nutritionistName}{profile.college_number ? ` · Nº colegiado ${profile.college_number}` : ''}{approved_at ? ` · ${approved_at}` : ''}
+          {nutritionistName}{profile.college_number ? ` · Nº colegiado ${profile.college_number}` : ''}{approved_at ? ` · ${approved_at}` : ''}
         </Text>
         <Text style={S.footerText}>Pág 1</Text>
       </View>
@@ -746,7 +803,7 @@ export function NutritionPlanPDF({
   profile,
   logo_uri,
   signature_uri,
-  profile_photo_uri: _profile_photo_uri,
+  profile_photo_uri,
   is_pro,
   approved_at,
 }: PropsPDF) {
@@ -769,6 +826,7 @@ export function NutritionPlanPDF({
         patient={patient}
         profile={profile}
         logo_uri={logo_uri}
+        profile_photo_uri={profile_photo_uri}
         is_pro={is_pro}
         approved_at={approved_at}
         color={color}

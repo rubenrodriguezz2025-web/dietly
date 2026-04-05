@@ -386,7 +386,13 @@ export default async function PaginaPaciente({
               {clinicName ?? nombreDN ?? ''}
             </span>
             <div className='ml-auto flex-shrink-0'>
-              <BotonDescargar variant='compact' />
+              <BotonDescargar
+                variant='compact'
+                planId={plan.id as string}
+                patientToken={token}
+                hmac={hmac}
+                expires={expires}
+              />
             </div>
           </header>
         </div>
@@ -413,8 +419,13 @@ export default async function PaginaPaciente({
             />
           )}
 
-          {/* Botón guardar como PDF */}
-          <BotonDescargar />
+          {/* Botón descargar PDF */}
+          <BotonDescargar
+            planId={plan.id as string}
+            patientToken={token}
+            hmac={hmac}
+            expires={expires}
+          />
 
           {/* Pie — transparencia IA (CLAUDE.md: siempre mencionar revisión profesional) */}
           <FooterTransparenciaIA
