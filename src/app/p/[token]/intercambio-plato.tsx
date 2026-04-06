@@ -230,7 +230,7 @@ export function IntercambioPlato({
                     style={{ color: primaryColor }}
                   />
                   <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                    Generando 3 alternativas con IA...
+                    Buscando alternativas equivalentes...
                   </p>
                 </div>
               )}
@@ -243,7 +243,7 @@ export function IntercambioPlato({
                   </p>
                   <div className="rounded-xl px-3 py-2.5" style={{ background: 'var(--chip-off)', border: '1px solid var(--border)' }}>
                     <p className="text-[11px] leading-snug" style={{ color: 'var(--text-muted)' }}>
-                      Estas alternativas son generadas por IA con calorías y macros equivalentes. Tu nutricionista revisará el cambio.
+                      Estas alternativas tienen calorías y macros equivalentes. Tu nutricionista revisará el cambio antes de aplicarlo.
                     </p>
                   </div>
 

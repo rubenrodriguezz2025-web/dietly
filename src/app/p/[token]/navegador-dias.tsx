@@ -21,7 +21,7 @@ export function NavegadorDias({ dias, diaActual, token }: Props) {
               scroll={false}
               className={`rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                 activo
-                  ? 'bg-green-600 text-white shadow-sm'
+                  ? 'bg-emerald-600 text-white shadow-sm'
                   : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
               }`}
             >

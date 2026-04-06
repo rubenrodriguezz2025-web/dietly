@@ -63,8 +63,8 @@ export function IntakeForm({ patientId, intakeToken }: { patientId: string; inta
   if (enviado) {
     return (
       <div className='mt-8 text-center'>
-        <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100'>
-          <svg className='h-6 w-6 text-green-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+        <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100'>
+          <svg className='h-6 w-6 text-emerald-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
           </svg>
         </div>
@@ -239,8 +239,8 @@ export function IntakeForm({ patientId, intakeToken }: { patientId: string; inta
       </section>
 
       {/* Bloque de consentimiento */}
-      <section className='rounded-2xl border border-green-200 bg-green-50 p-5'>
-        <h2 className='mb-3 text-sm font-bold uppercase tracking-wider text-green-800'>
+      <section className='rounded-2xl border border-emerald-200 bg-emerald-50 p-5'>
+        <h2 className='mb-3 text-sm font-bold uppercase tracking-wider text-emerald-800'>
           Información sobre el tratamiento de tus datos
         </h2>
         <p className='mb-4 text-sm leading-relaxed text-zinc-700'>
@@ -253,7 +253,7 @@ export function IntakeForm({ patientId, intakeToken }: { patientId: string; inta
             type='checkbox'
             checked={consentido}
             onChange={(e) => setConsentido(e.target.checked)}
-            className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-green-400 accent-green-600'
+            className='mt-0.5 h-4 w-4 flex-shrink-0 rounded border-emerald-400 accent-emerald-600'
           />
           <span className='text-sm font-medium text-zinc-800'>
             Acepto y doy mi consentimiento
@@ -268,7 +268,7 @@ export function IntakeForm({ patientId, intakeToken }: { patientId: string; inta
       <button
         type='submit'
         disabled={cargando || !consentido}
-        className='w-full rounded-xl bg-green-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-60'
+        className='w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60'
       >
         {cargando ? 'Enviando...' : 'Enviar cuestionario'}
       </button>
