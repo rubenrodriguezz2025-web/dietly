@@ -346,7 +346,7 @@ export function IntercambioPlato({
                     {state.message}
                   </p>
                   <button
-                    onClick={() => { closeSheet(); setTimeout(requestAlternatives, 350); }}
+                    onClick={() => requestAlternatives()}
                     className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors"
                     style={{ background: primaryColor }}
                   >

@@ -276,7 +276,7 @@ function validateDay(day: PlanDay): number[] {
 
 const BETA_PLAN_LIMIT = 10;
 
-// Precios claude-sonnet-4-5 (USD por token)
+// Precios claude-sonnet-4-6 (USD por token)
 const COST_PER_INPUT_TOKEN = 0.000003;
 const COST_PER_OUTPUT_TOKEN = 0.000015;
 
@@ -506,7 +506,8 @@ export async function POST(req: NextRequest) {
           const { data: swapsData } = await supabaseAdminClient
             .from('meal_swaps')
             .select('original_meal')
-            .eq('patient_id', patient_id);
+            .eq('patient_id', patient_id)
+            .eq('nutritionist_id', user.id);
           if (swapsData) {
             rejectedMealNames = [...new Set(
               swapsData.map((s: { original_meal: { meal_name: string } }) => s.original_meal.meal_name),
