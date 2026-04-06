@@ -98,10 +98,13 @@ export async function POST(
     console.log('[PWA-PDF] Rate limit OK. count:', count);
 
     // Registrar intento de acceso
-    await (supabaseAdminClient as any)
-      .from('plan_access_attempts')
-      .insert({ plan_id: planId, ip_address: ip })
-      .catch((e: unknown) => { console.warn('[PWA-PDF] No se pudo registrar intento:', e); });
+    try {
+      await (supabaseAdminClient as any)
+        .from('plan_access_attempts')
+        .insert({ plan_id: planId, ip_address: ip });
+    } catch (e) {
+      console.warn('[PWA-PDF] No se pudo registrar intento:', e);
+    }
 
     const paciente = plan.patients as { id: string; name: string; email?: string; nutritionist_id: string };
     console.log('[PWA-PDF] Buscando perfil nutricionista:', paciente.nutritionist_id);
@@ -231,10 +234,9 @@ export async function POST(
     });
 
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
     console.error('[PWA-PDF] Excepción no capturada:', err);
     return Response.json(
-      { error: `Error inesperado: ${msg}` },
+      { error: 'Error inesperado al generar el PDF. Inténtalo de nuevo.' },
       { status: 500 }
     );
   }
