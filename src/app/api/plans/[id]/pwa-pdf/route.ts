@@ -231,9 +231,10 @@ export async function POST(
     });
 
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[PWA-PDF] Excepción no capturada:', err);
     return Response.json(
-      { error: 'Error inesperado al generar el PDF. Inténtalo de nuevo.' },
+      { error: `Error inesperado: ${msg}` },
       { status: 500 }
     );
   }
