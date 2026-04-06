@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
 
   const isAdmin = user.email === ADMIN_EMAIL;
 
-  const [{ data: profile }, { count: draftCount }] = await Promise.all([
+  const [{ data: profile }, { count: draftCount }, { count: pendingSwapsCount }] = await Promise.all([
     (supabase as any)
       .from('profiles')
       .select('full_name, specialty, profile_photo_url')
@@ -30,6 +30,11 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
       .select('id', { count: 'exact', head: true })
       .eq('nutritionist_id', user.id)
       .eq('status', 'draft') as Promise<{ count: number | null }>,
+    (supabase as any)
+      .from('meal_swaps')
+      .select('id', { count: 'exact', head: true })
+      .eq('nutritionist_id', user.id)
+      .eq('status', 'pending') as Promise<{ count: number | null }>,
   ]);
 
   // Generar signed URL para la foto de perfil del sidebar
@@ -51,6 +56,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
               <SidebarNav
                 isAdmin={isAdmin}
                 draftCount={draftCount ?? 0}
+                pendingSwapsCount={pendingSwapsCount ?? 0}
                 profileName={profile?.full_name ?? ''}
                 profileSpecialty={profile?.specialty ?? null}
                 profilePhoto={profilePhotoUrl}
@@ -61,7 +67,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
           {/* Main content */}
           <div className='min-w-0 flex-1'>
             {/* Mobile nav — horizontal pills, shown only on mobile */}
-            <MobileDashboardNav isAdmin={isAdmin} draftCount={draftCount ?? 0} />
+            <MobileDashboardNav isAdmin={isAdmin} draftCount={draftCount ?? 0} pendingSwapsCount={pendingSwapsCount ?? 0} />
             <div className='animate-page-in'>
               {children}
             </div>

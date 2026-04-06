@@ -131,6 +131,8 @@ export function DayEditor({
             isInvalid={invalidMealIndexes.includes(i)}
             isDraft={isDraft}
             planId={planId}
+            dayNumber={day.day_number}
+            mealIndex={i}
             onChange={(updated) => updateMeal(i, updated)}
           />
         ))}

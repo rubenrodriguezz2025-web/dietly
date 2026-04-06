@@ -23,15 +23,23 @@ export type MealCardProps = {
   isInvalid: boolean;
   isDraft: boolean;
   planId: string;
+  dayNumber: number;
+  mealIndex: number;
   onChange: (updated: Meal) => void;
 };
 
-export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCardProps) {
+export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealIndex, onChange }: MealCardProps) {
   const [isRecalculating, startRecalc] = useTransition();
   const [recalcError, setRecalcError] = useState<string | null>(null);
   const [macrosDirty, setMacrosDirty] = useState(false);
   const [addingIngredient, setAddingIngredient] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [swapState, setSwapState] = useState<
+    | { phase: 'idle' }
+    | { phase: 'loading' }
+    | { phase: 'choosing'; alternatives: Meal[] }
+    | { phase: 'error'; message: string }
+  >({ phase: 'idle' });
 
   function handleIngredientChange(i: number, updated: Ingredient) {
     onChange({
@@ -62,6 +70,38 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
         onChange({ ...meal, calories: result.calories!, macros: result.macros! });
       }
     });
+  }
+
+  async function handleSwapRequest() {
+    setSwapState({ phase: 'loading' });
+    try {
+      const res = await fetch('/api/plans/swap-meal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: planId,
+          day_number: dayNumber,
+          meal_index: mealIndex,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Error al generar alternativas');
+      }
+      const data = await res.json();
+      setSwapState({ phase: 'choosing', alternatives: data.alternatives });
+    } catch (err) {
+      setSwapState({
+        phase: 'error',
+        message: err instanceof Error ? err.message : 'Error inesperado',
+      });
+    }
+  }
+
+  function handlePickAlternative(alt: Meal) {
+    onChange(alt);
+    setSwapState({ phase: 'idle' });
+    setMacrosDirty(false);
   }
 
   return (
@@ -254,6 +294,85 @@ export function MealCard({ meal, isInvalid, isDraft, planId, onChange }: MealCar
             onChange={(notes) => onChange({ ...meal, notes })}
             textClassName='text-sm italic text-gray-500 dark:text-zinc-400'
           />
+        </div>
+      )}
+
+      {/* Sugerir alternativa (nutricionista) */}
+      {isDraft && (
+        <div className='mt-3 border-t border-gray-200 dark:border-zinc-800 pt-3'>
+          {swapState.phase === 'idle' && (
+            <button
+              type='button'
+              onClick={handleSwapRequest}
+              className='flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-400 transition-colors hover:text-emerald-500'
+            >
+              <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                <polyline points='17 1 21 5 17 9' />
+                <path d='M3 11V9a4 4 0 014-4h14' />
+                <polyline points='7 23 3 19 7 15' />
+                <path d='M21 13v2a4 4 0 01-4 4H3' />
+              </svg>
+              Sugerir alternativa con IA
+            </button>
+          )}
+
+          {swapState.phase === 'loading' && (
+            <div className='flex items-center gap-2 text-xs text-zinc-400'>
+              <span className='h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-300' />
+              Generando 3 alternativas...
+            </div>
+          )}
+
+          {swapState.phase === 'error' && (
+            <div className='flex items-center gap-2'>
+              <p className='text-xs text-red-400'>{swapState.message}</p>
+              <button
+                type='button'
+                onClick={handleSwapRequest}
+                className='text-xs font-medium text-zinc-400 underline hover:text-zinc-200'
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
+
+          {swapState.phase === 'choosing' && (
+            <div className='flex flex-col gap-2'>
+              <div className='flex items-center justify-between'>
+                <p className='text-xs font-medium text-zinc-400'>
+                  Elige una alternativa para reemplazar este plato:
+                </p>
+                <button
+                  type='button'
+                  onClick={() => setSwapState({ phase: 'idle' })}
+                  className='text-[10px] text-zinc-500 hover:text-zinc-300'
+                >
+                  Cancelar
+                </button>
+              </div>
+              {swapState.alternatives.map((alt, i) => (
+                <button
+                  key={i}
+                  type='button'
+                  onClick={() => handlePickAlternative(alt)}
+                  className='rounded-lg border border-zinc-700/50 bg-zinc-800/50 p-3 text-left transition-all hover:border-emerald-700/50 hover:bg-emerald-950/20'
+                >
+                  <div className='flex items-start justify-between gap-2'>
+                    <p className='text-sm font-medium text-zinc-200'>{alt.meal_name}</p>
+                    <span className='flex-shrink-0 rounded-md bg-zinc-700/50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-300'>
+                      {alt.calories} kcal
+                    </span>
+                  </div>
+                  <p className='mt-1 text-[11px] tabular-nums text-zinc-500'>
+                    P{alt.macros.protein_g} · C{alt.macros.carbs_g} · G{alt.macros.fat_g}
+                  </p>
+                  <p className='mt-1 text-[11px] text-zinc-500'>
+                    {alt.ingredients.map((ing) => ing.name).join(', ')}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

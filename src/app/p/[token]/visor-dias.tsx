@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { Meal, PlanDay } from '@/types/dietly';
+import type { Meal, MealSwap, PlanDay } from '@/types/dietly';
 
 import { IntercambioPlato } from './intercambio-plato';
 
@@ -34,9 +34,10 @@ type Props = {
   planId: string;
   patientToken: string;
   allowSwaps?: boolean;
+  mealSwaps?: MealSwap[];
 };
 
-export function VisorDias({ days: initialDays, initialDay, showMacros, primaryColor, planId, patientToken, allowSwaps = true }: Props) {
+export function VisorDias({ days: initialDays, initialDay, showMacros, primaryColor, planId, patientToken, allowSwaps = true, mealSwaps = [] }: Props) {
   // Estado local mutable de los días — se actualiza al confirmar un intercambio
   const [days, setDays] = useState(initialDays);
   const [currentDay, setCurrentDay] = useState(initialDay);
@@ -48,15 +49,29 @@ export function VisorDias({ days: initialDays, initialDay, showMacros, primaryCo
   // Tracking de comidas intercambiadas — key: "day-mealIndex"
   const [swappedMeals, setSwappedMeals] = useState<Set<string>>(new Set());
 
+  // Tracking de swaps pendientes enviados en esta sesión
+  const [localPendingSwaps, setLocalPendingSwaps] = useState<Set<string>>(new Set());
+
   const diaData = days.find((d) => d.day_number === currentDay) ?? days[0];
 
-  // Callback cuando se confirma un intercambio
-  const handleSwapComplete = useCallback(
-    (dayNum: number, mealIdx: number, _newMeal: Meal, updatedDay: PlanDay) => {
-      setDays((prev) =>
-        prev.map((d) => (d.day_number === dayNum ? updatedDay : d)),
+  // Obtener estado de swap más reciente para una comida
+  const getSwapStatus = useCallback(
+    (dayNum: number, mealIdx: number): MealSwap['status'] | null => {
+      // Primero check local (enviados en esta sesión)
+      if (localPendingSwaps.has(`${dayNum}-${mealIdx}`)) return 'pending';
+      // Luego check server data — primer match es el más reciente (ordenado por created_at desc)
+      const swap = mealSwaps.find(
+        (s) => s.day_number === dayNum && s.meal_index === mealIdx,
       );
-      setSwappedMeals((prev) => new Set(prev).add(`${dayNum}-${mealIdx}`));
+      return swap?.status ?? null;
+    },
+    [mealSwaps, localPendingSwaps],
+  );
+
+  // Callback cuando se confirma un intercambio (ahora no actualiza días)
+  const handleSwapComplete = useCallback(
+    (dayNum: number, mealIdx: number) => {
+      setLocalPendingSwaps((prev) => new Set(prev).add(`${dayNum}-${mealIdx}`));
     },
     [],
   );
@@ -239,28 +254,32 @@ export function VisorDias({ days: initialDays, initialDay, showMacros, primaryCo
           className='flex flex-col gap-3'
           style={{ animation: `pwa-slide-${animDir} 0.28s ease both` }}
         >
-          {diaData.meals.map((comida, i) => (
-            <TarjetaComida
-              key={`${currentDay}-${i}`}
-              comida={comida}
-              showMacros={showMacros}
-              delay={i * 0.055}
-              swapped={swappedMeals.has(`${currentDay}-${i}`)}
-              swapButton={
-                allowSwaps ? (
-                  <IntercambioPlato
-                    planId={planId}
-                    patientToken={patientToken}
-                    dayNumber={currentDay}
-                    mealIndex={i}
-                    meal={comida}
-                    primaryColor={primaryColor}
-                    onSwapComplete={handleSwapComplete}
-                  />
-                ) : null
-              }
-            />
-          ))}
+          {diaData.meals.map((comida, i) => {
+            const swapStatus = getSwapStatus(currentDay, i);
+            return (
+              <TarjetaComida
+                key={`${currentDay}-${i}`}
+                comida={comida}
+                showMacros={showMacros}
+                delay={i * 0.055}
+                swapped={swappedMeals.has(`${currentDay}-${i}`)}
+                swapStatus={swapStatus}
+                swapButton={
+                  allowSwaps && swapStatus !== 'pending' ? (
+                    <IntercambioPlato
+                      planId={planId}
+                      patientToken={patientToken}
+                      dayNumber={currentDay}
+                      mealIndex={i}
+                      meal={comida}
+                      primaryColor={primaryColor}
+                      onSwapComplete={handleSwapComplete}
+                    />
+                  ) : null
+                }
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -353,12 +372,14 @@ function TarjetaComida({
   showMacros,
   delay,
   swapped,
+  swapStatus,
   swapButton,
 }: {
   comida: Meal;
   showMacros: boolean;
   delay: number;
   swapped: boolean;
+  swapStatus: 'pending' | 'approved' | 'rejected' | null;
   swapButton: React.ReactNode | null;
 }) {
   const acento = ACENTO_TIPO[comida.meal_type] ?? { borde: '#16a34a', etiqueta: '#15803d', emoji: '🍴' };
@@ -391,12 +412,28 @@ function TarjetaComida({
                 </span>
               )}
             </p>
-            {swapped && (
+            {swapStatus === 'pending' && (
+              <span
+                className='rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide'
+                style={{ background: '#fef3c7', color: '#92400e' }}
+              >
+                Pendiente
+              </span>
+            )}
+            {(swapStatus === 'approved' || swapped) && swapStatus !== 'pending' && (
               <span
                 className='rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide'
                 style={{ background: 'var(--kcal-bg)', color: 'var(--kcal-fg)' }}
               >
-                Cambiado
+                Aprobado
+              </span>
+            )}
+            {swapStatus === 'rejected' && (
+              <span
+                className='rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide'
+                style={{ background: '#fef2f2', color: '#dc2626' }}
+              >
+                Rechazado
               </span>
             )}
           </div>
@@ -500,6 +537,23 @@ function TarjetaComida({
             style={{ color: 'var(--text-muted)' }}
           >
             {comida.preparation}
+          </p>
+        </div>
+      )}
+
+      {/* Estado del intercambio */}
+      {swapStatus === 'pending' && (
+        <div className='px-4 py-3' style={{ borderTop: '1px solid var(--border)', background: '#fffbeb' }}>
+          <p className='flex items-center gap-1.5 text-[11px] font-medium' style={{ color: '#92400e' }}>
+            <span aria-hidden='true'>&#9203;</span>
+            Pendiente de aprobación del nutricionista
+          </p>
+        </div>
+      )}
+      {swapStatus === 'rejected' && (
+        <div className='px-4 py-3' style={{ borderTop: '1px solid var(--border)', background: '#fef2f2' }}>
+          <p className='text-[11px] font-medium' style={{ color: '#dc2626' }}>
+            Tu nutricionista mantiene este plato.
           </p>
         </div>
       )}

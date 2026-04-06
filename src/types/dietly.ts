@@ -207,6 +207,9 @@ export const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {
   error: 'Error',
 };
 
+export type MealSwapStatus = 'pending' | 'approved' | 'rejected';
+export type MealSwapInitiator = 'patient' | 'nutritionist';
+
 export type MealSwap = {
   id: string;
   plan_id: string;
@@ -218,7 +221,10 @@ export type MealSwap = {
   selected_meal: Meal;
   alternatives: Meal[];
   reason: string | null;
+  status: MealSwapStatus;
+  initiated_by: MealSwapInitiator;
   reverted_at: string | null;
+  notification_sent_at: string | null;
   created_at: string;
 };
 

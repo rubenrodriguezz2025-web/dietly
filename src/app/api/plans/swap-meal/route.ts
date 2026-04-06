@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Meal, PlanContent } from '@/types/dietly';
 import type Anthropic from '@anthropic-ai/sdk';
 
@@ -10,7 +11,7 @@ const bodySchema = z.object({
   plan_id: z.string().uuid(),
   day_number: z.number().int().min(1).max(7),
   meal_index: z.number().int().min(0),
-  patient_token: z.string().min(1),
+  patient_token: z.string().min(1).optional(),
 });
 
 // ── Tool definition para Claude ─────────────────────────────────────────────
@@ -89,30 +90,52 @@ export async function POST(req: NextRequest) {
     const { anthropicClient } = await import('@/libs/anthropic/client');
     const { callAnthropicWithResilience } = await import('@/libs/ai/resilience');
 
-    // Rate limiting: máximo 10 swaps por plan por día
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const { count: swapsToday } = await (supabaseAdminClient as any)
-      .from('meal_swaps')
-      .select('id', { count: 'exact', head: true })
-      .eq('plan_id', plan_id)
-      .gte('created_at', todayStart.toISOString());
+    // Determinar modo de autenticación: nutricionista (cookie auth) o paciente (token)
+    let isNutritionist = false;
+    let nutritionistId: string | null = null;
 
-    if ((swapsToday ?? 0) >= 10) {
-      return NextResponse.json(
-        { error: 'Has alcanzado el límite de 10 intercambios por día para este plan.' },
-        { status: 429 },
-      );
+    if (!patient_token) {
+      // Modo nutricionista: requiere auth
+      const supabase = await createSupabaseServerClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      }
+      isNutritionist = true;
+      nutritionistId = user.id;
     }
 
-    // Verificar plan y token
-    const { data: plan, error: planError } = await (supabaseAdminClient as any)
+    // Rate limiting solo para pacientes: máximo 10 swaps por plan por día
+    if (!isNutritionist) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { count: swapsToday } = await (supabaseAdminClient as any)
+        .from('meal_swaps')
+        .select('id', { count: 'exact', head: true })
+        .eq('plan_id', plan_id)
+        .gte('created_at', todayStart.toISOString());
+
+      if ((swapsToday ?? 0) >= 10) {
+        return NextResponse.json(
+          { error: 'Has alcanzado el límite de 10 intercambios por día para este plan.' },
+          { status: 429 },
+        );
+      }
+    }
+
+    // Verificar plan — nutricionista usa su ID, paciente usa token
+    const planQuery = (supabaseAdminClient as any)
       .from('nutrition_plans')
       .select('id, content, patient_id, nutritionist_id, status')
-      .eq('id', plan_id)
-      .eq('patient_token', patient_token)
-      .in('status', ['approved', 'sent'])
-      .single();
+      .eq('id', plan_id);
+
+    if (isNutritionist) {
+      planQuery.eq('nutritionist_id', nutritionistId);
+    } else {
+      planQuery.eq('patient_token', patient_token).in('status', ['approved', 'sent']);
+    }
+
+    const { data: plan, error: planError } = await planQuery.single();
 
     if (planError || !plan) {
       return NextResponse.json({ error: 'Plan no encontrado' }, { status: 404 });

@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation';
 import { validatePlanAccessToken } from '@/libs/auth/plan-tokens';
 import { aggregateShoppingList } from '@/libs/shopping-list';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
-import type { PlanContent } from '@/types/dietly';
+import type { MealSwap, PlanContent } from '@/types/dietly';
 
 import { BannerInstalar } from './banner-instalar';
 import { BienvenidaPwa } from './bienvenida-pwa';
@@ -287,8 +287,11 @@ export default async function PaginaPaciente({
   let logoUrl: string | null = null;
   let consentAlreadyGiven = false;
 
+  // Swaps del plan (para mostrar badges de estado)
+  let mealSwaps: MealSwap[] = [];
+
   if (pacienteData?.nutritionist_id) {
-    const [profileResult, consentResult] = await Promise.all([
+    const [profileResult, consentResult, swapsResult] = await Promise.all([
       (supabaseAdminClient as any)
         .from('profiles')
         .select('show_macros, full_name, college_number, primary_color, clinic_name, whatsapp_number, logo_url')
@@ -303,6 +306,12 @@ export default async function PaginaPaciente({
             .is('revoked_at', null)
             .maybeSingle()
         : Promise.resolve({ data: null }),
+      (supabaseAdminClient as any)
+        .from('meal_swaps')
+        .select('id, day_number, meal_index, selected_meal, original_meal, status, initiated_by, created_at')
+        .eq('plan_id', plan.id)
+        .in('status', ['pending', 'approved', 'rejected'])
+        .order('created_at', { ascending: false }),
     ]);
 
     const profileBrand = profileResult.data;
@@ -315,6 +324,7 @@ export default async function PaginaPaciente({
     logoUrl = profileBrand?.logo_url ?? null;
 
     consentAlreadyGiven = !!consentResult.data;
+    mealSwaps = (swapsResult.data ?? []) as MealSwap[];
   }
 
   // Pre-agregar la lista de la compra en el servidor para no pasar funciones al cliente
@@ -408,6 +418,7 @@ export default async function PaginaPaciente({
             planId={plan.id as string}
             patientToken={token}
             allowSwaps={pacienteData?.allow_meal_swaps ?? true}
+            mealSwaps={mealSwaps}
           />
 
           {/* Lista de la compra interactiva */}

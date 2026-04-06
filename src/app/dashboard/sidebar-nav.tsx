@@ -100,6 +100,17 @@ function IconMoon({ className }: { className?: string }) {
   );
 }
 
+function IconSwap({ className }: { className?: string }) {
+  return (
+    <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className={className} aria-hidden='true'>
+      <polyline points='17 1 21 5 17 9' />
+      <path d='M3 11V9a4 4 0 014-4h14' />
+      <polyline points='7 23 3 19 7 15' />
+      <path d='M21 13v2a4 4 0 01-4 4H3' />
+    </svg>
+  );
+}
+
 function IconAdmin({ className }: { className?: string }) {
   return (
     <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className={className} aria-hidden='true'>
@@ -116,6 +127,7 @@ type NavItem = {
   icon: ({ className }: { className?: string }) => React.JSX.Element;
   matchFn?: (pathname: string) => boolean;
   badge?: number;
+  badgeColor?: 'amber' | 'red';
 };
 
 type NavGroup = {
@@ -182,9 +194,14 @@ function NavLink({
   icon: Icon,
   matchFn,
   badge,
+  badgeColor = 'amber',
 }: NavItem) {
   const pathname = usePathname();
   const active = matchFn ? matchFn(pathname) : pathname === href;
+
+  const badgeClasses = badgeColor === 'red'
+    ? 'bg-red-500/20 text-red-400'
+    : 'bg-amber-500/20 text-amber-400';
 
   return (
     <Link
@@ -199,7 +216,7 @@ function NavLink({
       <Icon className={cn('flex-shrink-0 transition-colors duration-150', active ? 'text-emerald-400' : 'text-zinc-600 group-hover:text-zinc-400')} />
       <span className='flex-1'>{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className='flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500/20 px-1 text-[10px] font-semibold tabular-nums text-amber-400'>
+        <span className={cn('flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums', badgeClasses)}>
           {badge}
         </span>
       )}
@@ -222,12 +239,14 @@ function SectionLabel({ label }: { label: string }) {
 export function SidebarNav({
   isAdmin,
   draftCount = 0,
+  pendingSwapsCount = 0,
   profileName = '',
   profileSpecialty = null,
   profilePhoto = null,
 }: {
   isAdmin?: boolean;
   draftCount?: number;
+  pendingSwapsCount?: number;
   profileName?: string;
   profileSpecialty?: string | null;
   profilePhoto?: string | null;
@@ -263,6 +282,14 @@ export function SidebarNav({
     {
       label: 'Herramientas',
       items: [
+        {
+          href: '/dashboard/intercambios',
+          label: 'Intercambios',
+          icon: IconSwap,
+          matchFn: (p) => p.startsWith('/dashboard/intercambios'),
+          badge: pendingSwapsCount,
+          badgeColor: 'red' as const,
+        },
         {
           href: '/dashboard/recetas',
           label: 'Mis recetas',
@@ -357,13 +384,14 @@ export function SidebarNav({
 
 // ── Mobile horizontal nav ──────────────────────────────────────────────────────
 
-export function MobileDashboardNav({ isAdmin, draftCount = 0 }: { isAdmin?: boolean; draftCount?: number }) {
+export function MobileDashboardNav({ isAdmin, draftCount = 0, pendingSwapsCount = 0 }: { isAdmin?: boolean; draftCount?: number; pendingSwapsCount?: number }) {
   const pathname = usePathname();
 
   const ALL_ITEMS: NavItem[] = [
     { href: '/dashboard', label: 'Inicio', icon: IconHome, matchFn: (p) => p === '/dashboard' || p.startsWith('/dashboard/patients'), badge: draftCount },
     { href: '/dashboard/agenda', label: 'Agenda', icon: IconCalendar, matchFn: (p) => p.startsWith('/dashboard/agenda') },
     { href: '/dashboard/patients/new', label: 'Nuevo paciente', icon: IconUserPlus, matchFn: (p) => p === '/dashboard/patients/new' },
+    { href: '/dashboard/intercambios', label: 'Intercambios', icon: IconSwap, matchFn: (p) => p.startsWith('/dashboard/intercambios'), badge: pendingSwapsCount, badgeColor: 'red' as const },
     { href: '/dashboard/recetas', label: 'Mis recetas', icon: IconBook, matchFn: (p) => p.startsWith('/dashboard/recetas') },
     { href: '/dashboard/derechos-datos', label: 'RGPD', icon: IconShield, matchFn: (p) => p.startsWith('/dashboard/derechos-datos') },
     { href: '/dashboard/ajustes', label: 'Ajustes', icon: IconSettings, matchFn: (p) => p.startsWith('/dashboard/ajustes') },
@@ -375,8 +403,11 @@ export function MobileDashboardNav({ isAdmin, draftCount = 0 }: { isAdmin?: bool
       style={{ scrollbarWidth: 'none' }}
       aria-label='Navegación del dashboard'
     >
-      {ALL_ITEMS.map(({ href, label, icon: Icon, matchFn, badge }) => {
+      {ALL_ITEMS.map(({ href, label, icon: Icon, matchFn, badge, badgeColor = 'amber' }) => {
         const active = matchFn ? matchFn(pathname) : pathname === href;
+        const mobileBadgeClasses = badgeColor === 'red'
+          ? 'bg-red-500/20 text-red-400'
+          : 'bg-amber-500/20 text-amber-400';
         return (
           <Link
             key={href}
@@ -391,7 +422,7 @@ export function MobileDashboardNav({ isAdmin, draftCount = 0 }: { isAdmin?: bool
             <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', active ? 'text-emerald-400' : 'text-zinc-600')} />
             {label}
             {badge !== undefined && badge > 0 && (
-              <span className='ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500/20 px-1 text-[10px] font-semibold tabular-nums text-amber-400'>
+              <span className={cn('ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums', mobileBadgeClasses)}>
                 {badge}
               </span>
             )}

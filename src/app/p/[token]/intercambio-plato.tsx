@@ -21,7 +21,7 @@ type Props = {
   mealIndex: number;
   meal: Meal;
   primaryColor: string;
-  onSwapComplete: (dayNumber: number, mealIndex: number, newMeal: Meal, updatedDay: any) => void;
+  onSwapComplete: (dayNumber: number, mealIndex: number) => void;
 };
 
 // ── Componente principal ─────────────────────────────────────────────────────
@@ -139,14 +139,13 @@ export function IntercambioPlato({
         throw new Error(body.error || 'Error al confirmar el cambio');
       }
 
-      const data = await res.json();
       setState({ phase: 'success', selectedMeal });
 
-      // Notificar al padre para actualizar UI
-      onSwapComplete(dayNumber, mealIndex, selectedMeal, data.updated_day);
+      // Notificar al padre para actualizar UI (marca como pending)
+      onSwapComplete(dayNumber, mealIndex);
 
-      // Cerrar tras 1.2s de feedback visual
-      setTimeout(closeSheet, 1200);
+      // Cerrar tras 1.5s de feedback visual
+      setTimeout(closeSheet, 1500);
     } catch (err) {
       setState({
         phase: 'error',
@@ -176,10 +175,10 @@ export function IntercambioPlato({
           <polyline points="7 23 3 19 7 15" />
           <path d="M21 13v2a4 4 0 01-4 4H3" />
         </svg>
-        Cambiar este plato
+        No me apetece este plato
       </button>
       <p className="mt-1.5 text-center text-[10px] leading-snug" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-        La alternativa mantiene calorías y macros similares. Tu nutricionista será notificado del cambio.
+        Los cambios requieren aprobación de tu nutricionista. Las alternativas mantienen calorías y macros similares.
       </p>
 
       {/* Bottom Sheet Overlay */}
@@ -206,7 +205,7 @@ export function IntercambioPlato({
                   {state.phase === 'loading'
                     ? 'Buscando alternativas...'
                     : state.phase === 'success'
-                      ? 'Plato cambiado'
+                      ? 'Sugerencia enviada'
                       : state.phase === 'error'
                         ? 'Error'
                         : 'Elige una alternativa'}
@@ -303,7 +302,7 @@ export function IntercambioPlato({
                               style={{ color: primaryColor }}
                             />
                             <span className="text-xs font-medium" style={{ color: primaryColor }}>
-                              Guardando cambio...
+                              Enviando sugerencia...
                             </span>
                           </div>
                         )}
@@ -318,17 +317,18 @@ export function IntercambioPlato({
                 <div className="flex flex-col items-center gap-3 py-8">
                   <div
                     className="flex h-16 w-16 items-center justify-center rounded-full pwa-swap-check-in"
-                    style={{ background: `${primaryColor}22` }}
+                    style={{ background: '#fef3c722' }}
                   >
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={primaryColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
                     </svg>
                   </div>
                   <p className="text-center text-sm font-semibold" style={{ color: 'var(--text)' }}>
                     {state.selectedMeal.meal_name}
                   </p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    Tu plan se ha actualizado
+                  <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
+                    Sugerencia enviada. Tu nutricionista la revisará y aprobará o rechazará.
                   </p>
                 </div>
               )}
