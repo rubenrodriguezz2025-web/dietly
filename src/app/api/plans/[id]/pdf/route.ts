@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { type FontPreference,NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
+import { getImageDimensionsFromDataUri, isRasterDataUri } from '@/libs/image-dimensions';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Patient, PlanContent, Profile } from '@/types/dietly';
@@ -156,9 +157,12 @@ export async function GET(
       : Promise.resolve(null),
   ]);
 
-  logo_uri = downloads[0];
+  logo_uri = isRasterDataUri(downloads[0]) ? downloads[0] : null;
   signature_uri = downloads[1];
-  profile_photo_uri = downloads[2];
+  profile_photo_uri = isRasterDataUri(downloads[2]) ? downloads[2] : null;
+
+  const logo_dimensions = logo_uri ? getImageDimensionsFromDataUri(logo_uri) : null;
+  const photo_dimensions = profile_photo_uri ? getImageDimensionsFromDataUri(profile_photo_uri) : null;
 
   // Fecha de aprobación formateada
   const approved_at = plan.approved_at
@@ -181,6 +185,8 @@ export async function GET(
       logo_uri,
       signature_uri,
       profile_photo_uri,
+      logo_dimensions,
+      photo_dimensions,
       is_pro,
       approved_at: approved_at ?? undefined,
     });

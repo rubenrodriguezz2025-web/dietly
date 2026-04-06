@@ -79,14 +79,14 @@ export function LogoForm({
             <p className='text-sm text-zinc-400'>
               {preview ? 'Cambiar imagen' : 'Haz clic para subir tu logo'}
             </p>
-            <p className='mt-1 text-xs text-zinc-600'>PNG, JPG o WebP · máx. 512 KB</p>
+            <p className='mt-1 text-xs text-zinc-600'>PNG, JPG, WebP, SVG o GIF · máx. 5 MB</p>
           </div>
         </div>
         <input
           ref={inputRef}
           type='file'
           name='logo'
-          accept='image/png,image/jpeg,image/webp'
+          accept='image/png,image/jpeg,image/webp,image/svg+xml,image/gif'
           className='hidden'
           onChange={handleFileChange}
         />

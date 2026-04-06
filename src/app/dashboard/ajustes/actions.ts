@@ -4,8 +4,8 @@ import { revalidatePath } from 'next/cache';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-const MAX_SIZE_BYTES = 512 * 1024; // 512 KB
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/gif'];
 const BUCKET = 'nutritionist-logos';
 
 // ── Subir o reemplazar el logo ────────────────────────────────────────────────
@@ -24,14 +24,14 @@ export async function uploadLogo(
   const file = formData.get('logo') as File | null;
   if (!file || file.size === 0) return { error: 'Selecciona un archivo' };
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return { error: 'Formato no permitido. Usa PNG, JPG o WebP.' };
+    return { error: 'Formato no permitido. Usa PNG, JPG, WebP, SVG o GIF.' };
   }
   if (file.size > MAX_SIZE_BYTES) {
-    return { error: 'El archivo supera el límite de 512 KB.' };
+    return { error: 'El archivo supera el límite de 5 MB.' };
   }
 
   // Extensión a partir del MIME type
-  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/svg+xml' ? 'svg' : file.type.split('/')[1];
   const path = `${user.id}/logo.${ext}`;
 
   const arrayBuffer = await file.arrayBuffer();

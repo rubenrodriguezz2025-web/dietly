@@ -2,6 +2,7 @@ import React from 'react';
 
 import { type FontPreference, NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
 import { validatePlanAccessToken } from '@/libs/auth/plan-tokens';
+import { getImageDimensionsFromDataUri, isRasterDataUri } from '@/libs/image-dimensions';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { PlanContent, Profile } from '@/types/dietly';
 import { renderToBuffer } from '@react-pdf/renderer';
@@ -178,7 +179,14 @@ export async function POST(
         : Promise.resolve(null),
     ]);
 
-    console.log('[PWA-PDF] Assets OK. logo:', !!logo_uri, 'signature:', !!signature_uri, 'photo:', !!profile_photo_uri);
+    // SVG no es soportado por <Image> de react-pdf — descartar si es SVG
+    const logo_uri_raster = isRasterDataUri(logo_uri) ? logo_uri : null;
+    const profile_photo_uri_raster = isRasterDataUri(profile_photo_uri) ? profile_photo_uri : null;
+
+    const logo_dimensions = logo_uri_raster ? getImageDimensionsFromDataUri(logo_uri_raster) : null;
+    const photo_dimensions = profile_photo_uri_raster ? getImageDimensionsFromDataUri(profile_photo_uri_raster) : null;
+
+    console.log('[PWA-PDF] Assets OK. logo:', !!logo_uri_raster, 'signature:', !!signature_uri, 'photo:', !!profile_photo_uri_raster);
 
     // Fecha de aprobación formateada
     const approved_at = plan.approved_at
@@ -197,9 +205,11 @@ export async function POST(
       content,
       patient: { name: paciente.name, email: paciente.email },
       profile,
-      logo_uri,
+      logo_uri: logo_uri_raster,
       signature_uri,
-      profile_photo_uri,
+      profile_photo_uri: profile_photo_uri_raster,
+      logo_dimensions,
+      photo_dimensions,
       is_pro,
       approved_at,
     });

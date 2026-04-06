@@ -62,6 +62,8 @@ export type PropsPDF = {
   logo_uri?: string | null;
   signature_uri?: string | null;
   profile_photo_uri?: string | null;
+  logo_dimensions?: { width: number; height: number } | null;
+  photo_dimensions?: { width: number; height: number } | null;
   is_pro?: boolean;
   approved_at?: string;
 };
@@ -340,6 +342,8 @@ function CoverPage({
   profile,
   logo_uri,
   profile_photo_uri,
+  logo_dimensions,
+  photo_dimensions,
   is_pro,
   approved_at,
   color,
@@ -352,6 +356,8 @@ function CoverPage({
   profile: PropsPDF['profile'];
   logo_uri?: string | null;
   profile_photo_uri?: string | null;
+  logo_dimensions?: PropsPDF['logo_dimensions'];
+  photo_dimensions?: PropsPDF['photo_dimensions'];
   is_pro?: boolean;
   approved_at?: string;
   color: string;
@@ -374,12 +380,31 @@ function CoverPage({
         flexDirection: 'column',
         alignItems: 'center',
       }}>
-        {/* Foto del nutricionista — circular */}
-        {profile_photo_uri ? (
-          <View style={{ width: 96, height: 96, borderRadius: 48, overflow: 'hidden', borderWidth: 3, borderColor: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
-            <Image src={profile_photo_uri} style={{ width: 96, height: 96, objectFit: 'cover' }} />
-          </View>
-        ) : (
+        {/* Foto del nutricionista — forma adaptativa según proporción */}
+        {profile_photo_uri ? (() => {
+          const ratio = photo_dimensions ? photo_dimensions.width / photo_dimensions.height : 1;
+          const isWide = ratio > 1.2;
+          const isTall = ratio < 0.8;
+          if (isWide) {
+            return (
+              <View style={{ width: 160, height: 60, borderRadius: 8, overflow: 'hidden', borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
+                <Image src={profile_photo_uri} style={{ width: 160, height: 60, objectFit: 'contain' }} />
+              </View>
+            );
+          }
+          if (isTall) {
+            return (
+              <View style={{ width: 60, height: 96, borderRadius: 6, overflow: 'hidden', borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
+                <Image src={profile_photo_uri} style={{ width: 60, height: 96, objectFit: 'contain' }} />
+              </View>
+            );
+          }
+          return (
+            <View style={{ width: 96, height: 96, borderRadius: 48, overflow: 'hidden', borderWidth: 3, borderColor: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
+              <Image src={profile_photo_uri} style={{ width: 96, height: 96, objectFit: 'cover' }} />
+            </View>
+          );
+        })() : (
           <View style={{
             width: 96, height: 96, borderRadius: 48,
             backgroundColor: darkColor,
@@ -393,10 +418,19 @@ function CoverPage({
           </View>
         )}
 
-        {/* Logo de la clínica */}
-        {is_pro && logo_uri ? (
-          <Image src={logo_uri} style={{ height: 36, maxWidth: 160, objectFit: 'contain', marginBottom: 10 }} />
-        ) : (
+        {/* Logo de la clínica — forma adaptativa según proporción */}
+        {is_pro && logo_uri ? (() => {
+          const ratio = logo_dimensions ? logo_dimensions.width / logo_dimensions.height : 4;
+          const isSquareOrTall = ratio <= 1.2;
+          if (isSquareOrTall) {
+            return (
+              <Image src={logo_uri} style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 10 }} />
+            );
+          }
+          return (
+            <Image src={logo_uri} style={{ height: 36, maxWidth: 200, objectFit: 'contain', marginBottom: 10 }} />
+          );
+        })() : (
           <Text style={{ fontWeight: 700, fontSize: 16, color: '#ffffff', marginBottom: 4, textAlign: 'center' }}>
             {profile.clinic_name || ''}
           </Text>
@@ -804,6 +838,8 @@ export function NutritionPlanPDF({
   logo_uri,
   signature_uri,
   profile_photo_uri,
+  logo_dimensions,
+  photo_dimensions,
   is_pro,
   approved_at,
 }: PropsPDF) {
@@ -827,6 +863,8 @@ export function NutritionPlanPDF({
         profile={profile}
         logo_uri={logo_uri}
         profile_photo_uri={profile_photo_uri}
+        logo_dimensions={logo_dimensions}
+        photo_dimensions={photo_dimensions}
         is_pro={is_pro}
         approved_at={approved_at}
         color={color}

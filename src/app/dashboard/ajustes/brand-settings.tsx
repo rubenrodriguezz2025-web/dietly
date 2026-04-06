@@ -157,6 +157,7 @@ export function BrandSettings({
   const [welcomeMessage, setWelcomeMessage] = useState(initialWelcomeMessage ?? '');
   const [fontPref, setFontPref] = useState<FontPref>(initialFont);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoRatio, setPhotoRatio] = useState<number | null>(null);
   const [colorSaved, setColorSaved] = useState(false);
   const [welcomeSaved, setWelcomeSaved] = useState(false);
 
@@ -230,7 +231,11 @@ export function BrandSettings({
   function handlePhotoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPhotoPreview(URL.createObjectURL(file));
+    const objectUrl = URL.createObjectURL(file);
+    setPhotoPreview(objectUrl);
+    const img = new window.Image();
+    img.onload = () => setPhotoRatio(img.naturalWidth / img.naturalHeight);
+    img.src = objectUrl;
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -294,22 +299,26 @@ export function BrandSettings({
               Aparece en la página final del PDF junto a tu nombre y firma.
             </p>
 
-            {hasPhoto && (
-              <div className='mb-4 flex items-center gap-4'>
-                <div className='relative h-16 w-16 overflow-hidden rounded-full border border-zinc-700 bg-gray-100 dark:bg-zinc-900'>
-                  <Image
-                    src={photoPreview ?? profilePhotoUrl!}
-                    alt='Foto de perfil'
-                    fill
-                    className='object-cover'
-                    unoptimized
-                  />
+            {hasPhoto && (() => {
+              const ratio = photoRatio ?? 1;
+              const isWide = photoPreview ? ratio > 1.2 : false;
+              return (
+                <div className='mb-4 flex items-center gap-4'>
+                  <div className={`relative overflow-hidden border border-zinc-700 bg-gray-100 dark:bg-zinc-900 ${isWide ? 'h-12 w-40 rounded-lg' : 'h-16 w-16 rounded-full'}`}>
+                    <Image
+                      src={photoPreview ?? profilePhotoUrl!}
+                      alt='Foto de perfil'
+                      fill
+                      className={isWide ? 'object-contain' : 'object-cover'}
+                      unoptimized
+                    />
+                  </div>
+                  <p className='text-xs text-zinc-500'>
+                    {photoPreview ? 'Vista previa de la nueva foto' : 'Foto actual'}
+                  </p>
                 </div>
-                <p className='text-xs text-zinc-500'>
-                  {photoPreview ? 'Vista previa de la nueva foto' : 'Foto actual'}
-                </p>
-              </div>
-            )}
+              );
+            })()}
 
             <form action={uploadPhotoAction} className='flex flex-col gap-3'>
               <div
@@ -336,14 +345,14 @@ export function BrandSettings({
                   <p className='text-sm text-zinc-400'>
                     {photoPreview ? 'Cambiar foto' : 'Subir foto de perfil'}
                   </p>
-                  <p className='mt-1 text-xs text-zinc-600'>PNG, JPG o WebP · máx. 512 KB</p>
+                  <p className='mt-1 text-xs text-zinc-600'>PNG, JPG, WebP, SVG o GIF · máx. 5 MB</p>
                 </div>
               </div>
               <input
                 ref={photoInputRef}
                 type='file'
                 name='profile_photo'
-                accept='image/png,image/jpeg,image/webp'
+                accept='image/png,image/jpeg,image/webp,image/svg+xml,image/gif'
                 className='hidden'
                 onChange={handlePhotoFileChange}
               />

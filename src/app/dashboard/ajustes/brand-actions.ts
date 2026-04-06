@@ -130,8 +130,8 @@ export async function updatePrimaryColor(color: string): Promise<ActionResult> {
 // ── Subir foto de perfil ──────────────────────────────────────────────────────
 
 const PHOTO_BUCKET = 'nutritionist-photos';
-const MAX_PHOTO_SIZE = 512 * 1024; // 512 KB
-const ALLOWED_PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/gif'];
 
 export async function uploadProfilePhoto(
   _prev: ActionResult,
@@ -143,13 +143,13 @@ export async function uploadProfilePhoto(
   const file = formData.get('profile_photo') as File | null;
   if (!file || file.size === 0) return { error: 'Selecciona un archivo' };
   if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-    return { error: 'Formato no permitido. Usa PNG, JPG o WebP.' };
+    return { error: 'Formato no permitido. Usa PNG, JPG, WebP, SVG o GIF.' };
   }
   if (file.size > MAX_PHOTO_SIZE) {
-    return { error: 'El archivo supera el límite de 512 KB.' };
+    return { error: 'El archivo supera el límite de 5 MB.' };
   }
 
-  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/svg+xml' ? 'svg' : file.type.split('/')[1];
   const path = `${user.id}/photo.${ext}`;
 
   try {

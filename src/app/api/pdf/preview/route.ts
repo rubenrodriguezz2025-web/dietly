@@ -2,6 +2,7 @@ import React from 'react';
 
 import type { FontPreference } from '@/components/pdf/NutritionPlanPDF';
 import { NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
+import { getImageDimensionsFromDataUri, isRasterDataUri } from '@/libs/image-dimensions';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { renderToBuffer } from '@react-pdf/renderer';
 
@@ -166,14 +167,19 @@ async function handlePreview() {
   let profile_photo_uri: string | null = null;
 
   if (is_pro && profileData?.logo_url) {
-    logo_uri = await downloadAsDataUri(supabase, 'nutritionist-logos', profileData.logo_url as string);
+    const uri = await downloadAsDataUri(supabase, 'nutritionist-logos', profileData.logo_url as string);
+    logo_uri = isRasterDataUri(uri) ? uri : null;
   }
   if (is_pro && profileData?.signature_url) {
     signature_uri = await downloadAsDataUri(supabase, 'nutritionist-signatures', profileData.signature_url as string);
   }
   if (profileData?.profile_photo_url) {
-    profile_photo_uri = await downloadAsDataUri(supabase, 'nutritionist-photos', profileData.profile_photo_url as string);
+    const uri = await downloadAsDataUri(supabase, 'nutritionist-photos', profileData.profile_photo_url as string);
+    profile_photo_uri = isRasterDataUri(uri) ? uri : null;
   }
+
+  const logo_dimensions = logo_uri ? getImageDimensionsFromDataUri(logo_uri) : null;
+  const photo_dimensions = profile_photo_uri ? getImageDimensionsFromDataUri(profile_photo_uri) : null;
 
   const profile = {
     full_name: (profileData?.full_name as string) || 'Nutricionista Demo',
@@ -196,6 +202,8 @@ async function handlePreview() {
       logo_uri,
       signature_uri,
       profile_photo_uri,
+      logo_dimensions,
+      photo_dimensions,
       is_pro,
       approved_at: new Date().toLocaleDateString('es-ES', {
         day: '2-digit',
