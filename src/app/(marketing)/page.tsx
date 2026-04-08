@@ -336,39 +336,49 @@ function HeroSection() {
 
         {/* Titular */}
         <h1 className='fu1 mx-auto max-w-3xl text-3xl font-bold leading-tight tracking-tight text-zinc-100 lg:text-5xl'>
-          Genera planes nutricionales con IA en 2 minutos.{' '}
+          Genera planes nutricionales en 2 minutos.{' '}
           <span className='text-[#22c55e]'>Tú revisas y entregas.</span>
         </h1>
 
         {/* Subtítulo */}
         <p className='fu2 mx-auto mt-5 max-w-2xl text-base leading-relaxed text-zinc-400 lg:text-lg'>
-          Dietly genera el borrador del plan nutricional con IA. Tú lo revisas, ajustas y lo entregas con tu marca.
+          Dietly genera el borrador del plan nutricional completo. Tú lo revisas, ajustas y lo entregas con tu marca.
           Tu paciente lo recibe en su móvil en minutos.
         </p>
 
         {/* CTA */}
         <div className='fu3 mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center'>
-          <a
-            href='https://ig.me/m/dietly.ia'
-            target='_blank'
-            rel='noopener noreferrer'
-            className='inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#1a7a45] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#1a7a45]/25 transition-all duration-200 hover:bg-[#22c55e] hover:shadow-[#22c55e]/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a7a45]'
+          <Link
+            href='/signup'
+            className='glow-btn inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#1a7a45] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#1a7a45]/25 transition-all duration-200 hover:bg-[#22c55e] hover:shadow-[#22c55e]/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a7a45]'
           >
-            Unirte a la beta →
-          </a>
+            Empezar gratis 14 días →
+          </Link>
           <a
             href='/p/demo'
             target='_blank'
             rel='noopener noreferrer'
             className='group inline-flex items-center gap-1.5 cursor-pointer rounded-xl border border-[#1a2e1a] px-7 py-3.5 text-sm font-medium text-zinc-400 transition-colors hover:border-[#1a7a45]/50 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500'
           >
-            <span className='inline-block transition-transform duration-200 group-hover:scale-110'>📱</span>
             Ver plan de ejemplo →
           </a>
         </div>
         <p className='fu3 mt-3 text-center text-xs text-zinc-400'>
-          Responderemos en menos de 24h · Acceso gratuito durante la beta
+          Sin tarjeta de crédito · Cancela cuando quieras
         </p>
+
+        {/* Precios inline */}
+        <div className='fu3 mt-6 flex items-center justify-center gap-6 text-sm'>
+          <div className='text-center'>
+            <span className='font-bold text-zinc-100'>46€</span>
+            <span className='text-zinc-500'>/mes · Básico</span>
+          </div>
+          <span className='text-zinc-700'>|</span>
+          <div className='text-center'>
+            <span className='font-bold text-zinc-100'>89€</span>
+            <span className='text-zinc-500'>/mes · Pro</span>
+          </div>
+        </div>
         <p className='fu3 mt-4 text-xs text-zinc-700'>
           ¿Ya tienes cuenta?{' '}
           <Link href='/login' className='text-zinc-500 transition-colors hover:text-zinc-400'>
@@ -788,7 +798,7 @@ function SocialProofSection() {
           <SectionLabel>Testimonios</SectionLabel>
           <H2>Los primeros nutricionistas ya lo usan</H2>
           <p className='mx-auto mt-3 max-w-lg text-sm text-zinc-500'>
-            Acceso anticipado · Testimonios reales · Nombres con su permiso
+            Lo que dicen los primeros usuarios de la beta
           </p>
         </div>
 
@@ -840,11 +850,11 @@ function FinalCtaSection() {
           Empieza hoy. Tu próximo plan en 2 minutos.
         </h2>
         <p className='mx-auto mt-4 max-w-md text-sm leading-relaxed text-zinc-400'>
-          Regístrate en segundos. Si tu email está en la lista de acceso, empiezas hoy.
+          14 días gratis, sin tarjeta. Si lo usas, pagas. Si no, cancelas.
         </p>
         <div className='mt-8'>
           <CtaButton href='/signup'>
-            Empezar gratis →
+            Empezar gratis 14 días →
           </CtaButton>
         </div>
         <p className='mt-5 text-xs text-zinc-700'>

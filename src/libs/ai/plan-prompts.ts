@@ -14,6 +14,23 @@ import type { PseudonymizedPatient } from '@/libs/ai/pseudonymize';
 import type { PatientGoal, PlanDay, Recipe } from '@/types/dietly';
 import type Anthropic from '@anthropic-ai/sdk';
 
+// ── Insights clínicos para generación contextualizada ────────────────────────
+
+export type ClinicalInsights = {
+  /** Cambio de peso desde la primera medición (negativo = pérdida) */
+  weightChangKg: number | null;
+  /** Peso más reciente registrado */
+  latestWeightKg: number | null;
+  /** Media de adherencia de las últimas revisiones (1-5) */
+  avgAdherence: number | null;
+  /** Notas de la última revisión */
+  lastReviewNotes: string | null;
+  /** Fecha de la última revisión */
+  lastReviewDate: string | null;
+  /** Notas del último formulario de seguimiento */
+  lastFollowupNotes: string | null;
+};
+
 // ── Sistema compartido ────────────────────────────────────────────────────────
 
 /**
@@ -166,6 +183,42 @@ Si tienes dudas sobre un alimento, prioriza la categoría "protein" para cualqui
 
 Agrupa los ingredientes similares y suma cantidades cuando aparezcan varias veces (ej: "Pechuga de pollo 800g").
 Usa la herramienta generate_shopping_list para devolver la lista estructurada.`;
+}
+
+// ── Insights clínicos para el prompt ──────────────────────────────────────────
+
+/**
+ * Construye la sección de insights clínicos para inyectar en el prompt del día.
+ * Solo incluye datos que existen — devuelve string vacío si no hay insights.
+ */
+export function buildClinicalInsightsSection(insights: ClinicalInsights | null): string {
+  if (!insights) return '';
+
+  const lines: string[] = [];
+
+  if (insights.latestWeightKg !== null) {
+    lines.push(`- Peso actual registrado: ${insights.latestWeightKg} kg`);
+  }
+  if (insights.weightChangKg !== null) {
+    const direction = insights.weightChangKg > 0 ? 'ganado' : 'perdido';
+    lines.push(`- Ha ${direction} ${Math.abs(insights.weightChangKg).toFixed(1)} kg desde el inicio del seguimiento`);
+  }
+  if (insights.avgAdherence !== null) {
+    const adherenceText =
+      insights.avgAdherence >= 4 ? 'buena' :
+      insights.avgAdherence >= 3 ? 'regular' : 'baja';
+    lines.push(`- Adherencia media al plan anterior: ${insights.avgAdherence.toFixed(1)}/5 (${adherenceText})`);
+  }
+  if (insights.lastReviewNotes) {
+    lines.push(`- Notas de la última revisión (${insights.lastReviewDate ?? 'fecha desconocida'}): "${insights.lastReviewNotes}"`);
+  }
+  if (insights.lastFollowupNotes) {
+    lines.push(`- Feedback del paciente en último seguimiento: "${insights.lastFollowupNotes}"`);
+  }
+
+  if (lines.length === 0) return '';
+
+  return `\n\nHISTORIAL DE SEGUIMIENTO DEL PACIENTE (ten esto en cuenta para adaptar el plan):\n${lines.join('\n')}`;
 }
 
 // ── Filtrado de recetas (Optimización B) ──────────────────────────────────────

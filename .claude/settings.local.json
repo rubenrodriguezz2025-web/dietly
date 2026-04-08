@@ -146,7 +146,21 @@
       "Bash(cp -r C:/Users/Rubén/dietly/src/lib/validation C:/Users/Rubén/dietly/src/libs/validation)",
       "Bash(sed -i \"s|from '@/lib/auth/intake-tokens'|from '@/libs/auth/intake-tokens'|g\" C:/Users/Rubén/dietly/src/app/dashboard/patients/new/actions.ts C:/Users/Rubén/dietly/src/app/dashboard/patients/[id]/page.tsx C:/Users/Rubén/dietly/src/app/dashboard/patients/[id]/send-intake-email-action.ts C:/Users/Rubén/dietly/src/middleware.ts)",
       "Bash(sed -i \"s|from '@/lib/auth/plan-tokens'|from '@/libs/auth/plan-tokens'|g\" C:/Users/Rubén/dietly/src/app/dashboard/plans/[id]/actions.ts C:/Users/Rubén/dietly/src/app/p/[token]/page.tsx C:/Users/Rubén/dietly/src/middleware.ts)",
-      "Bash(sed -i \"s|from '@/lib/validation/nutrition-validator'|from '@/libs/validation/nutrition-validator'|g\" \"C:/Users/Rubén/dietly/src/app/dashboard/plans/[id]/page.tsx\" \"C:/Users/Rubén/dietly/src/app/dashboard/plans/[id]/plan-editor.tsx\" \"C:/Users/Rubén/dietly/src/app/dashboard/plans/[id]/validation-panel.tsx\")"
+      "Bash(sed -i \"s|from '@/lib/validation/nutrition-validator'|from '@/libs/validation/nutrition-validator'|g\" \"C:/Users/Rubén/dietly/src/app/dashboard/plans/[id]/page.tsx\" \"C:/Users/Rubén/dietly/src/app/dashboard/plans/[id]/plan-editor.tsx\" \"C:/Users/Rubén/dietly/src/app/dashboard/plans/[id]/validation-panel.tsx\")",
+      "Bash(mkdir -p ~/.claude/agents)",
+      "Bash(curl -o ~/.claude/agents/security-reviewer.md https://raw.githubusercontent.com/affaan-m/everything-claude-code/main/agents/security-reviewer.md)",
+      "Bash(gh run:*)",
+      "Bash(curl:*)",
+      "Bash(mkdir -p ~/.claude/hooks)",
+      "Bash(mkdir -p ~/.claude/skills)",
+      "Read(//c/Users/Rubén/.claude/**)",
+      "Read(//c/Users/Rubén/.claude/skills/**)",
+      "Bash(chmod +x ~/.claude/hooks/*.sh)",
+      "Read(//c/Users/Rubén/**)",
+      "Bash(mkdir -p dietly-video)",
+      "Bash(npm init:*)",
+      "Bash(mkdir -p src)",
+      "Bash(mkdir -p out)"
     ]
   }
 }

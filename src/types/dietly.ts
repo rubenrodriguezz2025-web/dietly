@@ -118,6 +118,11 @@ export type PatientProgress = {
   body_fat_pct: number | null;
   muscle_mass_kg: number | null;
   waist_cm: number | null;
+  hip_cm: number | null;
+  /** Adherencia al plan: 1=muy baja, 2=baja, 3=regular, 4=buena, 5=excelente */
+  adherence_score: number | null;
+  /** Se generó un nuevo plan en esta revisión */
+  new_plan_generated: boolean;
   notes: string | null;
   created_at: string;
 };

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { NutritionPlan, Patient, PLAN_STATUS_LABELS } from '@/types/dietly';
+import { cn } from '@/utils/cn';
 
 import { DueRemindersBanner } from './due-reminders-banner';
 import { OnboardingChecklist } from './onboarding-checklist';
@@ -39,6 +40,10 @@ export default async function DashboardPage() {
   const today = new Date().toISOString().split('T')[0];
   const normalizedEmail = (user.email ?? '').toLowerCase().trim();
 
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoISO = thirtyDaysAgo.toISOString().split('T')[0];
+
   const [
     { data: patientsRaw },
     { data: allPendingReminders },
@@ -48,6 +53,7 @@ export default async function DashboardPage() {
     { data: dueReminders },
     { data: whitelistEntry },
     { data: allPlans },
+    { data: latestProgressPerPatient },
   ] = await Promise.all([
     // Pacientes activos con estado de planes
     (supabase as any)
@@ -105,6 +111,12 @@ export default async function DashboardPage() {
       .limit(30) as Promise<{
       data: (NutritionPlan & { patients: { id: string; name: string } | null })[] | null;
     }>,
+    // Último progreso de cada paciente (para detectar sin revisión en 30+ días)
+    (supabase as any)
+      .from('patient_progress')
+      .select('patient_id, recorded_at')
+      .eq('nutritionist_id', user.id)
+      .order('recorded_at', { ascending: false }),
   ]);
 
   const pendingReminderPatientIds = new Set((allPendingReminders ?? []).map((r) => r.patient_id));
@@ -126,6 +138,25 @@ export default async function DashboardPage() {
   }
 
   const betaPlanLimit: number | null = whitelistEntry?.plan_limit ?? null;
+
+  // Pacientes sin revisión en 30+ días
+  const latestProgressMap = new Map<string, string>();
+  for (const row of (latestProgressPerPatient ?? []) as Array<{ patient_id: string; recorded_at: string }>) {
+    if (!latestProgressMap.has(row.patient_id)) {
+      latestProgressMap.set(row.patient_id, row.recorded_at);
+    }
+  }
+
+  const stalePatients = (patientsRaw ?? [])
+    .map((p) => {
+      const lastProgress = latestProgressMap.get(p.id);
+      const daysSince = lastProgress
+        ? Math.floor((Date.now() - new Date(lastProgress + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24))
+        : Math.floor((Date.now() - new Date(p.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      return { id: p.id, name: p.name, daysSince, lastProgress };
+    })
+    .filter((p) => p.daysSince >= 30)
+    .sort((a, b) => b.daysSince - a.daysSince);
 
   const draftPlans = (allPlans ?? []).filter((p) => p.status === 'draft');
   const draftCount = draftPlans.length;
@@ -210,6 +241,48 @@ export default async function DashboardPage() {
           }
         />
       </div>
+
+      {/* Revisiones pendientes — pacientes sin revisión en 30+ días */}
+      {stalePatients.length > 0 && (
+        <div className='rounded-xl border border-amber-900/40 bg-amber-950/10 p-5'>
+          <div className='mb-3 flex items-center gap-2'>
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-400' aria-hidden='true'>
+              <circle cx='12' cy='12' r='10' />
+              <polyline points='12 6 12 12 16 14' />
+            </svg>
+            <span className='text-xs font-semibold uppercase tracking-wider text-amber-400'>
+              Revisiones pendientes
+            </span>
+            <span className='ml-auto rounded-full bg-amber-900/50 px-2 py-0.5 text-xs tabular-nums font-medium text-amber-300'>
+              {stalePatients.length}
+            </span>
+          </div>
+          <div className='flex flex-col gap-2'>
+            {stalePatients.slice(0, 8).map((p) => (
+              <Link
+                key={p.id}
+                href={`/dashboard/patients/${p.id}`}
+                className='flex items-center justify-between rounded-lg border border-amber-900/30 bg-zinc-950/50 px-4 py-2.5 transition-colors hover:border-amber-700/50 hover:bg-zinc-900/50'
+              >
+                <span className='text-sm font-medium text-zinc-200'>{p.name}</span>
+                <span className={cn(
+                  'rounded-full px-2 py-0.5 text-xs font-medium',
+                  p.daysSince >= 60
+                    ? 'bg-red-950 text-red-400'
+                    : 'bg-amber-950 text-amber-400',
+                )}>
+                  {p.daysSince >= 60 ? `${p.daysSince} días — urgente` : `${p.daysSince} días`}
+                </span>
+              </Link>
+            ))}
+            {stalePatients.length > 8 && (
+              <p className='pt-1 text-center text-xs text-amber-600'>
+                +{stalePatients.length - 8} pacientes más
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Contador beta — oculto si el usuario tiene plan_limit=-1 */}
       {betaPlanLimit !== -1 && (

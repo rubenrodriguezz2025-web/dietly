@@ -26,16 +26,27 @@ import { addProgressEntry, deleteProgressEntry } from './progress-actions';
 
 // ── Metric config ─────────────────────────────────────────────────────────
 
-type MetricKey = 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg' | 'waist_cm';
+type MetricKey = 'weight_kg' | 'body_fat_pct' | 'muscle_mass_kg' | 'waist_cm' | 'hip_cm';
 
 const METRIC_CONFIG: Record<MetricKey, { label: string; unit: string; color: string; gradId: string }> = {
   weight_kg:      { label: 'Peso',     unit: 'kg', color: '#22c55e', gradId: 'g-weight'  },
   body_fat_pct:   { label: 'Grasa',    unit: '%',  color: '#f59e0b', gradId: 'g-fat'     },
   muscle_mass_kg: { label: 'Músculo',  unit: 'kg', color: '#60a5fa', gradId: 'g-muscle'  },
   waist_cm:       { label: 'Cintura',  unit: 'cm', color: '#a78bfa', gradId: 'g-waist'   },
+  hip_cm:         { label: 'Cadera',   unit: 'cm', color: '#f472b6', gradId: 'g-hip'     },
 };
 
 const METRIC_KEYS = Object.keys(METRIC_CONFIG) as MetricKey[];
+
+// ── Adherence config ─────────────────────────────────────────────────────
+
+const ADHERENCE_LABELS: Record<number, { label: string; color: string; bg: string }> = {
+  1: { label: 'Muy baja', color: 'text-red-400',    bg: 'bg-red-950' },
+  2: { label: 'Baja',     color: 'text-orange-400', bg: 'bg-orange-950' },
+  3: { label: 'Regular',  color: 'text-amber-400',  bg: 'bg-amber-950' },
+  4: { label: 'Buena',    color: 'text-emerald-400', bg: 'bg-emerald-950' },
+  5: { label: 'Excelente', color: 'text-green-400', bg: 'bg-green-950' },
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -56,6 +67,40 @@ function fmtLong(d: string) {
 
 function todayISO() {
   return new Date().toISOString().split('T')[0];
+}
+
+/** Calcula tendencia entre dos valores: ↑ ↓ → */
+function getTrend(current: number | null, previous: number | null): 'up' | 'down' | 'same' | null {
+  if (current === null || previous === null) return null;
+  const diff = current - previous;
+  if (Math.abs(diff) < 0.1) return 'same';
+  return diff > 0 ? 'up' : 'down';
+}
+
+function TrendIcon({ trend, inverse }: { trend: 'up' | 'down' | 'same' | null; inverse?: boolean }) {
+  if (!trend || trend === 'same') return null;
+  // inverse: para peso/grasa/cintura, bajar es positivo
+  const isPositive = inverse ? trend === 'down' : trend === 'up';
+  return (
+    <svg
+      width='10'
+      height='10'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      className={cn('inline-block ml-0.5', isPositive ? 'text-emerald-400' : 'text-red-400')}
+      aria-label={trend === 'up' ? 'Subida' : 'Bajada'}
+    >
+      {trend === 'up' ? (
+        <polyline points='18 15 12 9 6 15' />
+      ) : (
+        <polyline points='6 9 12 15 18 9' />
+      )}
+    </svg>
+  );
 }
 
 // ── Custom tooltip ────────────────────────────────────────────────────────
@@ -80,6 +125,11 @@ function ChartTooltip({
         {value}
         <span className='ml-0.5 text-xs font-normal text-zinc-500'> {unit}</span>
       </p>
+      {entry.adherence_score && (
+        <p className='mt-1.5 text-[11px] text-zinc-500'>
+          Adherencia: <span className={ADHERENCE_LABELS[entry.adherence_score]?.color}>{ADHERENCE_LABELS[entry.adherence_score]?.label}</span>
+        </p>
+      )}
       {entry.notes && (
         <p className='mt-2 max-w-[180px] border-t border-zinc-800 pt-2 text-[11px] leading-relaxed text-zinc-500'>
           {entry.notes}
@@ -187,6 +237,63 @@ function Field({
   );
 }
 
+// ── Adherence selector ───────────────────────────────────────────────────
+
+function AdherenceSelector({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+  return (
+    <div className='flex flex-col gap-1.5'>
+      <label className='text-xs font-medium text-zinc-400'>
+        Adherencia al plan
+      </label>
+      <div className='flex gap-1.5'>
+        {([1, 2, 3, 4, 5] as const).map((score) => {
+          const cfg = ADHERENCE_LABELS[score];
+          const isSelected = value === score;
+          return (
+            <button
+              key={score}
+              type='button'
+              onClick={() => onChange(isSelected ? null : score)}
+              className={cn(
+                'flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-all duration-150',
+                isSelected
+                  ? `${cfg.bg} ${cfg.color} border-current/20`
+                  : 'border-zinc-800 text-zinc-600 hover:text-zinc-400 hover:border-zinc-700',
+              )}
+            >
+              {score}
+            </button>
+          );
+        })}
+      </div>
+      <div className='flex justify-between text-[10px] text-zinc-700'>
+        <span>Muy baja</span>
+        <span>Excelente</span>
+      </div>
+    </div>
+  );
+}
+
+// ── "Sin revisión en 30+ días" badge ─────────────────────────────────────
+
+function StaleReviewBadge({ lastRecordedAt }: { lastRecordedAt: string | null }) {
+  if (!lastRecordedAt) return null;
+  const daysSince = Math.floor(
+    (Date.now() - new Date(lastRecordedAt + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24),
+  );
+  if (daysSince < 30) return null;
+
+  return (
+    <span className='inline-flex items-center gap-1.5 rounded-full bg-red-950 px-2.5 py-0.5 text-xs font-medium text-red-400'>
+      <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='h-3 w-3' aria-hidden>
+        <circle cx='12' cy='12' r='10' />
+        <polyline points='12 6 12 12 16 14' />
+      </svg>
+      Sin revisión en {daysSince} días
+    </span>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────
 
 export function ProgressTab({
@@ -206,6 +313,7 @@ export function ProgressTab({
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
   const [activeMetric, setActiveMetric] = useState<MetricKey>('weight_kg');
+  const [adherenceValue, setAdherenceValue] = useState<number | null>(null);
 
   // Entries visible: server data minus optimistic deletes
   const entries = progress.filter((e) => !pendingDeletes.has(e.id));
@@ -232,10 +340,15 @@ export function ProgressTab({
     body_fat_pct:   entries.some((e) => e.body_fat_pct !== null),
     muscle_mass_kg: entries.some((e) => e.muscle_mass_kg !== null),
     waist_cm:       entries.some((e) => e.waist_cm !== null),
+    hip_cm:         entries.some((e) => e.hip_cm !== null),
+    adherence:      entries.some((e) => e.adherence_score !== null),
     notes:          entries.some((e) => e.notes),
   };
 
   const cfg = METRIC_CONFIG[activeMetric];
+
+  // Last recorded date for stale badge
+  const lastRecordedAt = tableData.length > 0 ? tableData[0].recorded_at : null;
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -246,12 +359,15 @@ export function ProgressTab({
 
     const fd = new FormData(formRef.current);
     const data = {
-      recorded_at:    fd.get('recorded_at') as string,
-      weight_kg:      fd.get('weight_kg') ? Number(fd.get('weight_kg')) : null,
-      body_fat_pct:   fd.get('body_fat_pct') ? Number(fd.get('body_fat_pct')) : null,
-      muscle_mass_kg: fd.get('muscle_mass_kg') ? Number(fd.get('muscle_mass_kg')) : null,
-      waist_cm:       fd.get('waist_cm') ? Number(fd.get('waist_cm')) : null,
-      notes:          (fd.get('notes') as string) || null,
+      recorded_at:       fd.get('recorded_at') as string,
+      weight_kg:         fd.get('weight_kg') ? Number(fd.get('weight_kg')) : null,
+      body_fat_pct:      fd.get('body_fat_pct') ? Number(fd.get('body_fat_pct')) : null,
+      muscle_mass_kg:    fd.get('muscle_mass_kg') ? Number(fd.get('muscle_mass_kg')) : null,
+      waist_cm:          fd.get('waist_cm') ? Number(fd.get('waist_cm')) : null,
+      hip_cm:            fd.get('hip_cm') ? Number(fd.get('hip_cm')) : null,
+      adherence_score:   adherenceValue,
+      new_plan_generated: fd.get('new_plan_generated') === 'on',
+      notes:             (fd.get('notes') as string) || null,
     };
 
     startTransition(async () => {
@@ -260,6 +376,7 @@ export function ProgressTab({
         setFormError(result.error);
       } else {
         formRef.current?.reset();
+        setAdherenceValue(null);
         setIsOpen(false);
         router.refresh();
       }
@@ -305,11 +422,14 @@ export function ProgressTab({
       <div className='prg-in flex flex-col gap-7'>
         {/* ── Header ── */}
         <div className='flex items-center justify-between'>
-          <p className='text-xs font-semibold uppercase tracking-wider text-zinc-600'>
-            Historial de progreso
-          </p>
+          <div className='flex items-center gap-3'>
+            <p className='text-xs font-semibold uppercase tracking-wider text-zinc-600'>
+              Historial de progreso
+            </p>
+            <StaleReviewBadge lastRecordedAt={lastRecordedAt} />
+          </div>
 
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <Sheet open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) setAdherenceValue(null); }}>
             <SheetTrigger asChild>
               <button className='flex items-center gap-1.5 rounded-lg bg-[#1a7a45] px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#22c55e] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950'>
                 <svg
@@ -324,7 +444,7 @@ export function ProgressTab({
                 >
                   <path d='M12 4v16m8-8H4' />
                 </svg>
-                Registrar medición
+                Nueva revisión
               </button>
             </SheetTrigger>
 
@@ -335,7 +455,7 @@ export function ProgressTab({
             >
               <SheetHeader className='mb-7'>
                 <SheetTitle className='text-base font-semibold text-zinc-100'>
-                  Registrar medición
+                  Nueva revisión
                 </SheetTitle>
                 <p className='text-sm text-zinc-500'>
                   Los campos de medición son opcionales — rellena los que tengas.
@@ -384,7 +504,28 @@ export function ProgressTab({
                     max='300'
                     step='0.1'
                   />
+                  <Field
+                    label='Cadera (cm)'
+                    name='hip_cm'
+                    placeholder='100.0'
+                    min='0'
+                    max='300'
+                    step='0.1'
+                  />
                 </div>
+
+                {/* Adherencia al plan */}
+                <AdherenceSelector value={adherenceValue} onChange={setAdherenceValue} />
+
+                {/* Nuevo plan generado */}
+                <label className='flex items-center gap-2.5 cursor-pointer'>
+                  <input
+                    type='checkbox'
+                    name='new_plan_generated'
+                    className='h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-[#1a7a45] focus:ring-[#1a7a45] focus:ring-offset-zinc-950'
+                  />
+                  <span className='text-sm text-zinc-400'>Se generó un nuevo plan en esta revisión</span>
+                </label>
 
                 <div className='flex flex-col gap-1.5'>
                   <label htmlFor='notes' className='text-xs font-medium text-zinc-400'>
@@ -394,7 +535,7 @@ export function ProgressTab({
                     id='notes'
                     name='notes'
                     rows={3}
-                    placeholder='Observaciones de esta medición...'
+                    placeholder='Observaciones de esta revisión...'
                     className='resize-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-700 focus:border-[#1a7a45] focus:ring-1 focus:ring-[#1a7a45]'
                   />
                 </div>
@@ -418,7 +559,7 @@ export function ProgressTab({
                     disabled={isPending}
                     className='rounded-lg bg-[#1a7a45] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#22c55e] hover:text-black disabled:cursor-not-allowed disabled:opacity-50'
                   >
-                    {isPending ? 'Guardando...' : 'Guardar medición'}
+                    {isPending ? 'Guardando...' : 'Guardar revisión'}
                   </button>
                 </div>
               </form>
@@ -533,7 +674,7 @@ export function ProgressTab({
         {entries.length > 0 && (
           <div>
             <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-600'>
-              Mediciones registradas
+              Revisiones registradas
             </p>
             <div className='overflow-x-auto'>
               <table className='w-full text-sm'>
@@ -562,6 +703,16 @@ export function ProgressTab({
                         Cintura
                       </th>
                     )}
+                    {hasData.hip_cm && (
+                      <th className='pb-2.5 pr-6 text-right text-xs font-medium text-zinc-600'>
+                        Cadera
+                      </th>
+                    )}
+                    {hasData.adherence && (
+                      <th className='pb-2.5 pr-6 text-center text-xs font-medium text-zinc-600'>
+                        Adherencia
+                      </th>
+                    )}
                     {hasData.notes && (
                       <th className='pb-2.5 pr-6 text-left text-xs font-medium text-zinc-600'>
                         Notas
@@ -572,118 +723,157 @@ export function ProgressTab({
                 </thead>
 
                 <tbody className='divide-y divide-zinc-900'>
-                  {tableData.map((entry) => (
-                    <tr
-                      key={entry.id}
-                      className='group transition-colors hover:bg-zinc-900/40'
-                    >
-                      <td className='py-3 pr-6 text-zinc-300'>{fmtShort(entry.recorded_at)}</td>
+                  {tableData.map((entry, idx) => {
+                    // Previous entry for trend comparison (next in array because sorted desc)
+                    const prev = idx < tableData.length - 1 ? tableData[idx + 1] : null;
 
-                      {hasData.weight_kg && (
-                        <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
-                          {entry.weight_kg !== null ? (
-                            <>
-                              {entry.weight_kg}
-                              <span className='ml-0.5 text-[11px] text-zinc-600'>kg</span>
-                            </>
-                          ) : (
-                            <span className='text-zinc-700'>—</span>
-                          )}
-                        </td>
-                      )}
+                    return (
+                      <tr
+                        key={entry.id}
+                        className='group transition-colors hover:bg-zinc-900/40'
+                      >
+                        <td className='py-3 pr-6 text-zinc-300'>{fmtShort(entry.recorded_at)}</td>
 
-                      {hasData.body_fat_pct && (
-                        <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
-                          {entry.body_fat_pct !== null ? (
-                            <>
-                              {entry.body_fat_pct}
-                              <span className='ml-0.5 text-[11px] text-zinc-600'>%</span>
-                            </>
-                          ) : (
-                            <span className='text-zinc-700'>—</span>
-                          )}
-                        </td>
-                      )}
-
-                      {hasData.muscle_mass_kg && (
-                        <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
-                          {entry.muscle_mass_kg !== null ? (
-                            <>
-                              {entry.muscle_mass_kg}
-                              <span className='ml-0.5 text-[11px] text-zinc-600'>kg</span>
-                            </>
-                          ) : (
-                            <span className='text-zinc-700'>—</span>
-                          )}
-                        </td>
-                      )}
-
-                      {hasData.waist_cm && (
-                        <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
-                          {entry.waist_cm !== null ? (
-                            <>
-                              {entry.waist_cm}
-                              <span className='ml-0.5 text-[11px] text-zinc-600'>cm</span>
-                            </>
-                          ) : (
-                            <span className='text-zinc-700'>—</span>
-                          )}
-                        </td>
-                      )}
-
-                      {hasData.notes && (
-                        <td className='py-3 pr-6 text-zinc-500'>
-                          {entry.notes ? (
-                            <span className='line-clamp-1' title={entry.notes}>
-                              {entry.notes}
-                            </span>
-                          ) : (
-                            <span className='text-zinc-800'>—</span>
-                          )}
-                        </td>
-                      )}
-
-                      {/* Delete */}
-                      <td className='py-3 text-right'>
-                        {confirmingId === entry.id ? (
-                          <div className='flex items-center justify-end gap-2'>
-                            <span className='text-[11px] text-zinc-600'>¿Eliminar?</span>
-                            <button
-                              onClick={() => handleDelete(entry.id)}
-                              className='text-xs font-medium text-red-400 transition-colors hover:text-red-300'
-                            >
-                              Sí
-                            </button>
-                            <button
-                              onClick={() => setConfirmingId(null)}
-                              className='text-xs text-zinc-600 transition-colors hover:text-zinc-400'
-                            >
-                              No
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setConfirmingId(entry.id)}
-                            aria-label='Eliminar medición'
-                            className='opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100'
-                          >
-                            <svg
-                              viewBox='0 0 24 24'
-                              fill='none'
-                              stroke='currentColor'
-                              strokeWidth='1.5'
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              className='h-4 w-4 text-zinc-600 transition-colors hover:text-red-400'
-                              aria-hidden
-                            >
-                              <path d='M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0' />
-                            </svg>
-                          </button>
+                        {hasData.weight_kg && (
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                            {entry.weight_kg !== null ? (
+                              <>
+                                {entry.weight_kg}
+                                <span className='ml-0.5 text-[11px] text-zinc-600'>kg</span>
+                                <TrendIcon trend={getTrend(entry.weight_kg, prev?.weight_kg ?? null)} inverse />
+                              </>
+                            ) : (
+                              <span className='text-zinc-700'>—</span>
+                            )}
+                          </td>
                         )}
-                      </td>
-                    </tr>
-                  ))}
+
+                        {hasData.body_fat_pct && (
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                            {entry.body_fat_pct !== null ? (
+                              <>
+                                {entry.body_fat_pct}
+                                <span className='ml-0.5 text-[11px] text-zinc-600'>%</span>
+                                <TrendIcon trend={getTrend(entry.body_fat_pct, prev?.body_fat_pct ?? null)} inverse />
+                              </>
+                            ) : (
+                              <span className='text-zinc-700'>—</span>
+                            )}
+                          </td>
+                        )}
+
+                        {hasData.muscle_mass_kg && (
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                            {entry.muscle_mass_kg !== null ? (
+                              <>
+                                {entry.muscle_mass_kg}
+                                <span className='ml-0.5 text-[11px] text-zinc-600'>kg</span>
+                                <TrendIcon trend={getTrend(entry.muscle_mass_kg, prev?.muscle_mass_kg ?? null)} />
+                              </>
+                            ) : (
+                              <span className='text-zinc-700'>—</span>
+                            )}
+                          </td>
+                        )}
+
+                        {hasData.waist_cm && (
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                            {entry.waist_cm !== null ? (
+                              <>
+                                {entry.waist_cm}
+                                <span className='ml-0.5 text-[11px] text-zinc-600'>cm</span>
+                                <TrendIcon trend={getTrend(entry.waist_cm, prev?.waist_cm ?? null)} inverse />
+                              </>
+                            ) : (
+                              <span className='text-zinc-700'>—</span>
+                            )}
+                          </td>
+                        )}
+
+                        {hasData.hip_cm && (
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                            {entry.hip_cm !== null ? (
+                              <>
+                                {entry.hip_cm}
+                                <span className='ml-0.5 text-[11px] text-zinc-600'>cm</span>
+                                <TrendIcon trend={getTrend(entry.hip_cm, prev?.hip_cm ?? null)} inverse />
+                              </>
+                            ) : (
+                              <span className='text-zinc-700'>—</span>
+                            )}
+                          </td>
+                        )}
+
+                        {hasData.adherence && (
+                          <td className='py-3 pr-6 text-center'>
+                            {entry.adherence_score !== null ? (
+                              <span className={cn(
+                                'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                                ADHERENCE_LABELS[entry.adherence_score]?.bg,
+                                ADHERENCE_LABELS[entry.adherence_score]?.color,
+                              )}>
+                                {entry.adherence_score}/5
+                              </span>
+                            ) : (
+                              <span className='text-zinc-700'>—</span>
+                            )}
+                          </td>
+                        )}
+
+                        {hasData.notes && (
+                          <td className='py-3 pr-6 text-zinc-500'>
+                            {entry.notes ? (
+                              <span className='line-clamp-1' title={entry.notes}>
+                                {entry.notes}
+                              </span>
+                            ) : (
+                              <span className='text-zinc-800'>—</span>
+                            )}
+                          </td>
+                        )}
+
+                        {/* Delete */}
+                        <td className='py-3 text-right'>
+                          {confirmingId === entry.id ? (
+                            <div className='flex items-center justify-end gap-2'>
+                              <span className='text-[11px] text-zinc-600'>¿Eliminar?</span>
+                              <button
+                                onClick={() => handleDelete(entry.id)}
+                                className='text-xs font-medium text-red-400 transition-colors hover:text-red-300'
+                              >
+                                Sí
+                              </button>
+                              <button
+                                onClick={() => setConfirmingId(null)}
+                                className='text-xs text-zinc-600 transition-colors hover:text-zinc-400'
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmingId(entry.id)}
+                              aria-label='Eliminar medición'
+                              className='opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100'
+                            >
+                              <svg
+                                viewBox='0 0 24 24'
+                                fill='none'
+                                stroke='currentColor'
+                                strokeWidth='1.5'
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                className='h-4 w-4 text-zinc-600 transition-colors hover:text-red-400'
+                                aria-hidden
+                              >
+                                <path d='M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0' />
+                              </svg>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

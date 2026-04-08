@@ -3,8 +3,10 @@ import { z } from 'zod';
 
 import { logAIRequest } from '@/libs/ai/logger';
 import {
+  buildClinicalInsightsSection,
   buildShoppingListPrompt,
   buildSystemPrompt,
+  type ClinicalInsights,
   filterRecipesForPatient,
   SHOPPING_LIST_TOOL,
 } from '@/libs/ai/plan-prompts';
@@ -218,7 +220,8 @@ function buildDayPrompt(
   previousDays: PlanDay[],
   intakeAnswers?: IntakeAnswers,
   nutritionistRecipes?: Recipe[],
-  rejectedMealNames?: string[]
+  rejectedMealNames?: string[],
+  clinicalInsights?: ClinicalInsights | null,
 ): string {
   const restrictions = [
     patient.dietary_restrictions?.length ? patient.dietary_restrictions.join(', ') : null,
@@ -240,6 +243,7 @@ function buildDayPrompt(
   const rejectedSection = rejectedMealNames?.length
     ? `\nPLATOS RECHAZADOS POR EL PACIENTE (evita estos platos o variantes muy similares):\n${rejectedMealNames.map((n) => `  - ${n}`).join('\n')}`
     : '';
+  const clinicalSection = buildClinicalInsightsSection(clinicalInsights ?? null);
 
   const carbsPctDisplay = Math.round(targets.carbs_pct * 100);
   const fatPctDisplay = Math.round(targets.fat_pct * 100);
@@ -257,7 +261,7 @@ PERFIL DEL PACIENTE:
 - Calorías diarias objetivo: ${targets.calories} kcal
 - Proteína objetivo: ${targets.protein_g}g (${targets.protein_per_kg}g/kg peso corporal)
 - Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
-- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${recipesSection}${rejectedSection}${variety}
+- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${recipesSection}${rejectedSection}${clinicalSection}${variety}
 
 Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}.
 
@@ -517,6 +521,66 @@ export async function POST(req: NextRequest) {
           // No bloqueante
         }
 
+        // ── Insights clínicos del seguimiento ───────────────────────────────
+        let clinicalInsights: ClinicalInsights | null = null;
+        try {
+          const [{ data: progressData }, { data: followupData }] = await Promise.all([
+            supabaseAdminClient
+              .from('patient_progress')
+              .select('weight_kg, adherence_score, notes, recorded_at')
+              .eq('patient_id', patient_id)
+              .eq('nutritionist_id', user.id)
+              .order('recorded_at', { ascending: false })
+              .limit(10),
+            supabaseAdminClient
+              .from('followup_forms')
+              .select('answers, completed_at')
+              .eq('patient_id', patient_id)
+              .eq('nutritionist_id', user.id)
+              .not('completed_at', 'is', null)
+              .order('completed_at', { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+          ]);
+
+          if (progressData && progressData.length > 0) {
+            const entries = progressData as Array<{
+              weight_kg: number | null;
+              adherence_score: number | null;
+              notes: string | null;
+              recorded_at: string;
+            }>;
+            const latest = entries[0];
+            const oldest = entries[entries.length - 1];
+            const weights = entries.filter((e) => e.weight_kg !== null);
+            const adherenceScores = entries.filter((e) => e.adherence_score !== null);
+
+            clinicalInsights = {
+              latestWeightKg: latest.weight_kg,
+              weightChangKg:
+                weights.length >= 2
+                  ? (weights[0].weight_kg ?? 0) - (weights[weights.length - 1].weight_kg ?? 0)
+                  : null,
+              avgAdherence:
+                adherenceScores.length > 0
+                  ? adherenceScores.reduce((sum, e) => sum + (e.adherence_score ?? 0), 0) / adherenceScores.length
+                  : null,
+              lastReviewNotes: latest.notes,
+              lastReviewDate: latest.recorded_at,
+              lastFollowupNotes: null,
+            };
+
+            // Añadir notas del último followup completado
+            if (followupData?.answers) {
+              const answers = followupData.answers as Record<string, string>;
+              const notes = answers.observaciones ?? answers.notas ?? answers.notes ?? null;
+              if (notes) clinicalInsights.lastFollowupNotes = notes;
+            }
+          }
+        } catch {
+          // No bloqueante
+        }
+
         // ── Recetas personales del nutricionista ──────────────────────────────
         // Cargamos hasta 20 recetas para inyectar contexto en el prompt.
         // No bloqueamos la generación si falla (fire-and-continue).
@@ -623,7 +687,7 @@ export async function POST(req: NextRequest) {
           let dayData: PlanDay | null = null;
 
           // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
-          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, filterRecipesForPatient(nutritionistRecipes, pseudoPatient), rejectedMealNames);
+          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, filterRecipesForPatient(nutritionistRecipes, pseudoPatient), rejectedMealNames, clinicalInsights);
           try {
             const response = await callAnthropicWithResilience(
               () => anthropic.messages.create({
