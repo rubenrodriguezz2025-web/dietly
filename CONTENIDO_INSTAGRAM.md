@@ -32,8 +32,8 @@
 6. Emojis: maximo 3 por post, no en cada frase
 7. Hashtags: 5-8 por post, mezclar nicho y amplios
 
-### Hashtags recurrentes
-`#nutricionista` `#dietista` `#nutricionistaespana` `#dietistanutricionista` `#plannutricional` `#consultanutricional` `#nutriciondeportiva` `#dietly` `#IAparanutris` `#ahorrartiempo`
+### Hashtags
+Ver `HASHTAGS_INSTAGRAM.md` para los 5 sets optimizados por pilar (15 hashtags/set con copy-paste listo)
 
 ---
 
