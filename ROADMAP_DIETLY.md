@@ -1,5 +1,5 @@
 # 🗺️ ROADMAP DIETLY
-> Última actualización: 31 marzo 2026
+> Última actualización: 8 abril 2026
 
 ---
 
@@ -7,17 +7,15 @@
 
 - **Fase**: Beta cerrada
 - **Usuarios beta**: 4 contactadas, objetivo 8
-- **DEMO_MODE**: true (precios ocultos)
-- **Modelo**: Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
+- **DEMO_MODE**: false (precios visibles)
+- **Modelo**: Claude Sonnet 4.6 (claude-sonnet-4-6)
 
 ---
 
 ## 🔴 PRIORIDAD MÁXIMA — ANTES DE CERRAR BETA
 
-### 1. Intercambio de platos
-**Por qué**: pedido explícitamente por sanalu_nutricion (beta user). Todos los competidores establecidos lo tienen (Nutrium, INDYA, Dietopro, ICNS). Sin esto Dietly pierde en la conversación de ventas.
-**Qué es**: sustituir una comida del plan por otra alternativa con macros equivalentes (mismas kcal ±5%, mismo grupo de alimento principal).
-**Complejidad**: alta — requiere base de recetas etiquetadas + algoritmo de matching + UI en editor de planes.
+### 1. ~~Intercambio de platos~~ ✅ COMPLETADO (6 abril 2026)
+Implementado E2E: swap desde PWA paciente + aprobación nutricionista + swap directo desde editor. Rate limiting (10/plan/día). Migraciones 034-037. Auditoría completa en AUDIT_BETA_FINAL.md.
 
 ### 2. Verificar migraciones 024/025 en producción
 **Por qué**: pueden estar pendientes de aplicar en Supabase producción.
@@ -27,9 +25,8 @@
 **Por qué**: necesario para que la detección Pro por price_id funcione correctamente.
 **Valor**: `price_1I8Mp81JVMxXq3vxcbxAv1CN`
 
-### 4. Cláusula Art. 28.3 RGPD completa en T&Cs
-**Por qué**: obligatorio para procesar datos de salud como encargado del tratamiento.
-**Qué es**: añadir las letras a-h del Art. 28.3 RGPD en los Términos y Condiciones.
+### 4. ~~Cláusula Art. 28.3 RGPD completa en T&Cs~~ ✅ COMPLETADO (8 abril 2026)
+Sección 9 de `/legal/terminos` incluye Art. 28.3 letras a-h + sub-encargados + SCCs.
 
 ### 5. Plantilla consentimiento informado descargable
 **Por qué**: el nutricionista necesita darlo a firmar a sus pacientes (obligación legal).
@@ -58,9 +55,8 @@
 **Herramientas**: Warmup Inbox, Mailreach o Lemwarm (~20-50$/mes).
 **Alternativa gratis**: añadir beta users como contactos en Resend y pedirles que marquen el email como "No es spam".
 
-### 10. Security-reviewer audit
-**Por qué**: antes de lanzamiento público con datos de salud reales.
-**Cómo**: `curl -o ~/.claude/agents/security-reviewer.md https://raw.githubusercontent.com/affaan-m/everything-claude-code/main/agents/security-reviewer.md`
+### 10. ~~Security-reviewer audit~~ ✅ COMPLETADO (4 abril 2026)
+Auditoría completa documentada en SECURITY_AUDIT.md. Fixes aplicados: XSS, HMAC tokens, RLS plan_views, headers HSTS+CSP, rate limiting real, Zod en 5 rutas API.
 
 ---
 
@@ -70,12 +66,12 @@
 
 | # | Feature | Impacto | Complejidad | Notas |
 |---|---------|---------|-------------|-------|
-| 1 | Intercambio de platos desde PWA del paciente | Alto | Media | Extensión del intercambio del dashboard |
+| 1 | ~~Intercambio de platos desde PWA del paciente~~ | ✅ | — | Implementado E2E (swap PWA + aprobación + editor) |
 | 2 | Diario alimentario con fotos del paciente | Alto | Alta | Competidor: Nutrium, ICNS |
 | 3 | Gestión de pagos integrada | Alto | Media | Stripe + facturación fiscal española |
 | 4 | Agenda: estados de cita y recordatorios | Medio | Baja | Bug actual 5/10 |
 | 5 | PWA offline (Service Worker) | Medio | Media | Cuando no hay conexión |
-| 6 | Caché PDF en Supabase Storage | Medio | Baja | No regenerar si no hay cambios |
+| 6 | ~~Caché PDF en Supabase Storage~~ | ✅ | — | Implementado: `pdf_generated_at` + migración 033 |
 | 7 | Pliegues cutáneos y composición corporal | Medio | Baja | Competidor: Nutrium, Nutrify |
 | 8 | Tracking adherencia (marcar comidas) | Medio | Media | El paciente marca comidas completadas |
 | 9 | Objetivo peso con fecha y gráfico | Medio | Baja | Motivación del paciente |
@@ -99,7 +95,7 @@
 
 | # | Acción | Timing | Notas |
 |---|--------|--------|-------|
-| 1 | Crear @dietly.es en Instagram | Inmediato | Logo árbol verde |
+| 1 | ~~Crear @dietly.ia en Instagram~~ | ✅ | Cuenta creada, contenido 30 días planificado (CONTENIDO_INSTAGRAM.md) |
 | 2 | Post 1: carrusel dolor (Canva/Gemini) | Esta semana | Plantilla preparada |
 | 3 | Contactar Nuttralia/Ibilbidea | Esta semana | Telegram D-N emprendedoras |
 | 4 | Contactar CODiNuCoVa | Este mes | 1.226 colegiados Valencia |
@@ -169,4 +165,4 @@ sabea.es  → redirige a sabea.app (mercado español)
 
 ---
 
-*Actualizado: 31 marzo 2026*
+*Actualizado: 8 abril 2026*

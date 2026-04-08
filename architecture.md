@@ -10,72 +10,63 @@ dietly/
 ├── architecture.md              # Este archivo
 ├── src/
 │   ├── app/                     # Next.js App Router
-│   │   ├── (auth)/              # Grupo: páginas sin sidebar
-│   │   │   ├── login/
-│   │   │   ├── register/
-│   │   │   └── forgot-password/
-│   │   ├── (dashboard)/         # Grupo: páginas con sidebar (requieren auth)
-│   │   │   ├── layout.tsx       # Sidebar + header
-│   │   │   ├── dashboard/       # Home con métricas
-│   │   │   ├── patients/        # Lista de pacientes
-│   │   │   │   ├── page.tsx
+│   │   ├── (auth)/              # Login, signup, reset password
+│   │   ├── (marketing)/         # Landing, legal pages, cookie banner
+│   │   ├── dashboard/           # Panel protegido (requiere auth)
+│   │   │   ├── patients/        # CRUD pacientes
 │   │   │   │   ├── new/
-│   │   │   │   └── [id]/
-│   │   │   ├── plans/           # Planes nutricionales
-│   │   │   │   ├── page.tsx
-│   │   │   │   └── [id]/
-│   │   │   └── settings/        # Perfil + branding + billing
-│   │   ├── api/
-│   │   │   ├── webhooks/        # Stripe webhooks (del boilerplate)
-│   │   │   ├── plans/
-│   │   │   │   ├── generate/    # POST: genera plan con Claude API
-│   │   │   │   └── pdf/         # POST: genera PDF con @react-pdf/renderer
-│   │   │   └── email/
-│   │   │       └── send-plan/   # POST: envía email con Resend
+│   │   │   │   └── [id]/        # Tabs: Ficha, Cuestionario, Progreso, Seguimientos
+│   │   │   ├── plans/[id]/      # Editor de planes + validación
+│   │   │   ├── intercambios/    # Gestión de swaps pendientes
+│   │   │   ├── agenda/          # Calendario de citas
+│   │   │   ├── recetas/         # Recetario personal
+│   │   │   ├── ajustes/         # Perfil + branding + billing
+│   │   │   ├── derechos-datos/  # Solicitudes ARCO (RGPD)
+│   │   │   └── admin/beta/      # Panel admin beta
+│   │   ├── p/                   # Rutas públicas paciente
+│   │   │   ├── [token]/         # PWA plan del paciente
+│   │   │   ├── intake/[token]/  # Cuestionario intake
+│   │   │   └── seguimiento/[token]/
+│   │   ├── api/                 # 21 endpoints (ver CLAUDE.md)
+│   │   │   ├── plans/           # generate (SSE), status, pdf, pwa-pdf, swap-meal, confirm-swap, swap-action
+│   │   │   ├── patients/[id]/   # delete, export
+│   │   │   ├── stripe/          # checkout, portal, webhook
+│   │   │   ├── intake/submit/
+│   │   │   ├── followup/submit/
+│   │   │   ├── pdf/preview/
+│   │   │   ├── data-rights/
+│   │   │   ├── meal-image/
+│   │   │   └── health/
 │   │   └── layout.tsx
 │   ├── features/
-│   │   ├── auth/
-│   │   │   ├── actions/         # Server Actions: login, register, logout
-│   │   │   └── components/      # LoginForm, RegisterForm
-│   │   ├── patients/
-│   │   │   ├── actions/         # createPatient, updatePatient, deletePatient
-│   │   │   ├── components/      # PatientForm, PatientCard, PatientList
-│   │   │   └── models/          # patientSchema (Zod), Patient (TypeScript type)
-│   │   ├── plans/
-│   │   │   ├── actions/         # createPlan, approvePlan, sendPlan
-│   │   │   ├── components/      # PlanViewer, PlanEditor, GenerateButton
-│   │   │   ├── models/          # planSchema (Zod), MealPlan, DailyPlan types
-│   │   │   └── utils/
-│   │   │       ├── prompt-builder.ts    # Construye el system prompt de Claude
-│   │   │       └── macro-calculator.ts  # Calcula TMB, TDEE, objetivos macro
-│   │   ├── pdf/
-│   │   │   ├── components/      # NutritionPlanDocument (react-pdf)
-│   │   │   └── utils/           # generatePDF, uploadToStorage
-│   │   ├── profile/
-│   │   │   ├── actions/         # updateProfile, uploadLogo
-│   │   │   └── components/      # ProfileForm, BrandingSettings
-│   │   └── billing/             # Del boilerplate (Stripe)
+│   │   ├── account/             # User, session, subscription controllers
+│   │   ├── pricing/             # Checkout + pricing section
+│   │   └── emails/              # welcome.tsx, beta-welcome.tsx
 │   ├── libs/
-│   │   ├── supabase/
-│   │   │   ├── client.ts        # Browser client
-│   │   │   ├── server.ts        # Server client (SSR)
-│   │   │   └── types.ts         # Types generados (supabase gen types)
-│   │   ├── anthropic/
-│   │   │   └── client.ts        # Anthropic SDK client
-│   │   ├── resend/              # Del boilerplate
-│   │   └── stripe/              # Del boilerplate
-│   └── components/              # Componentes UI reutilizables (shadcn/ui)
+│   │   ├── supabase/            # server-client, middleware-client, admin, types.ts
+│   │   ├── anthropic/           # client.ts (singleton)
+│   │   ├── ai/                  # plan-prompts, pseudonymize, resilience, logger
+│   │   ├── auth/                # intake-tokens.ts, plan-tokens.ts (HMAC-SHA256)
+│   │   ├── validation/          # nutrition-validator.ts (19 checks clínicos)
+│   │   ├── resend/              # resend-client.ts
+│   │   └── stripe/              # stripe-admin.ts
+│   ├── components/
+│   │   ├── ui/                  # shadcn/ui
+│   │   ├── pdf/                 # NutritionPlanPDF.tsx
+│   │   ├── skeletons/           # Loading states reutilizables
+│   │   └── patients/            # ConsentForm.tsx
+│   ├── config/                  # demo-mode.ts
+│   ├── types/                   # dietly.ts
+│   └── utils/                   # cn, calc-targets, get-env-var
 ├── supabase/
-│   └── migrations/              # SQL migrations (ejecutar en orden)
-│       ├── 001_profiles.sql
-│       ├── 002_patients.sql
-│       ├── 003_nutrition_plans.sql
-│       └── 004_rls_policies.sql
+│   └── migrations/              # 38 SQL migrations (init → 038)
+│       ├── 20240115041359_init.sql
+│       ├── 001_initial_schema.sql → 033_pdf_cache.sql
+│       ├── 034_meal_swaps.sql → 037_meal_swaps_status.sql
+│       └── 038_progress_enhancements.sql
 └── public/
-    └── fonts/                   # Fonts TTF para @react-pdf/renderer
-        ├── Inter-Regular.ttf
-        ├── Inter-Bold.ttf
-        └── Inter-Medium.ttf
+    ├── fonts/                   # Fonts TTF para @react-pdf/renderer
+    └── sitemap.xml              # 7 URLs indexadas
 ```
 
 ---
@@ -254,7 +245,7 @@ Si el plan es `profesional` → branding completo del nutricionista
 | Supabase Storage para PDFs | Cloudinary, S3 | Ya en el stack, signed URLs nativas, más simple |
 | @react-pdf/renderer | Puppeteer/Playwright | Sin Chromium, funciona en Vercel serverless, PDFs vectoriales |
 | Resend para emails | SendGrid, Nodemailer | Mejor DX, React Email nativo, ya en boilerplate |
-| Plan básico limitado a 15 pacientes | Sin límite en básico | Incentiva upgrade, límite razonable para autónomos pequeños |
+| Plan básico limitado a 30 pacientes | Sin límite en básico | Incentiva upgrade, límite razonable para autónomos pequeños |
 
 ---
 

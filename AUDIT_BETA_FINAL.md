@@ -23,7 +23,7 @@ Dietly está listo para beta privada. El sistema de intercambios (feature más d
 | **Intercambios** | 🟢 | E2E verificado — 14+ archivos auditados sin bugs |
 | **PDF** | 🟢 | Sin fugas de swaps pendientes, caché con invalidación |
 | **PWA paciente** | 🟢 | Copy limpio de IA, colores unificados emerald |
-| **RGPD** | 🟡 | Art. 28.3 T&Cs incompleta (ok para beta, no para escalar) |
+| **RGPD** | 🟢 | Art. 28.3 T&Cs completada (sección 9, letras a-h + sub-encargados + SCCs) |
 | **Pagos Stripe** | 🟢 | Checkout, portal, webhooks funcionales |
 | **Landing / Marketing** | 🟢 | Visual OK, CTA claro |
 
@@ -121,7 +121,7 @@ Dietly está listo para beta privada. El sistema de intercambios (feature más d
 
 1. ~46 `as any` restantes en queries Supabase
 2. 92 queries sin abstracción (patrón repository)
-3. Art. 28.3 RGPD incompleta en T&Cs
+3. ~~Art. 28.3 RGPD~~ ✅ Completada en T&Cs (8 abril 2026)
 4. Detección Pro por nombre Stripe (TODO: price_id)
 5. Recálculo macros automático al editar ingredientes (marcado ❌ en MVP)
 
@@ -129,7 +129,7 @@ Dietly está listo para beta privada. El sistema de intercambios (feature más d
 
 ## Próximos pasos post-beta
 
-1. Cláusula Art. 28.3 RGPD completa en T&Cs
+1. ~~Cláusula Art. 28.3 RGPD completa en T&Cs~~ ✅ (8 abril 2026)
 2. Plantilla consentimiento informado descargable
 3. BEDCA integrada (base datos nutricional oficial)
 4. Fotos de comida con visión IA

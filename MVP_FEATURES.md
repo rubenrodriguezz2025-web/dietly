@@ -76,8 +76,8 @@
 ### F-10 · PDF con marca del nutricionista
 **Queja que resuelve**: todos los competidores ofrecen PDF pero la personalización es limitada o requiere plan premium.
 **Comportamiento esperado**:
-- **Plan Básico (€29)**: PDF con logo genérico de Dietly + nombre del nutricionista + nombre de la clínica
-- **Plan Profesional (€49)**: PDF con logo propio del nutricionista + color primario personalizado en cabeceras
+- **Plan Básico (€46/mes, 30 pacientes)**: PDF con logo genérico de Dietly + nombre del nutricionista + nombre de la clínica
+- **Plan Profesional (€89/mes, ilimitado)**: PDF con logo propio del nutricionista + color primario personalizado en cabeceras
 - El PDF incluye: portada, resumen semanal (kcal + macros objetivo), plan día por día, lista de compra
 **Notas técnicas**: `@react-pdf/renderer` server-side. Testar en Vercel el DÍA 1 del proyecto. Si falla, activar plan B: `usePDF` hook client-side.
 **Imágenes en PDF**: placeholder genérico en MVP. Fotos de comidas en versión post-MVP.
@@ -156,7 +156,7 @@ Las semanas 3 y 5 son las más críticas — si se atascan, el resto se desplaza
 | Base datos BEDCA/USDA integrada | Claude API genera macros con ~1.5% error, suficiente para MVP |
 | Recálculo automático de macros al editar | Complejidad alta, bajo impacto en adopción inicial |
 | Integración wearables (Strava, Apple Health) | Nicho deportivo, no es el target principal |
-| Historial de progreso del paciente | Importante pero no bloqueante para los primeros 10 clientes |
+| ~~Historial de progreso del paciente~~ | ✅ Implementado (patient_progress + migraciones 010, 038) |
 | OAuth social (Google, Apple) | Email/password suficiente en MVP |
 | Plan anual Stripe | Optimización de revenue, no de adopción |
 | Templates de dieta preconfigurados | La IA los hace dinámicos, los templates son el workaround del problema |
@@ -167,5 +167,5 @@ Las semanas 3 y 5 son las más críticas — si se atascan, el resto se desplaza
 
 ---
 
-*Última actualización: Semana 0 — antes de arrancar desarrollo*
-*Siguiente revisión: al terminar Semana 3 (después de validar el core de IA con primeros usuarios)*
+*Última actualización: 8 abril 2026 (precios actualizados: 46€/89€, límite 30 pacientes en Básico)*
+*Documento original de Semana 0 — los features F-01 a F-17 están mayoritariamente implementados (ver AUDIT_BETA_FINAL.md)*
