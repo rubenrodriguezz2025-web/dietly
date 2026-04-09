@@ -364,7 +364,7 @@ function HeroSection() {
           </a>
         </div>
         <p className='fu3 mt-3 text-center text-xs text-zinc-400'>
-          Sin tarjeta de crédito · Cancela cuando quieras
+          14 días gratis · Cancela antes del día 14 sin coste
         </p>
 
         {/* Precios inline */}
@@ -850,7 +850,7 @@ function FinalCtaSection() {
           Empieza hoy. Tu próximo plan en 2 minutos.
         </h2>
         <p className='mx-auto mt-4 max-w-md text-sm leading-relaxed text-zinc-400'>
-          14 días gratis, sin tarjeta. Si lo usas, pagas. Si no, cancelas.
+          14 días gratis. Si lo usas, pagas. Si no, cancelas antes del día 14 sin coste.
         </p>
         <div className='mt-8'>
           <CtaButton href='/signup'>

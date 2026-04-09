@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     },
     allow_promotion_codes: true,
     success_url: `${getURL()}/dashboard?checkout=exito`,
-    cancel_url: `${getURL()}/dashboard`,
+    cancel_url: `${getURL()}/onboarding/plan`,
     locale: 'es',
     metadata: { user_id: session.user.id, plan_tier: planTipo },
   });

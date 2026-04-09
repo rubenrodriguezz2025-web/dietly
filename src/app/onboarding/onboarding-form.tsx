@@ -188,7 +188,7 @@ export function OnboardingWizard() {
   async function handleStep4Skip() {
     startTransition(async () => {
       await markOnboardingComplete();
-      router.push('/dashboard');
+      router.push('/onboarding/plan');
     });
   }
 

@@ -8,6 +8,7 @@ import { BrandVisitTracker } from './brand-visit-tracker';
 import { LogoForm } from './logo-form';
 import { ProfileForm } from './profile-form';
 import { SignatureForm } from './signature-form';
+import { SubscriptionManage } from './subscription-manage';
 
 export default async function AjustesPage() {
   const supabase = await createSupabaseServerClient();
@@ -26,12 +27,64 @@ export default async function AjustesPage() {
     .eq('id', user.id)
     .single();
 
-  // Suscripción activa → determinar si es Plan Pro
+  // Suscripción activa → determinar plan y estado
   const subscription = await getSubscription();
   const isPro =
     subscription != null &&
     !!process.env.STRIPE_PRICE_PRO_ID &&
     subscription.price_id === process.env.STRIPE_PRICE_PRO_ID;
+
+  const subStatus = subscription?.status ?? 'none';
+
+  // Calcular días restantes de trial
+  let trialDaysLeft: number | null = null;
+  if (subStatus === 'trialing' && subscription?.trial_end) {
+    const diff = new Date(subscription.trial_end).getTime() - Date.now();
+    trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }
+
+  // Badge config según estado
+  type BadgeConfig = { label: string; dotClass: string; textClass: string; bgClass: string };
+  const badgeMap: Record<string, BadgeConfig> = {
+    trialing: {
+      label: `Prueba gratuita${trialDaysLeft != null ? ` · ${trialDaysLeft} días` : ''}`,
+      dotClass: 'bg-amber-400',
+      textClass: 'text-amber-300',
+      bgClass: 'border-amber-700/30 bg-amber-950/20',
+    },
+    active: isPro
+      ? {
+          label: 'Plan Profesional',
+          dotClass: 'bg-emerald-400',
+          textClass: 'text-emerald-300',
+          bgClass: 'border-[#1a7a45]/30 bg-[#1a7a45]/10',
+        }
+      : {
+          label: 'Plan Básico',
+          dotClass: 'bg-emerald-400',
+          textClass: 'text-emerald-300',
+          bgClass: 'border-[#1a7a45]/30 bg-[#1a7a45]/10',
+        },
+    past_due: {
+      label: 'Pago pendiente',
+      dotClass: 'bg-red-400',
+      textClass: 'text-red-300',
+      bgClass: 'border-red-800/30 bg-red-950/20',
+    },
+    canceled: {
+      label: 'Suscripción cancelada',
+      dotClass: 'bg-zinc-500',
+      textClass: 'text-zinc-400',
+      bgClass: 'border-zinc-800 bg-zinc-950',
+    },
+  };
+
+  const badge: BadgeConfig = badgeMap[subStatus] ?? {
+    label: 'Sin suscripción',
+    dotClass: 'bg-zinc-600',
+    textClass: 'text-zinc-400',
+    bgClass: 'border-zinc-800 bg-zinc-950',
+  };
 
   // URL firmada del logo para previsualización (1 hora de validez)
   let logoPreviewUrl: string | null = null;
@@ -71,15 +124,11 @@ export default async function AjustesPage() {
         </div>
         {/* Plan badge */}
         <div
-          className={`flex flex-shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 ${
-            isPro
-              ? 'border-[#1a7a45]/30 bg-[#1a7a45]/10'
-              : 'border-zinc-800 bg-white dark:bg-zinc-950'
-          }`}
+          className={`flex flex-shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 ${badge.bgClass}`}
         >
-          <div className={`h-2 w-2 rounded-full ${isPro ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
-          <span className={`text-sm font-semibold ${isPro ? 'text-emerald-300' : 'text-zinc-400'}`}>
-            {isPro ? 'Plan Profesional' : 'Plan Básico'}
+          <div className={`h-2 w-2 rounded-full ${badge.dotClass}`} />
+          <span className={`text-sm font-semibold ${badge.textClass}`}>
+            {badge.label}
           </span>
         </div>
       </div>
@@ -103,6 +152,9 @@ export default async function AjustesPage() {
           </a>
         </div>
       )}
+
+      {/* ── Gestionar suscripción ── */}
+      <SubscriptionManage hasSubscription={subscription != null} />
 
       {/* ── Mi marca (arriba para visibilidad) ── */}
       <div id='mi-marca'>

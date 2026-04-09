@@ -76,7 +76,7 @@ export function DietlyPricingFallback() {
             >
               Empezar 14 dias gratis
             </Link>
-            <p className='mt-2 text-center text-xs text-zinc-500'>Sin tarjeta de crédito</p>
+            <p className='mt-2 text-center text-xs text-zinc-500'>Cancela antes del día 14 sin coste</p>
           </div>
         </div>
       ))}

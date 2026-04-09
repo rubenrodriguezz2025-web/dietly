@@ -94,12 +94,17 @@ export function BannerUpgrade({ estado, diasRestantesTrialDia }: Props) {
               continuar.
             </p>
           </div>
-          <a
-            href='/api/stripe/portal'
+          <button
+            type='button'
+            onClick={async () => {
+              const res = await fetch('/api/stripe/portal', { method: 'POST' });
+              const data = await res.json();
+              if (data.url) window.location.href = data.url;
+            }}
             className='rounded-lg border border-red-700 bg-red-900 px-4 py-2 text-sm font-medium text-red-200 transition-colors hover:bg-red-800'
           >
             Actualizar pago
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -112,7 +117,7 @@ export function BannerUpgrade({ estado, diasRestantesTrialDia }: Props) {
     <div className='overflow-hidden rounded-xl border border-zinc-700 bg-white dark:bg-zinc-900'>
       <div className='relative border-b border-zinc-800 px-5 py-4'>
         <p className='text-sm font-semibold text-zinc-100'>
-          Empieza gratis — 14 días sin tarjeta
+          Empieza gratis — 14 días de prueba
         </p>
         <p className='mt-0.5 text-xs text-zinc-500'>
           Genera planes nutricionales completos en 2 minutos. Cancela cuando quieras.

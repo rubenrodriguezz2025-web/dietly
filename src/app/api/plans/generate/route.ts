@@ -355,6 +355,16 @@ export async function POST(req: NextRequest) {
           controller.close();
           return;
         }
+
+        // ── Subscription guard ────────────────────────────────────────────────
+        const { requireActiveSubscription } = await import('@/libs/auth/require-subscription');
+        const subCheck = await requireActiveSubscription();
+        if (!subCheck.authorized) {
+          send({ type: 'error', message: subCheck.error, code: subCheck.code });
+          controller.close();
+          return;
+        }
+
         send({ type: 'progress', step: 'auth_ok' });
 
         // ── Límite beta ───────────────────────────────────────────────────────

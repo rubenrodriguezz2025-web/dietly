@@ -49,6 +49,13 @@ export async function createPatient(
 
   if (!user) redirect('/login');
 
+  // ── Subscription guard ──────────────────────────────────────────────────
+  const { requireActiveSubscription } = await import('@/libs/auth/require-subscription');
+  const subCheck = await requireActiveSubscription();
+  if (!subCheck.authorized) {
+    return { error: subCheck.error };
+  }
+
   // Validar consentimiento antes de crear el paciente
   const aiConsent = formData.get('ai_consent') as string | null;
   if (aiConsent !== 'granted') {

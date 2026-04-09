@@ -95,14 +95,18 @@ export async function POST(req: NextRequest) {
     let nutritionistId: string | null = null;
 
     if (!patient_token) {
-      // Modo nutricionista: requiere auth
-      const supabase = await createSupabaseServerClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      // Modo nutricionista: requiere auth + suscripción activa
+      const { requireActiveSubscription } = await import('@/libs/auth/require-subscription');
+      const subCheck = await requireActiveSubscription();
+      if (!subCheck.authorized) {
+        const status = subCheck.code === 'UNAUTHORIZED' ? 401 : 403;
+        return NextResponse.json(
+          { error: subCheck.error, code: subCheck.code },
+          { status },
+        );
       }
       isNutritionist = true;
-      nutritionistId = user.id;
+      nutritionistId = subCheck.userId;
     }
 
     // Rate limiting solo para pacientes: máximo 10 swaps por plan por día

@@ -1,34 +1,42 @@
-import { redirect } from 'next/navigation';
+import { NextResponse } from 'next/server';
 
-import { getCustomerId } from '@/features/account/controllers/get-customer-id';
-import { getSession } from '@/features/account/controllers/get-session';
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getURL } from '@/utils/get-url';
 
-export const dynamic = 'force-dynamic';
+// POST /api/stripe/portal
+// Crea una sesión del Customer Portal de Stripe y devuelve la URL.
+// El portal permite gestionar suscripción, cambiar tarjeta, cancelar, ver facturas.
 
-// GET /api/stripe/portal
-// Crea una sesión del portal de cliente de Stripe y redirige al usuario.
-// El portal permite gestionar la suscripción, cambiar tarjeta, cancelar, etc.
+export async function POST() {
+  const supabase = await createSupabaseServerClient();
 
-export async function GET() {
-  const session = await getSession();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session?.user?.id) {
-    redirect('/login');
+  if (!user) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
-  const customerId = await getCustomerId({ userId: session.user.id });
+  const { data: customer } = await supabaseAdminClient
+    .from('customers')
+    .select('stripe_customer_id')
+    .eq('id', user.id)
+    .single();
 
-  if (!customerId) {
-    // El usuario nunca ha iniciado un pago — redirigir al dashboard
-    redirect('/dashboard?sin_suscripcion=1');
+  if (!customer?.stripe_customer_id) {
+    return NextResponse.json(
+      { error: 'No tienes una cuenta de facturación. Elige un plan primero.' },
+      { status: 400 },
+    );
   }
 
-  const { url } = await stripeAdmin.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: `${getURL()}/dashboard`,
+  const portalSession = await stripeAdmin.billingPortal.sessions.create({
+    customer: customer.stripe_customer_id,
+    return_url: `${getURL()}/dashboard/ajustes`,
   });
 
-  redirect(url);
+  return NextResponse.json({ url: portalSession.url });
 }

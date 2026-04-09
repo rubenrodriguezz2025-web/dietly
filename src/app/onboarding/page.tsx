@@ -23,7 +23,7 @@ export default async function OnboardingPage() {
     .single();
 
   if (profile?.onboarding_completed_at) {
-    redirect('/dashboard');
+    redirect('/onboarding/plan');
   }
 
   return (
