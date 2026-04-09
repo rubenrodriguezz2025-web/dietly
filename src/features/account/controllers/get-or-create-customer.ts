@@ -6,13 +6,28 @@ export async function getOrCreateCustomer({ userId, email }: { userId: string; e
     .from('profiles')
     .select('stripe_customer_id')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw new Error(`Error buscando perfil del usuario: ${error.message}`);
   }
 
-  if (data.stripe_customer_id) {
+  // Si no existe el profile, crearlo con datos mínimos (usuario llegó al checkout sin pasar por onboarding)
+  if (!data) {
+    const { error: insertError } = await supabaseAdminClient
+      .from('profiles')
+      .insert({
+        id: userId,
+        full_name: email.split('@')[0],
+      });
+
+    if (insertError) {
+      // Race condition: otro request pudo crearlo entre el SELECT y el INSERT
+      console.warn(`[getOrCreateCustomer] Error creando profile mínimo para ${userId}: ${insertError.message}`);
+    }
+  }
+
+  if (data?.stripe_customer_id) {
     return data.stripe_customer_id;
   }
 
