@@ -68,15 +68,21 @@ export async function signInWithEmail(email: string, password: string): Promise<
 }
 
 export async function signUpWithEmail(email: string, password: string): Promise<ActionResponse> {
-  // Beta access: verificar que el email está en la lista blanca
-  const { data: entry } = await (supabaseAdminClient as any)
-    .from('beta_whitelist')
-    .select('id')
-    .eq('email', email.toLowerCase().trim())
-    .maybeSingle();
+  // Beta whitelist: si BETA_WHITELIST_ENABLED !== 'false', se verifica que el email
+  // esté en beta_whitelist. Para abrir registro público, set BETA_WHITELIST_ENABLED=false en env.
+  // Default: 'true' (whitelist activo) si la variable no está definida.
+  const betaWhitelistEnabled = process.env.BETA_WHITELIST_ENABLED !== 'false';
 
-  if (!entry) {
-    return { data: null, error: { message: BETA_BLOCKED_MSG } };
+  if (betaWhitelistEnabled) {
+    const { data: entry } = await (supabaseAdminClient as any)
+      .from('beta_whitelist')
+      .select('id')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (!entry) {
+      return { data: null, error: { message: BETA_BLOCKED_MSG } };
+    }
   }
 
   const supabase = await createSupabaseServerClient();
