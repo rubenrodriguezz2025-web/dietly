@@ -697,6 +697,7 @@ export interface Database {
           brand_settings_visited_at: string | null;
           ai_literacy_acknowledged_at: string | null;
           primary_color: string | null;
+          stripe_customer_id: string | null;
         };
         Insert: {
           id: string;
@@ -718,6 +719,7 @@ export interface Database {
           brand_settings_visited_at?: string | null;
           ai_literacy_acknowledged_at?: string | null;
           primary_color?: string | null;
+          stripe_customer_id?: string | null;
         };
         Update: {
           id?: string;
@@ -739,6 +741,7 @@ export interface Database {
           brand_settings_visited_at?: string | null;
           ai_literacy_acknowledged_at?: string | null;
           primary_color?: string | null;
+          stripe_customer_id?: string | null;
         };
         Relationships: [];
       };

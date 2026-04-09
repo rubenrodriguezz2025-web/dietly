@@ -1,23 +1,18 @@
-import Stripe from 'stripe';
-
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import type { Database } from '@/libs/supabase/types';
 import { toDateTime } from '@/utils/to-date-time';
-import { AddressParam } from '@stripe/stripe-js';
 
 export async function upsertUserSubscription({
   subscriptionId,
   customerId,
-  isCreateAction,
 }: {
   subscriptionId: string;
   customerId: string;
-  isCreateAction?: boolean;
 }) {
-  // Get customer's userId from mapping table.
+  // Buscar userId en profiles por stripe_customer_id
   const { data: customerData, error: noCustomerError } = await supabaseAdminClient
-    .from('customers')
+    .from('profiles')
     .select('id')
     .eq('stripe_customer_id', customerId)
     .single();
@@ -25,11 +20,8 @@ export async function upsertUserSubscription({
 
   const { id: userId } = customerData!;
 
-  const subscription = await stripeAdmin.subscriptions.retrieve(subscriptionId, {
-    expand: ['default_payment_method'],
-  });
+  const subscription = await stripeAdmin.subscriptions.retrieve(subscriptionId);
 
-  // Upsert the latest status of the subscription object.
   const subscriptionData: Database['public']['Tables']['subscriptions']['Insert'] = {
     id: subscription.id,
     user_id: userId,
@@ -52,34 +44,4 @@ export async function upsertUserSubscription({
     throw error;
   }
   console.info(`Inserted/updated subscription [${subscription.id}] for user [${userId}]`);
-
-  // For a new subscription copy the billing details to the customer object.
-  // NOTE: This is a costly operation and should happen at the very end.
-  if (isCreateAction && subscription.default_payment_method && userId) {
-    await copyBillingDetailsToCustomer(userId, subscription.default_payment_method as Stripe.PaymentMethod);
-  }
 }
-
-const copyBillingDetailsToCustomer = async (userId: string, paymentMethod: Stripe.PaymentMethod) => {
-  const customer = paymentMethod.customer;
-  if (typeof customer !== 'string') {
-    throw new Error('Customer id not found');
-  }
-
-  const { name, phone, address } = paymentMethod.billing_details;
-  if (!name || !phone || !address) return;
-
-  await stripeAdmin.customers.update(customer, { name, phone, address: address as AddressParam });
-
-  const { error } = await supabaseAdminClient
-    .from('users')
-    .update({
-      billing_address: { ...address },
-      payment_method: { ...paymentMethod[paymentMethod.type] },
-    })
-    .eq('id', userId);
-
-  if (error) {
-    throw error;
-  }
-};

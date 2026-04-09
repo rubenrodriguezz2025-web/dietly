@@ -93,9 +93,9 @@ async function sincronizarSuscripcion(
   subscription: Stripe.Subscription,
   esNueva = false
 ) {
-  // Obtener el userId desde la tabla customers
+  // Obtener el userId desde profiles
   const { data: clienteData, error: errCliente } = await supabaseAdminClient
-    .from('customers')
+    .from('profiles')
     .select('id')
     .eq('stripe_customer_id', subscription.customer as string)
     .single();

@@ -2,7 +2,7 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 export async function getCustomerId({ userId }: { userId: string }) {
   const { data, error } = await supabaseAdminClient
-    .from('customers')
+    .from('profiles')
     .select('stripe_customer_id')
     .eq('id', userId)
     .single();
