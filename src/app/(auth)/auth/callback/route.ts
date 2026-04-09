@@ -29,6 +29,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${siteUrl}${next}`);
     }
 
+    // Verificar si completó onboarding — si no, enviar al wizard
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed_at')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!profile?.onboarding_completed_at) {
+      return NextResponse.redirect(`${siteUrl}/onboarding`);
+    }
+
     return NextResponse.redirect(`${siteUrl}/dashboard`);
   }
 

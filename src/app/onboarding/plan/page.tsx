@@ -16,6 +16,17 @@ export default async function OnboardingPlanPage() {
     redirect('/login');
   }
 
+  // Guard: si no completó onboarding, redirigir al wizard
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('onboarding_completed_at')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile?.onboarding_completed_at) {
+    redirect('/onboarding');
+  }
+
   // Si ya tiene suscripción activa o en trial, va directo al dashboard
   const subscription = await getSubscription();
   if (subscription?.status && ['trialing', 'active'].includes(subscription.status)) {
