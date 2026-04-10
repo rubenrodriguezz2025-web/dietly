@@ -1117,7 +1117,7 @@ export function OnboardingWizard() {
                     e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
                   }}
                 >
-                  {isPending ? 'Redirigiendo...' : 'Ir al dashboard directamente'}
+                  {isPending ? 'Redirigiendo...' : 'Saltar este paso por ahora →'}
                 </button>
               </div>
             </div>
