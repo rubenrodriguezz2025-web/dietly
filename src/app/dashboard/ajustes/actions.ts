@@ -1,11 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import sharp from 'sharp';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/gif'];
+const RASTER_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const BUCKET = 'nutritionist-logos';
 
 // ── Subir o reemplazar el logo ────────────────────────────────────────────────
@@ -30,15 +32,29 @@ export async function uploadLogo(
     return { error: 'El archivo supera el límite de 5 MB.' };
   }
 
-  // Extensión a partir del MIME type
-  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/svg+xml' ? 'svg' : file.type.split('/')[1];
-  const path = `${user.id}/logo.${ext}`;
+  const rawBuffer = Buffer.from(await file.arrayBuffer());
 
-  const arrayBuffer = await file.arrayBuffer();
+  // Optimizar imágenes rasterizadas con sharp (SVG/GIF se suben sin cambios)
+  let uploadBuffer: Buffer | Uint8Array = rawBuffer;
+  let contentType = file.type;
+  let path: string;
+
+  if (RASTER_TYPES.includes(file.type)) {
+    uploadBuffer = await sharp(rawBuffer)
+      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toBuffer();
+    contentType = 'image/webp';
+    path = `${user.id}/logo.webp`;
+  } else {
+    const ext = file.type === 'image/svg+xml' ? 'svg' : 'gif';
+    path = `${user.id}/logo.${ext}`;
+  }
+
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)
-    .upload(path, arrayBuffer, {
-      contentType: file.type,
+    .upload(path, uploadBuffer, {
+      contentType,
       upsert: true,
     });
 

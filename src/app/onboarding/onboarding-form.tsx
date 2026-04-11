@@ -120,8 +120,8 @@ export function OnboardingWizard() {
 
   function handleLogoFile(file: File) {
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) return;
-    if (file.size > 512 * 1024) {
-      setStep3Error('El archivo supera 512 KB.');
+    if (file.size > 5 * 1024 * 1024) {
+      setStep3Error('La imagen es demasiado grande (máx. 5 MB). Prueba con una más ligera.');
       return;
     }
     setLogoFile(file);
@@ -675,7 +675,7 @@ export function OnboardingWizard() {
                         Arrastra tu logo aquí o haz clic
                       </p>
                       <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
-                        PNG, JPG o WebP · máx. 512 KB
+                        PNG, JPG o WebP · máx. 5 MB
                       </p>
                     </div>
                   )}

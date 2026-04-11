@@ -2,6 +2,7 @@
 
 import { createElement } from 'react';
 import { revalidatePath } from 'next/cache';
+import sharp from 'sharp';
 
 import { OnboardingWelcomeEmail } from '@/features/emails/onboarding-welcome';
 import { resendClient } from '@/libs/resend/resend-client';
@@ -10,7 +11,7 @@ import { render } from '@react-email/components';
 
 type ActionResult = { error?: string; success?: boolean };
 
-const MAX_SIZE_BYTES = 512 * 1024;
+const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const LOGO_BUCKET = 'nutritionist-logos';
 
@@ -87,16 +88,21 @@ export async function saveBrandWizard(formData: FormData): Promise<ActionResult>
       return { error: 'Formato no permitido. Usa PNG, JPG o WebP.' };
     }
     if (file.size > MAX_SIZE_BYTES) {
-      return { error: 'El archivo supera el límite de 512 KB.' };
+      return { error: 'La imagen es demasiado grande (máx. 5 MB). Prueba con una más ligera.' };
     }
 
-    const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
-    const path = `${user.id}/logo.${ext}`;
+    // Optimizar: redimensionar a max 800x800 y convertir a WebP calidad 85
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
+    const optimized = await sharp(rawBuffer)
+      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toBuffer();
 
-    const arrayBuffer = await file.arrayBuffer();
+    const path = `${user.id}/logo.webp`;
+
     const { error: uploadError } = await supabase.storage
       .from(LOGO_BUCKET)
-      .upload(path, arrayBuffer, { contentType: file.type, upsert: true });
+      .upload(path, optimized, { contentType: 'image/webp', upsert: true });
 
     if (uploadError) return { error: uploadError.message };
 
