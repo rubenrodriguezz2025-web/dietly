@@ -77,5 +77,5 @@ export async function saveProfile(formData: FormData) {
     // El email de notificación no es crítico; continuamos igualmente
   }
 
-  redirect('/onboarding/plan');
+  redirect('/dashboard');
 }

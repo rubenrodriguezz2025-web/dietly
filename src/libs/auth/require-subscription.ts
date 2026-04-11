@@ -46,7 +46,7 @@ export async function requireActiveSubscription(): Promise<SubscriptionCheck> {
   if (!subscription) {
     return {
       authorized: false,
-      error: 'Necesitas una suscripción activa para usar esta función. Elige tu plan en /onboarding/plan.',
+      error: 'Necesitas una suscripción activa para usar esta función.',
       code: 'SUBSCRIPTION_REQUIRED',
     };
   }

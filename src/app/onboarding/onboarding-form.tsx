@@ -3,15 +3,11 @@
 import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { CONSENT_TEXT_VERSION } from '@/components/patients/ConsentForm';
-
-import { createPatient } from '../dashboard/patients/new/actions';
-
 import { markOnboardingComplete, saveBrandWizard, saveProfileWizard } from './onboarding-actions';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
 
 const SPECIALTIES = [
   { value: 'weight_loss', label: 'Pérdida de peso' },
@@ -20,20 +16,6 @@ const SPECIALTIES = [
   { value: 'general', label: 'General' },
 ] as const;
 
-const GOALS = [
-  { value: 'weight_loss', label: 'Perder peso' },
-  { value: 'weight_gain', label: 'Ganar peso' },
-  { value: 'maintenance', label: 'Mantenimiento' },
-  { value: 'muscle_gain', label: 'Ganar músculo' },
-  { value: 'health', label: 'Salud general' },
-] as const;
-
-const ACTIVITY_LEVELS = [
-  { value: 'sedentary', label: 'Sedentario (poco o nada de ejercicio)' },
-  { value: 'lightly_active', label: 'Ligero (ejercicio 1-3 días/semana)' },
-  { value: 'moderately_active', label: 'Moderado (ejercicio 3-5 días/semana)' },
-  { value: 'very_active', label: 'Activo (ejercicio 6-7 días/semana)' },
-] as const;
 
 // ── Colores predefinidos ──────────────────────────────────────────────────────
 
@@ -74,17 +56,6 @@ export function OnboardingWizard() {
   const [dragOver, setDragOver] = useState(false);
   const [step3Error, setStep3Error] = useState('');
   const logoInputRef = useRef<HTMLInputElement>(null);
-
-  // Step 4 state
-  const [patientName, setPatientName] = useState('');
-  const [dob, setDob] = useState('');
-  const [sex, setSex] = useState('');
-  const [weight, setWeight] = useState('');
-  const [height, setHeight] = useState('');
-  const [goal, setGoal] = useState('');
-  const [activityLevel, setActivityLevel] = useState('');
-  const [consentChecked, setConsentChecked] = useState(false);
-  const [step4Error, setStep4Error] = useState('');
 
   // ── Transición entre pasos ─────────────────────────────────────────────────
 
@@ -132,13 +103,17 @@ export function OnboardingWizard() {
       if (result?.error) {
         setStep3Error(result.error);
       } else {
-        goTo(4);
+        await markOnboardingComplete();
+        router.push('/dashboard');
       }
     });
   }
 
   async function handleStep3Skip() {
-    goTo(4);
+    startTransition(async () => {
+      await markOnboardingComplete();
+      router.push('/dashboard');
+    });
   }
 
   // ── Logo drag&drop ────────────────────────────────────────────────────────
@@ -152,44 +127,6 @@ export function OnboardingWizard() {
     setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
     setStep3Error('');
-  }
-
-  // ── Step 4 submit ─────────────────────────────────────────────────────────
-
-  async function handleStep4() {
-    setStep4Error('');
-    if (!consentChecked) {
-      setStep4Error('Acepta el consentimiento para continuar.');
-      return;
-    }
-
-    const fd = new FormData();
-    fd.set('name', patientName);
-    fd.set('date_of_birth', dob);
-    fd.set('sex', sex);
-    fd.set('weight_kg', weight);
-    fd.set('height_cm', height);
-    fd.set('goal', goal);
-    fd.set('activity_level', activityLevel);
-    fd.set('ai_consent', 'granted');
-    fd.set('ai_consent_version', CONSENT_TEXT_VERSION);
-
-    startTransition(async () => {
-      // Marcar onboarding completo antes de crear paciente
-      await markOnboardingComplete();
-      const result = await createPatient({ error: undefined }, fd);
-      if (result?.error) {
-        setStep4Error(result.error);
-      }
-      // createPatient redirige internamente a /dashboard/patients/[id]
-    });
-  }
-
-  async function handleStep4Skip() {
-    startTransition(async () => {
-      await markOnboardingComplete();
-      router.push('/onboarding/plan');
-    });
   }
 
   // ── Estilos comunes ───────────────────────────────────────────────────────
@@ -232,7 +169,7 @@ export function OnboardingWizard() {
             style={{
               height: '100%',
               backgroundColor: '#1a7a45',
-              width: `${((step - 1) / 3) * 100}%`,
+              width: `${((step - 1) / 2) * 100}%`,
               transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           />
@@ -249,7 +186,7 @@ export function OnboardingWizard() {
             alignItems: 'center',
           }}
         >
-          {([2, 3, 4] as Step[]).map((s) => (
+          {([2, 3] as Step[]).map((s) => (
             <div
               key={s}
               style={{
@@ -880,249 +817,6 @@ export function OnboardingWizard() {
           </div>
         )}
 
-        {/* ── PASO 4: Primer paciente ───────────────────────────────────── */}
-        {step === 4 && (
-          <div>
-            <h2
-              style={{
-                fontSize: 26,
-                fontWeight: 800,
-                color: '#ffffff',
-                margin: '0 0 6px',
-                letterSpacing: '-0.3px',
-              }}
-            >
-              Tu primer paciente
-            </h2>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', margin: '0 0 28px' }}>
-              Opcional — puedes hacerlo ahora o después desde el dashboard.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Nombre */}
-              <div>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
-                  Nombre *
-                </label>
-                <input
-                  value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
-                  placeholder='Nombre del paciente'
-                  disabled={isPending}
-                  className={inputClass}
-                />
-              </div>
-
-              {/* Fecha nacimiento + Sexo */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
-                    Fecha nacimiento *
-                  </label>
-                  <input
-                    type='date'
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
-                    disabled={isPending}
-                    className={inputClass}
-                    style={{ colorScheme: 'dark' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
-                    Sexo *
-                  </label>
-                  <select
-                    value={sex}
-                    onChange={(e) => setSex(e.target.value)}
-                    disabled={isPending}
-                    className={selectClass}
-                  >
-                    <option value=''>—</option>
-                    <option value='female'>Mujer</option>
-                    <option value='male'>Hombre</option>
-                    <option value='other'>Otro</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Peso + Altura */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
-                    Peso (kg) *
-                  </label>
-                  <input
-                    type='number'
-                    value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
-                    placeholder='70'
-                    min='30'
-                    max='300'
-                    disabled={isPending}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
-                    Altura (cm) *
-                  </label>
-                  <input
-                    type='number'
-                    value={height}
-                    onChange={(e) => setHeight(e.target.value)}
-                    placeholder='165'
-                    min='100'
-                    max='250'
-                    disabled={isPending}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-
-              {/* Objetivo */}
-              <div>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
-                  Objetivo *
-                </label>
-                <select
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  disabled={isPending}
-                  className={selectClass}
-                >
-                  <option value=''>Selecciona un objetivo</option>
-                  {GOALS.map((g) => (
-                    <option key={g.value} value={g.value}>
-                      {g.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Nivel de actividad */}
-              <div>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
-                  Nivel de actividad *
-                </label>
-                <select
-                  value={activityLevel}
-                  onChange={(e) => setActivityLevel(e.target.value)}
-                  disabled={isPending}
-                  className={selectClass}
-                >
-                  <option value=''>Selecciona nivel de actividad</option>
-                  {ACTIVITY_LEVELS.map((a) => (
-                    <option key={a.value} value={a.value}>
-                      {a.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Consentimiento */}
-              <div
-                style={{
-                  borderRadius: 12,
-                  border: '1px solid rgba(255,180,0,0.2)',
-                  backgroundColor: 'rgba(255,180,0,0.04)',
-                  padding: '14px 16px',
-                }}
-              >
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
-                  <input
-                    type='checkbox'
-                    checked={consentChecked}
-                    onChange={(e) => setConsentChecked(e.target.checked)}
-                    disabled={isPending}
-                    style={{ marginTop: 2, width: 16, height: 16, accentColor: '#1a7a45', flexShrink: 0 }}
-                  />
-                  <span style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(255,255,255,0.6)' }}>
-                    Confirmo que tengo el consentimiento del paciente para tratar sus datos de
-                    salud con herramientas digitales de asistencia.{' '}
-                    <span style={{ color: '#f87171' }}>*</span>
-                  </span>
-                </label>
-              </div>
-
-              {step4Error && (
-                <p style={{ fontSize: 13, color: '#f87171', margin: 0 }}>{step4Error}</p>
-              )}
-
-              {/* Botones */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button
-                  onClick={handleStep4}
-                  disabled={
-                    !patientName ||
-                    !dob ||
-                    !sex ||
-                    !weight ||
-                    !height ||
-                    !goal ||
-                    !activityLevel ||
-                    !consentChecked ||
-                    isPending
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '14px 24px',
-                    borderRadius: 12,
-                    backgroundColor: '#1a7a45',
-                    border: 'none',
-                    color: '#ffffff',
-                    fontSize: 15,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    opacity:
-                      !patientName ||
-                      !dob ||
-                      !sex ||
-                      !weight ||
-                      !height ||
-                      !goal ||
-                      !activityLevel ||
-                      !consentChecked ||
-                      isPending
-                        ? 0.4
-                        : 1,
-                    transition: 'opacity 0.15s ease',
-                  }}
-                >
-                  {isPending ? 'Creando paciente...' : 'Crear paciente y generar plan →'}
-                </button>
-                <button
-                  onClick={handleStep4Skip}
-                  disabled={isPending}
-                  style={{
-                    width: '100%',
-                    padding: '12px 24px',
-                    borderRadius: 12,
-                    backgroundColor: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    color: 'rgba(255,255,255,0.45)',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    cursor: isPending ? 'default' : 'pointer',
-                    fontFamily: 'inherit',
-                    transition: 'border-color 0.15s ease, color 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
-                  }}
-                >
-                  {isPending ? 'Redirigiendo...' : 'Saltar este paso por ahora →'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

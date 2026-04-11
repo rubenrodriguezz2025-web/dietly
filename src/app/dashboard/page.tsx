@@ -54,6 +54,7 @@ export default async function DashboardPage() {
     { data: whitelistEntry },
     { data: allPlans },
     { data: latestProgressPerPatient },
+    { data: activeSubscription },
   ] = await Promise.all([
     // Pacientes activos con estado de planes
     (supabase as any)
@@ -117,6 +118,13 @@ export default async function DashboardPage() {
       .select('patient_id, recorded_at')
       .eq('nutritionist_id', user.id)
       .order('recorded_at', { ascending: false }),
+    // Suscripción activa (para banner de bienvenida)
+    (supabase as any)
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .in('status', ['trialing', 'active'])
+      .maybeSingle() as Promise<{ data: { status: string } | null }>,
   ]);
 
   const pendingReminderPatientIds = new Set((allPendingReminders ?? []).map((r) => r.patient_id));
@@ -158,6 +166,8 @@ export default async function DashboardPage() {
     .filter((p) => p.daysSince >= 30)
     .sort((a, b) => b.daysSince - a.daysSince);
 
+  const hasSubscription = !!activeSubscription;
+
   const draftPlans = (allPlans ?? []).filter((p) => p.status === 'draft');
   const draftCount = draftPlans.length;
 
@@ -181,6 +191,11 @@ export default async function DashboardPage() {
           <Link href='/dashboard/patients/new'>+ Nuevo paciente</Link>
         </Button>
       </div>
+
+      {/* Banner de bienvenida — solo cuando 0 pacientes */}
+      {patients.length === 0 && (
+        <WelcomeBanner hasSubscription={hasSubscription} firstName={profile.full_name.split(' ')[0]} />
+      )}
 
       {/* Banner de recordatorios vencidos */}
       {dueReminders && dueReminders.length > 0 && (
@@ -513,6 +528,70 @@ function MetricCard({
   return (
     <div className={`rounded-xl border ${s.border} bg-white dark:bg-zinc-950 shadow-sm dark:shadow-none`}>
       {inner}
+    </div>
+  );
+}
+
+function WelcomeBanner({ hasSubscription, firstName }: { hasSubscription: boolean; firstName: string }) {
+  if (hasSubscription) {
+    // Variante sobria — suscriptor sin pacientes
+    return (
+      <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5 animate-in fade-in slide-in-from-top-2 duration-500'>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex items-start gap-3'>
+            <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#1a7a45]/10'>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-emerald-500' aria-hidden='true'>
+                <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
+                <circle cx='9' cy='7' r='4' />
+                <path d='M23 11h-6' />
+                <path d='M20 8v6' />
+              </svg>
+            </div>
+            <div>
+              <p className='text-sm font-semibold text-zinc-100'>
+                Empieza añadiendo tu primer paciente
+              </p>
+              <p className='mt-0.5 text-xs text-zinc-500'>
+                Crea una ficha y genera su primer plan nutricional con IA.
+              </p>
+            </div>
+          </div>
+          <Button asChild size='sm' className='flex-shrink-0'>
+            <Link href='/dashboard/patients/new'>Crear paciente</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Variante principal — freemium sin suscripción
+  return (
+    <div className='relative overflow-hidden rounded-xl border border-[#1a7a45]/30 bg-gradient-to-br from-[#0d1f12] via-zinc-950 to-zinc-950 p-6 animate-in fade-in slide-in-from-top-2 duration-500'>
+      {/* Glow decorativo */}
+      <div className='pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-[#1a7a45]/8 blur-3xl' aria-hidden='true' />
+
+      <div className='relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex items-start gap-3'>
+          <div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#1a7a45]/15'>
+            <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-[#22c55e]' aria-hidden='true'>
+              <path d='M13 2L4.09 12.96A1 1 0 0 0 5 14.5h5.5L11 22l8.91-10.96A1 1 0 0 0 19 9.5H13.5L13 2z' />
+            </svg>
+          </div>
+          <div>
+            <h2 className='text-base font-bold text-zinc-100'>
+              ¡Bienvenido a Dietly, {firstName}!
+            </h2>
+            <p className='mt-1 text-sm leading-relaxed text-zinc-400'>
+              Crea hasta <span className='font-medium text-zinc-300'>2 pacientes gratis</span> para explorar la plataforma.
+              <br className='hidden sm:block' />
+              Activa tu prueba de 14 días cuando quieras generar planes con IA.
+            </p>
+          </div>
+        </div>
+        <Button asChild className='flex-shrink-0 bg-[#1a7a45] text-white hover:bg-[#1e8a4e] active:scale-[0.98]'>
+          <Link href='/dashboard/patients/new'>Crear primer paciente</Link>
+        </Button>
+      </div>
     </div>
   );
 }

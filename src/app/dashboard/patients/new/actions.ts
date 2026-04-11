@@ -38,9 +38,9 @@ function calculateTMB(
 }
 
 export async function createPatient(
-  _prev: { error?: string },
+  _prev: { error?: string; code?: string },
   formData: FormData
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; code?: string }> {
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -49,11 +49,33 @@ export async function createPatient(
 
   if (!user) redirect('/login');
 
-  // ── Subscription guard ──────────────────────────────────────────────────
-  const { requireActiveSubscription } = await import('@/libs/auth/require-subscription');
-  const subCheck = await requireActiveSubscription();
-  if (!subCheck.authorized) {
-    return { error: subCheck.error };
+  // ── Freemium guard: límite 2 pacientes sin suscripción ─────────────────
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'rubenrodriguezz2025@gmail.com';
+  const isAdmin = user.email === ADMIN_EMAIL;
+
+  if (!isAdmin) {
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .in('status', ['trialing', 'active'])
+      .maybeSingle();
+
+    const hasActiveSubscription = !!subscription;
+
+    if (!hasActiveSubscription) {
+      const { count } = await supabase
+        .from('patients')
+        .select('id', { count: 'exact', head: true })
+        .eq('nutritionist_id', user.id);
+
+      if ((count ?? 0) >= 2) {
+        return {
+          error: 'Has alcanzado el límite de 2 pacientes en modo prueba. Activa tu suscripción para añadir pacientes ilimitados.',
+          code: 'LIMIT_REACHED' as const,
+        };
+      }
+    }
   }
 
   // Validar consentimiento antes de crear el paciente

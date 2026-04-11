@@ -1,7 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { redirect } from 'next/navigation';
 
-import { getSubscription } from '@/features/account/controllers/get-subscription';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 import { MobileDashboardNav, SidebarNav } from './sidebar-nav';
@@ -19,18 +18,6 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
   }
 
   const isAdmin = user.email === ADMIN_EMAIL;
-
-  // ── Subscription guard ──────────────────────────────────────────────────
-  // Admins pasan siempre. El resto necesita suscripción activa o en trial.
-  if (!isAdmin) {
-    const subscription = await getSubscription();
-    const hasAccess =
-      subscription?.status && ['trialing', 'active'].includes(subscription.status);
-
-    if (!hasAccess) {
-      redirect('/onboarding/plan');
-    }
-  }
 
   const [{ data: profile }, { count: draftCount }, { count: pendingSwapsCount }] = await Promise.all([
     (supabase as any)
