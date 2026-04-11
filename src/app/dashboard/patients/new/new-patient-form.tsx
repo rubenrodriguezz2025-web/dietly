@@ -1,8 +1,9 @@
 'use client';
 
-import { useActionState, useCallback, useRef, useState } from 'react';
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
 
 import { ConsentForm } from '@/components/patients/ConsentForm';
+import { PaywallModal } from '@/components/PaywallModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -176,7 +177,12 @@ export function NewPatientForm() {
   const [showClinicalNotes, setShowClinicalNotes] = useState(false);
   const [allergyChips, setAllergyChips] = useState<string[]>([]);
   const [intoleranceChips, setIntoleranceChips] = useState<string[]>([]);
+  const [paywallOpen, setPaywallOpen] = useState(false);
   const isMinor = dob ? calcAge(dob) < 18 : false;
+
+  useEffect(() => {
+    if (state?.code === 'LIMIT_REACHED') setPaywallOpen(true);
+  }, [state]);
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -398,9 +404,15 @@ export function NewPatientForm() {
         </div>
       )}
 
-      {state?.error && (
+      {state?.error && state.code !== 'LIMIT_REACHED' && (
         <p className='rounded-md bg-red-950 px-4 py-3 text-sm text-red-400'>{state.error}</p>
       )}
+
+      <PaywallModal
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        reason='LIMIT_REACHED'
+      />
 
       <div className='flex justify-end'>
         <Button type='submit' disabled={pending || isMinor}>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 
+import { PaywallModal } from '@/components/PaywallModal';
 import type { Ingredient, Meal } from '@/types/dietly';
 
 import { recalculateMealMacros } from './actions';
@@ -40,6 +41,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
     | { phase: 'choosing'; alternatives: Meal[] }
     | { phase: 'error'; message: string }
   >({ phase: 'idle' });
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   function handleIngredientChange(i: number, updated: Ingredient) {
     onChange({
@@ -86,6 +88,11 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        if (body.code === 'SUBSCRIPTION_REQUIRED') {
+          setSwapState({ phase: 'idle' });
+          setPaywallOpen(true);
+          return;
+        }
         throw new Error(body.error || 'Error al generar alternativas');
       }
       const data = await res.json();
@@ -105,6 +112,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
   }
 
   return (
+    <>
     <div className={`rounded-xl border shadow-sm p-5 ${isInvalid ? 'border-red-500/40 bg-red-950/10 dark:bg-red-950/20' : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'}`}>
       {/* Header: tipo + nombre + macros */}
       <div className='flex flex-wrap items-start justify-between gap-2'>
@@ -376,5 +384,12 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
         </div>
       )}
     </div>
+
+    <PaywallModal
+      open={paywallOpen}
+      onClose={() => setPaywallOpen(false)}
+      reason='SUBSCRIPTION_REQUIRED'
+    />
+    </>
   );
 }

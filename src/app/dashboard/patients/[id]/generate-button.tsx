@@ -3,6 +3,7 @@
 import { useCallback,useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { PaywallModal } from '@/components/PaywallModal';
 import { Button } from '@/components/ui/button';
 import type { AnthropicErrorCode } from '@/libs/ai/resilience';
 import type { PatientGoal } from '@/types/dietly';
@@ -33,6 +34,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   const [currentDay, setCurrentDay] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const [errorCode, setErrorCode] = useState<AnthropicErrorCode | string | undefined>();
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   // A-11: AbortController ref para cancelar el stream al desmontar
   const abortRef = useRef<AbortController | null>(null);
@@ -85,6 +87,11 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
         let msg = `Error HTTP ${res.status}. Inténtalo de nuevo.`;
         try {
           const b = await res.clone().json();
+          if (b.code === 'SUBSCRIPTION_REQUIRED') {
+            setState('idle');
+            setPaywallOpen(true);
+            return;
+          }
           if (b.beta_limit_reached) {
             msg = b.error as string;
           } else if (b.error || b.detail) {
@@ -109,6 +116,11 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
               if (data.type === 'progress') setCurrentDay(data.day as number);
               else if (data.type === 'done') { doneReceived = true; router.push(`/dashboard/plans/${data.plan_id}`); }
               else if (data.type === 'error') {
+                if (data.code === 'SUBSCRIPTION_REQUIRED') {
+                  setState('idle');
+                  setPaywallOpen(true);
+                  return;
+                }
                 setState('error');
                 setErrorMsg(data.message as string);
                 setErrorCode(data.error_code as AnthropicErrorCode | undefined);
@@ -328,8 +340,15 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
 
   // ── Idle ────────────────────────────────────────────────────────────────────
   return (
-    <Button onClick={() => setState('confirm')}>
-      + Generar plan
-    </Button>
+    <>
+      <Button onClick={() => setState('confirm')}>
+        + Generar plan
+      </Button>
+      <PaywallModal
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        reason='SUBSCRIPTION_REQUIRED'
+      />
+    </>
   );
 }
