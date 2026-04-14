@@ -150,17 +150,13 @@ async function handlePreview() {
     .single();
 
   // Determinar si tiene suscripción Pro (para logo/firma)
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('status, price_id')
-    .eq('user_id', user.id)
-    .in('status', ['trialing', 'active'])
-    .maybeSingle();
-
+  const subStatus = (profileData as { subscription_status?: string | null } | null)?.subscription_status;
+  const subPriceId = (profileData as { stripe_price_id?: string | null } | null)?.stripe_price_id;
+  const subActive = subStatus === 'trialing' || subStatus === 'active';
   const is_pro =
-    subscription != null &&
+    subActive &&
     !!process.env.STRIPE_PRICE_PRO_ID &&
-    subscription.price_id === process.env.STRIPE_PRICE_PRO_ID;
+    subPriceId === process.env.STRIPE_PRICE_PRO_ID;
 
   let logo_uri: string | null = null;
   let signature_uri: string | null = null;

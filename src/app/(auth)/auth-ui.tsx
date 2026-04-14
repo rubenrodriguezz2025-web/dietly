@@ -98,7 +98,7 @@ export function AuthUI({
       <form onSubmit={handleSubmit} className='flex flex-col gap-3 text-left'>
         <div className='flex flex-col gap-1'>
           <label htmlFor='email' className='text-xs text-zinc-500'>Email</label>
-          <Input id='email' type='email' name='email' placeholder='tu@email.com' required autoFocus className={inputClass} />
+          <Input id='email' type='email' name='email' autoComplete='email' placeholder='tu@email.com' required autoFocus className={inputClass} />
         </div>
 
         <div className='flex flex-col gap-1'>
@@ -115,6 +115,7 @@ export function AuthUI({
               id='password'
               type={showPassword ? 'text' : 'password'}
               name='password'
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               placeholder={mode === 'signup' ? 'Mínimo 8 caracteres' : '••••••••'}
               required
               className={`${inputClass} pr-10`}

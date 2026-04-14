@@ -74,6 +74,7 @@ export default function ForgotPasswordPage() {
                   id='email'
                   type='email'
                   name='email'
+                  autoComplete='email'
                   placeholder='tu@email.com'
                   required
                   autoFocus

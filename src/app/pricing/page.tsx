@@ -1,5 +1,5 @@
 import { PricingSection } from '@/features/pricing/components/pricing-section';
 
-export default async function PricingPage() {
+export default function PricingPage() {
   return <PricingSection isPricingPage />;
 }

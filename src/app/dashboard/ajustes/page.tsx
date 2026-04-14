@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { getSubscription } from '@/features/account/controllers/get-subscription';
+import { getUserSubscription } from '@/features/account/controllers/get-user-subscription';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 import { BrandSettings } from './brand-settings';
@@ -28,26 +28,16 @@ export default async function AjustesPage() {
     .single();
 
   // Suscripción activa → determinar plan y estado
-  const subscription = await getSubscription();
-  const isPro =
-    subscription != null &&
-    !!process.env.STRIPE_PRICE_PRO_ID &&
-    subscription.price_id === process.env.STRIPE_PRICE_PRO_ID;
+  const subscription = await getUserSubscription();
+  const isPro = subscription?.isPro ?? false;
 
   const subStatus = subscription?.status ?? 'none';
-
-  // Calcular días restantes de trial
-  let trialDaysLeft: number | null = null;
-  if (subStatus === 'trialing' && subscription?.trial_end) {
-    const diff = new Date(subscription.trial_end).getTime() - Date.now();
-    trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  }
 
   // Badge config según estado
   type BadgeConfig = { label: string; dotClass: string; textClass: string; bgClass: string };
   const badgeMap: Record<string, BadgeConfig> = {
     trialing: {
-      label: `Prueba gratuita${trialDaysLeft != null ? ` · ${trialDaysLeft} días` : ''}`,
+      label: 'Prueba gratuita',
       dotClass: 'bg-amber-400',
       textClass: 'text-amber-300',
       bgClass: 'border-amber-700/30 bg-amber-950/20',
@@ -154,7 +144,7 @@ export default async function AjustesPage() {
       )}
 
       {/* ── Gestionar suscripción ── */}
-      <SubscriptionManage hasSubscription={subscription != null} />
+      <SubscriptionManage hasSubscription={subscription?.isActive ?? false} />
 
       {/* ── Mi marca (arriba para visibilidad) ── */}
       <div id='mi-marca'>

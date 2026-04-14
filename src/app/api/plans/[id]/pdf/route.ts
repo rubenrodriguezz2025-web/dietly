@@ -113,18 +113,14 @@ export async function GET(
       || '',
   };
 
-  // Verificar si el usuario tiene suscripción Pro activa
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('status, price_id')
-    .eq('user_id', user.id)
-    .in('status', ['trialing', 'active'])
-    .maybeSingle();
-
+  // Verificar si el usuario tiene suscripción Pro activa (derivado de profiles)
+  const subStatus = (profileData as { subscription_status?: string | null } | null)?.subscription_status;
+  const subPriceId = (profileData as { stripe_price_id?: string | null } | null)?.stripe_price_id;
+  const subActive = subStatus === 'trialing' || subStatus === 'active';
   const is_pro =
-    subscription != null &&
+    subActive &&
     !!process.env.STRIPE_PRICE_PRO_ID &&
-    subscription.price_id === process.env.STRIPE_PRICE_PRO_ID;
+    subPriceId === process.env.STRIPE_PRICE_PRO_ID;
 
   // Helper: descarga un archivo de Storage y devuelve data URI base64
   async function downloadAsDataUri(bucket: string, path: string): Promise<string | null> {

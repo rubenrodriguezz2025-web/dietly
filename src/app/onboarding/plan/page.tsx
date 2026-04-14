@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { getSubscription } from '@/features/account/controllers/get-subscription';
+import { getUserSubscription } from '@/features/account/controllers/get-user-subscription';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 import { PlanSelectionClient } from './PlanSelectionClient';
@@ -28,8 +28,8 @@ export default async function OnboardingPlanPage() {
   }
 
   // Si ya tiene suscripción activa o en trial, va directo al dashboard
-  const subscription = await getSubscription();
-  if (subscription?.status && ['trialing', 'active'].includes(subscription.status)) {
+  const subscription = await getUserSubscription();
+  if (subscription?.isActive) {
     redirect('/dashboard');
   }
 

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { type FontPreference, NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
+import { getUserSubscriptionById } from '@/features/account/controllers/get-user-subscription';
 import { validatePlanAccessToken } from '@/libs/auth/plan-tokens';
 import { getImageDimensionsFromDataUri, isRasterDataUri } from '@/libs/image-dimensions';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
@@ -134,22 +135,9 @@ export async function POST(
       full_name: profileData?.full_name || '',
     };
 
-    // Verificar si Pro
-    const { data: subscription, error: subError } = await (supabaseAdminClient as any)
-      .from('subscriptions')
-      .select('status, price_id')
-      .eq('user_id', paciente.nutritionist_id)
-      .in('status', ['trialing', 'active'])
-      .maybeSingle();
-
-    if (subError) {
-      console.error('[PWA-PDF] Error obteniendo suscripción:', subError.message);
-    }
-
-    const is_pro =
-      subscription != null &&
-      !!process.env.STRIPE_PRICE_PRO_ID &&
-      subscription.price_id === process.env.STRIPE_PRICE_PRO_ID;
+    // Verificar si Pro (fuente: profiles.subscription_status + stripe_price_id)
+    const subscription = await getUserSubscriptionById(paciente.nutritionist_id as string);
+    const is_pro = subscription?.isActive === true && subscription.isPro === true;
 
     console.log('[PWA-PDF] is_pro:', is_pro, '— Descargando assets...');
 

@@ -103,6 +103,7 @@ export default function ResetPasswordPage() {
                   id='password'
                   type='password'
                   name='password'
+                  autoComplete='new-password'
                   placeholder='Mínimo 8 caracteres'
                   required
                   autoFocus
@@ -116,6 +117,7 @@ export default function ResetPasswordPage() {
                   id='confirm'
                   type='password'
                   name='confirm'
+                  autoComplete='new-password'
                   placeholder='Repite la contraseña'
                   required
                   className={inputClass}

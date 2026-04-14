@@ -408,17 +408,19 @@ export async function POST(req: NextRequest) {
           .gte('created_at', twentyFourHoursAgo);
 
         // Determinar si es Pro para el límite
-        const { data: subForLimit } = await supabase
-          .from('subscriptions')
-          .select('price_id')
-          .eq('user_id', user.id)
-          .in('status', ['trialing', 'active'])
+        const { data: profileForLimit } = await supabase
+          .from('profiles')
+          .select('subscription_status, stripe_price_id')
+          .eq('id', user.id)
           .maybeSingle();
 
+        const subActive =
+          profileForLimit?.subscription_status === 'trialing' ||
+          profileForLimit?.subscription_status === 'active';
         const isProUser =
-          subForLimit != null &&
+          subActive &&
           !!process.env.STRIPE_PRICE_PRO_ID &&
-          subForLimit.price_id === process.env.STRIPE_PRICE_PRO_ID;
+          profileForLimit?.stripe_price_id === process.env.STRIPE_PRICE_PRO_ID;
 
         const rateLimit = isProUser ? RATE_LIMIT_PRO : RATE_LIMIT_BASIC;
 

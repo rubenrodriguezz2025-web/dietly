@@ -54,14 +54,14 @@ export async function createPatient(
   const isAdmin = user.email === ADMIN_EMAIL;
 
   if (!isAdmin) {
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', user.id)
-      .in('status', ['trialing', 'active'])
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_status')
+      .eq('id', user.id)
       .maybeSingle();
 
-    const hasActiveSubscription = !!subscription;
+    const status = profile?.subscription_status;
+    const hasActiveSubscription = status === 'trialing' || status === 'active';
 
     if (!hasActiveSubscription) {
       const { count } = await supabase

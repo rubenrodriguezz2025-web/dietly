@@ -36,14 +36,16 @@ export async function requireActiveSubscription(): Promise<SubscriptionCheck> {
     return { authorized: true, userId: user.id, email: user.email };
   }
 
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('status')
-    .eq('user_id', user.id)
-    .in('status', ['trialing', 'active'])
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_status')
+    .eq('id', user.id)
     .maybeSingle();
 
-  if (!subscription) {
+  const status = profile?.subscription_status;
+  const hasActive = status === 'trialing' || status === 'active';
+
+  if (!hasActive) {
     return {
       authorized: false,
       error: 'Necesitas una suscripción activa para usar esta función.',

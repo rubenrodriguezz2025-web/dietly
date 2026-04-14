@@ -1,22 +1,18 @@
 import Stripe from 'stripe';
 
-import { upsertPrice } from '@/features/pricing/controllers/upsert-price';
-import { upsertProduct } from '@/features/pricing/controllers/upsert-product';
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { getEnvVar } from '@/utils/get-env-var';
-import { toDateTime } from '@/utils/to-date-time';
 
 // Webhook principal de Dietly — configurar en Stripe Dashboard:
 // URL: https://TU_DOMINIO/api/stripe/webhook
-// Eventos: checkout.session.completed, customer.subscription.*,
-//          product.created/updated, price.created/updated
+// Eventos: checkout.session.completed, customer.subscription.*
+//
+// NOTA: Dietly usa profiles.subscription_status como fuente única de verdad.
+// No existen tablas products/prices/subscriptions — el catálogo está hardcoded
+// en src/features/pricing/plans-config.ts.
 
 const EVENTOS_RELEVANTES = new Set([
-  'product.created',
-  'product.updated',
-  'price.created',
-  'price.updated',
   'checkout.session.completed',
   'customer.subscription.created',
   'customer.subscription.updated',
@@ -44,18 +40,6 @@ export async function POST(req: Request) {
 
   try {
     switch (evento.type) {
-      // ── Catálogo de productos y precios ──────────────────────────────────────
-      case 'product.created':
-      case 'product.updated':
-        await upsertProduct(evento.data.object as Stripe.Product);
-        break;
-
-      case 'price.created':
-      case 'price.updated':
-        await upsertPrice(evento.data.object as Stripe.Price);
-        break;
-
-      // ── Suscripciones ─────────────────────────────────────────────────────────
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
@@ -64,7 +48,6 @@ export async function POST(req: Request) {
         break;
       }
 
-      // ── Checkout completado ───────────────────────────────────────────────────
       case 'checkout.session.completed': {
         const session = evento.data.object as Stripe.Checkout.Session;
         if (session.mode === 'subscription' && session.subscription) {
@@ -106,52 +89,21 @@ async function sincronizarSuscripcion(
 
   const userId = clienteData.id;
 
-  // Upsert en tabla subscriptions del boilerplate
-  const datosSub = {
-    id: subscription.id,
-    user_id: userId,
-    metadata: subscription.metadata,
-    status: subscription.status,
-    price_id: subscription.items.data[0]?.price.id ?? null,
-    cancel_at_period_end: subscription.cancel_at_period_end,
-    cancel_at: subscription.cancel_at
-      ? toDateTime(subscription.cancel_at).toISOString()
-      : null,
-    canceled_at: subscription.canceled_at
-      ? toDateTime(subscription.canceled_at).toISOString()
-      : null,
-    current_period_start: toDateTime(subscription.current_period_start).toISOString(),
-    current_period_end: toDateTime(subscription.current_period_end).toISOString(),
-    created: toDateTime(subscription.created).toISOString(),
-    ended_at: subscription.ended_at
-      ? toDateTime(subscription.ended_at).toISOString()
-      : null,
-    trial_start: subscription.trial_start
-      ? toDateTime(subscription.trial_start).toISOString()
-      : null,
-    trial_end: subscription.trial_end
-      ? toDateTime(subscription.trial_end).toISOString()
-      : null,
-  };
-
-  const { error: errSub } = await supabaseAdminClient
-    .from('subscriptions')
-    .upsert([datosSub]);
-
-  if (errSub) throw errSub;
-
-  // Actualizar subscription_status en profiles (columna añadida en migración 002)
-  // Si la migración no se ha aplicado aún, el error se ignora silenciosamente.
+  // Mapear estado Stripe → subscription_status en profiles
   const estadoParaPerfil =
     subscription.status === 'canceled' ||
     subscription.status === 'incomplete_expired'
       ? 'canceled'
       : subscription.status;
 
-  await supabaseAdminClient
+  const priceId = subscription.items.data[0]?.price.id ?? null;
+
+  const { error: errPerfil } = await supabaseAdminClient
     .from('profiles')
-    .update({ subscription_status: estadoParaPerfil })
+    .update({ subscription_status: estadoParaPerfil, stripe_price_id: priceId })
     .eq('id', userId);
+
+  if (errPerfil) throw errPerfil;
 
   // Si es suscripción nueva, copiar datos de facturación al cliente de Stripe
   if (esNueva && subscription.default_payment_method) {

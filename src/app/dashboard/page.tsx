@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   // Verificar onboarding
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name, logo_url, onboarding_completed_at, brand_settings_visited_at')
+    .select('full_name, clinic_name, logo_url, onboarding_completed_at, brand_settings_visited_at, subscription_status')
     .eq('id', user.id)
     .single();
 
@@ -54,7 +54,6 @@ export default async function DashboardPage() {
     { data: whitelistEntry },
     { data: allPlans },
     { data: latestProgressPerPatient },
-    { data: activeSubscription },
   ] = await Promise.all([
     // Pacientes activos con estado de planes
     (supabase as any)
@@ -118,13 +117,6 @@ export default async function DashboardPage() {
       .select('patient_id, recorded_at')
       .eq('nutritionist_id', user.id)
       .order('recorded_at', { ascending: false }),
-    // Suscripción activa (para banner de bienvenida)
-    (supabase as any)
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', user.id)
-      .in('status', ['trialing', 'active'])
-      .maybeSingle() as Promise<{ data: { status: string } | null }>,
   ]);
 
   const pendingReminderPatientIds = new Set((allPendingReminders ?? []).map((r) => r.patient_id));
@@ -166,7 +158,7 @@ export default async function DashboardPage() {
     .filter((p) => p.daysSince >= 30)
     .sort((a, b) => b.daysSince - a.daysSince);
 
-  const hasSubscription = !!activeSubscription;
+  const hasSubscription = profile.subscription_status === 'trialing' || profile.subscription_status === 'active';
 
   const draftPlans = (allPlans ?? []).filter((p) => p.status === 'draft');
   const draftCount = draftPlans.length;

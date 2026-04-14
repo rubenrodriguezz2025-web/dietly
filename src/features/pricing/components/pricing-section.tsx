@@ -1,17 +1,10 @@
-import { PricingCard } from '@/features/pricing/components/price-card';
-import { getProducts } from '@/features/pricing/controllers/get-products';
+import Link from 'next/link';
+import { IoCheckmark } from 'react-icons/io5';
 
-import { createCheckoutAction } from '../actions/create-checkout-action';
+import { DIETLY_PLANS } from '@/features/pricing/plans-config';
 
-import { DietlyPricingFallback } from './dietly-pricing-fallback';
-
-export async function PricingSection({ isPricingPage }: { isPricingPage?: boolean }) {
-  const products = await getProducts();
-
+export function PricingSection({ isPricingPage }: { isPricingPage?: boolean }) {
   const HeadingLevel = isPricingPage ? 'h1' : 'h2';
-
-  // Si no hay productos Stripe en DB, mostrar pricing estático de Dietly
-  const showStaticPricing = products.length === 0;
 
   return (
     <section className='relative rounded-lg bg-gradient-to-b from-[#0d1f12] via-[#0a1a0e] to-black py-8'>
@@ -23,15 +16,55 @@ export async function PricingSection({ isPricingPage }: { isPricingPage?: boolea
           Elige el plan que mejor se adapte a tu consulta. Cambia cuando quieras.
         </p>
 
-        {showStaticPricing ? (
-          <DietlyPricingFallback />
-        ) : (
-          <div className='flex w-full flex-col items-center justify-center gap-2 lg:flex-row lg:gap-8'>
-            {products.map((product) => {
-              return <PricingCard key={product.id} product={product} createCheckoutAction={createCheckoutAction} />;
-            })}
-          </div>
-        )}
+        <div className='flex w-full flex-col items-center justify-center gap-4 lg:flex-row lg:gap-8'>
+          {DIETLY_PLANS.map((plan) => (
+            <div
+              key={plan.id}
+              className={`flex w-full max-w-md flex-1 flex-col rounded-xl border p-6 lg:p-8 ${
+                plan.recommended
+                  ? 'border-[#1a7a45]/60 bg-gradient-to-b from-[#0d1f12] to-black shadow-lg shadow-[#1a7a45]/10'
+                  : 'border-zinc-800 bg-black'
+              }`}
+            >
+              {plan.recommended && (
+                <span className='mb-4 w-fit rounded-full bg-[#1a7a45]/20 px-3 py-1 text-xs font-semibold text-[#22c55e]'>
+                  Más popular
+                </span>
+              )}
+
+              <h3 className='text-xl font-bold text-white'>{plan.name}</h3>
+
+              <div className='mt-3 flex items-baseline gap-1'>
+                <span className='text-4xl font-bold text-white'>{plan.price}&euro;</span>
+                <span className='text-zinc-400'>/mes</span>
+              </div>
+              <p className='mt-1 text-xs text-zinc-500'>IVA incluido</p>
+
+              <ul className='mt-6 flex flex-1 flex-col gap-3'>
+                {plan.features.map((feat) => (
+                  <li key={feat} className='flex items-start gap-2.5'>
+                    <IoCheckmark className='mt-0.5 h-4 w-4 flex-shrink-0 text-[#22c55e]' />
+                    <span className='text-sm text-zinc-300'>{feat}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className='mt-8'>
+                <Link
+                  href='/signup'
+                  className={`block w-full rounded-lg px-6 py-3 text-center text-sm font-semibold transition-colors ${
+                    plan.recommended
+                      ? 'bg-[#1a7a45] text-white hover:bg-[#22c55e] hover:text-black'
+                      : 'border border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800'
+                  }`}
+                >
+                  Empezar 14 días gratis
+                </Link>
+                <p className='mt-2 text-center text-xs text-zinc-500'>Cancela antes del día 14 sin coste</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
