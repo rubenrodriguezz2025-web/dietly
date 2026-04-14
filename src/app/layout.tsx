@@ -1,6 +1,7 @@
 import { PropsWithChildren } from 'react';
 import type { Metadata } from 'next';
-import { Montserrat_Alternates, Plus_Jakarta_Sans } from 'next/font/google';
+import { Instrument_Serif } from 'next/font/google';
+import localFont from 'next/font/local';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { IoLogoInstagram, IoLogoTwitter } from 'react-icons/io5';
@@ -16,16 +17,19 @@ import { Navigation } from './navigation';
 
 import '@/styles/globals.css';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: '--font-plus-jakarta-sans',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+const generalSans = localFont({
+  src: '../../public/fonts/general-sans/GeneralSans-Variable.woff2',
+  variable: '--font-body',
+  display: 'swap',
+  weight: '200 700',
 });
 
-const montserratAlternates = Montserrat_Alternates({
-  variable: '--font-montserrat-alternates',
-  weight: ['500', '600', '700'],
+const instrumentSerif = Instrument_Serif({
+  variable: '--font-display',
   subsets: ['latin'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -43,7 +47,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 
   return (
     <html lang='es'>
-      <body className={cn('font-sans antialiased', plusJakartaSans.variable, montserratAlternates.variable)}>
+      <body className={cn('font-sans antialiased', generalSans.variable, instrumentSerif.variable)}>
         <ThemeProvider>
           <div className='flex min-h-screen flex-col'>
             {!isPwa && !isDashboard ? (
