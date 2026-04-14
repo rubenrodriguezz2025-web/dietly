@@ -1,5 +1,3 @@
-import Image from 'next/image';
-
 import { PricingCard } from '@/features/pricing/components/price-card';
 import { getProducts } from '@/features/pricing/controllers/get-products';
 
@@ -16,7 +14,7 @@ export async function PricingSection({ isPricingPage }: { isPricingPage?: boolea
   const showStaticPricing = products.length === 0;
 
   return (
-    <section className='relative rounded-lg bg-black py-8'>
+    <section className='relative rounded-lg bg-gradient-to-b from-[#0d1f12] via-[#0a1a0e] to-black py-8'>
       <div className='relative z-10 m-auto flex max-w-[1200px] flex-col items-center gap-8 px-4 pt-8 lg:pt-[140px]'>
         <HeadingLevel className='max-w-4xl bg-gradient-to-br from-white to-neutral-200 bg-clip-text text-center text-4xl font-bold text-transparent lg:text-6xl'>
           Precios claros para cada etapa de tu consulta.
@@ -35,15 +33,6 @@ export async function PricingSection({ isPricingPage }: { isPricingPage?: boolea
           </div>
         )}
       </div>
-      <Image
-        src='/section-bg.png'
-        width={1440}
-        height={462}
-        alt=''
-        className='absolute left-0 top-0 rounded-t-lg'
-        priority={isPricingPage}
-        quality={100}
-      />
     </section>
   );
 }

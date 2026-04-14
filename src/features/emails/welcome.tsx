@@ -13,8 +13,15 @@ export function WelcomeEmail() {
       <Tailwind config={tailwindConfig}>
         <Body className='mx-auto my-auto bg-slate-500 px-2 py-10 font-sans'>
           <Container className='mx-auto mt-[40px] w-[464px] overflow-hidden rounded-md bg-white'>
-            <Section className={`h-[255px] w-full bg-black bg-[url('${baseUrl + '/hero-shape.png'}')] bg-center`}>
-              <Heading className='mb-0 mt-[70px] text-center text-[48px] font-bold text-white'>Welcome!</Heading>
+            <Section className='h-[180px] w-full bg-[#1a7a45] text-center'>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={baseUrl + '/logo-email.png'}
+                alt='Dietly'
+                width={96}
+                height={96}
+                className='mx-auto mt-[42px]'
+              />
             </Section>
             <Section className='p-8'>
               <Heading as='h2' className='m-0 text-[24px] font-bold'>
