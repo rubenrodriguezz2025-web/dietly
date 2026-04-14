@@ -167,5 +167,24 @@ Las semanas 3 y 5 son las más críticas — si se atascan, el resto se desplaza
 
 ---
 
-*Última actualización: 8 abril 2026 (precios actualizados: 46€/89€, límite 30 pacientes en Básico)*
-*Documento original de Semana 0 — los features F-01 a F-17 están mayoritariamente implementados (ver AUDIT_BETA_FINAL.md)*
+*Última actualización: 14 abril 2026 (Sprint 5 completado — Stripe LIVE + Modelo B freemium)*
+*Documento original de Semana 0 — los features F-01 a F-17 están implementados (ver AUDIT_BETA_FINAL.md)*
+
+---
+
+## Sprint 5 — Features añadidas tras la Semana 8
+
+Estas features no estaban en el MVP original pero se añadieron durante la fase beta tras feedback real:
+
+- **F-18 · Modelo B freemium (2 pacientes gratis)** ✅
+  Permite registro sin tarjeta. Límite de 2 pacientes activos antes del paywall. `PaywallModal` bloquea en tres puntos críticos: `createPatient` (al intentar el 3º), `/api/plans/generate` (generación IA) y `/api/plans/swap-meal` (intercambio de platos). Banner de bienvenida en `/dashboard` invita a empezar la prueba de 14 días.
+- **F-19 · Intercambio de platos por el paciente** ✅
+  El paciente solicita swap desde la PWA → queda en `meal_swaps` pendiente → el nutricionista aprueba/rechaza en `/dashboard/intercambios`. Migraciones 034, 035, 037.
+- **F-20 · Templates de email en español (Supabase Auth + Resend)** ✅
+  Resend configurado como SMTP de Supabase Auth. Templates HTML en español en `docs/email-templates/` (confirm-signup, magic-link, reset-password, email-change) con branding Dietly (logo-email.png optimizado con sharp < 5 MB).
+- **F-21 · Stripe LIVE + `profiles` como Source of Truth** ✅
+  Webhook escribe `stripe_customer_id`, `subscription_status` y `stripe_price_id` directamente en `profiles`. El tier Pro se deriva comparando `stripe_price_id` con `STRIPE_PRICE_PRO_ID`. Se eliminó el boilerplate completo de sync Stripe (4 tablas + 8 archivos) que nunca se usó.
+- **F-22 · Progreso antropométrico enriquecido** ✅ (migración 038)
+  Nuevos campos y vista de evolución en la ficha del paciente.
+- **F-05 revisado · Onboarding reducido** ✅
+  Eliminado el paso "primer paciente" del wizard (se rediseñará en Sprint 3 posterior). Onboarding ahora en 2-3 pasos, botón "Saltar este paso" temporal como puente.

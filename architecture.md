@@ -28,7 +28,8 @@ dietly/
 │   │   │   ├── intake/[token]/  # Cuestionario intake
 │   │   │   └── seguimiento/[token]/
 │   │   ├── api/                 # 21 endpoints (ver CLAUDE.md)
-│   │   │   ├── plans/           # generate (SSE), status, pdf, pwa-pdf, swap-meal, confirm-swap, swap-action
+│   │   │   ├── plans/           # generate (SSE), status, pdf, pwa-pdf,
+│   │   │   │                    # swap-meal, confirm-swap, swap-action
 │   │   │   ├── patients/[id]/   # delete, export
 │   │   │   ├── stripe/          # checkout, portal, webhook
 │   │   │   ├── intake/submit/
@@ -39,9 +40,13 @@ dietly/
 │   │   │   └── health/
 │   │   └── layout.tsx
 │   ├── features/
-│   │   ├── account/             # User, session, subscription controllers
-│   │   ├── pricing/             # Checkout + pricing section
-│   │   └── emails/              # welcome.tsx, beta-welcome.tsx
+│   │   ├── account/             # get-user, get-session, get-customer-id,
+│   │   │                        # get-or-create-customer, get-user-subscription
+│   │   ├── pricing/
+│   │   │   ├── plans-config.ts  # DIETLY_PLANS — SoT única (nombre, precio, stripe_price_id, límites)
+│   │   │   └── components/pricing-section.tsx
+│   │   └── emails/              # welcome, beta-welcome, onboarding-welcome,
+│   │                            # patient-welcome, plan-ready
 │   ├── libs/
 │   │   ├── supabase/            # server-client, middleware-client, admin, types.ts
 │   │   ├── anthropic/           # client.ts (singleton)
@@ -54,18 +59,29 @@ dietly/
 │   │   ├── ui/                  # shadcn/ui
 │   │   ├── pdf/                 # NutritionPlanPDF.tsx
 │   │   ├── skeletons/           # Loading states reutilizables
-│   │   └── patients/            # ConsentForm.tsx
+│   │   ├── patients/            # ConsentForm.tsx
+│   │   └── PaywallModal.tsx     # Muro Modelo B freemium
 │   ├── config/                  # demo-mode.ts
 │   ├── types/                   # dietly.ts
 │   └── utils/                   # cn, calc-targets, get-env-var
 ├── supabase/
-│   └── migrations/              # 38 SQL migrations (init → 038)
+│   └── migrations/              # 41 SQL migrations (init → 040)
 │       ├── 20240115041359_init.sql
 │       ├── 001_initial_schema.sql → 033_pdf_cache.sql
-│       ├── 034_meal_swaps.sql → 037_meal_swaps_status.sql
-│       └── 038_progress_enhancements.sql
+│       ├── 034_meal_swaps.sql → 038_progress_enhancements.sql
+│       ├── 039_stripe_customer_to_profiles.sql  # stripe_customer_id a profiles
+│       └── 040_profiles_stripe_price_id.sql     # stripe_price_id (SoT Básico/Pro)
+├── docs/
+│   └── email-templates/         # Templates ES Supabase Auth (Resend SMTP)
+│       ├── confirm-signup.html
+│       ├── magic-link.html
+│       ├── reset-password.html
+│       └── email-change.html
 └── public/
     ├── fonts/                   # Fonts TTF para @react-pdf/renderer
+    ├── logo.png                 # Logo principal
+    ├── logo-email.png           # Logo optimizado para emails (sharp, <5 MB)
+    ├── favicon.svg
     └── sitemap.xml              # 7 URLs indexadas
 ```
 
@@ -161,6 +177,45 @@ Los componentes PDF NO pueden usar:
       - Attachment: PDF (base64, max 40MB)
    c. Actualiza nutrition_plans con sent_at
 ```
+
+---
+
+## Monetización — Stripe + Modelo B freemium
+
+**profiles como fuente única de verdad.** Las tablas `customers`/`products`/`prices`/`subscriptions` del boilerplate `next-supabase-stripe-starter` nunca se aplicaron al proyecto real; se eliminaron en Sprint 5 junto con todo el código de sync (`upsert-user-subscription`, `upsert-product`, `upsert-price`, `get-products`, `get-subscription`, `price-card`, `create-checkout-action`, `types.ts`, `product-metadata.ts`).
+
+### Flujo suscripción
+
+```
+Usuario click "Empezar 14 días gratis" en /pricing (DIETLY_PLANS)
+  → POST /api/stripe/checkout con price_id (STRIPE_PRICE_BASICO_ID o STRIPE_PRICE_PRO_ID)
+  → Stripe Checkout Session (trialing 14 días, IVA 21% incluido)
+  → Redirect a /dashboard
+
+Stripe dispara customer.subscription.created/updated/deleted
+  → POST /api/stripe/webhook (firma verificada con STRIPE_WEBHOOK_SECRET)
+  → Escribe en profiles:
+       stripe_customer_id  ← subscription.customer
+       subscription_status ← subscription.status (trialing|active|canceled|…)
+       stripe_price_id     ← subscription.items.data[0].price.id
+```
+
+### Derivación del tier (`get-user-subscription.ts`)
+
+```ts
+isActive = status === 'trialing' || status === 'active'
+isPro    = stripe_price_id === process.env.STRIPE_PRICE_PRO_ID
+```
+
+Dos variantes: `getUserSubscription()` (con auth/RLS) y `getUserSubscriptionById(userId)` (admin client para rutas públicas `/p/[token]`).
+
+### Modelo B freemium — PaywallModal
+
+Muro fuerte en tres puntos: crear paciente (límite 2), generar plan IA, intercambiar plato. `PaywallModal` se dispara cuando `!isActive` y bloquea la acción hasta que el usuario inicia checkout. Banner de bienvenida en `/dashboard` invita a empezar la prueba.
+
+### DIETLY_PLANS (`src/features/pricing/plans-config.ts`)
+
+Fuente única de `name`, `price`, `patient_limit`, `features[]` y `stripe_price_id`. La página `/pricing` y el `PricingSection` lo renderizan directamente — no hay fetch a Stripe ni sync a BBDD.
 
 ---
 

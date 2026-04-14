@@ -31,10 +31,12 @@ Deploy:    Vercel
 
 ---
 
-## Schema DB (22 tablas · tipos en `src/libs/supabase/types.ts`)
+## Schema DB (18 tablas · tipos en `src/libs/supabase/types.ts`)
+
+> ⚠️ **profiles es la fuente única de verdad para Stripe.** Las tablas `customers`/`products`/`prices`/`subscriptions` del boilerplate `next-supabase-stripe-starter` nunca se aplicaron al proyecto real y se eliminaron en Sprint 5. El webhook escribe `stripe_customer_id`, `subscription_status` y `stripe_price_id` directamente en `profiles` en cada evento `customer.subscription.*`.
 
 ### `profiles`
-`id` · `full_name` · `specialty` (weight_loss|sports|clinical|general) · `clinic_name` · `logo_url` · `primary_color` (#1a7a45) · `college_number` · `signature_url` · `subscription_status` · `onboarding_completed_at` · `show_macros` · `show_shopping_list` · `welcome_message` · `font_preference` (clasica|moderna|minimalista) · `profile_photo_url` · `brand_settings_visited_at` · `ai_literacy_acknowledged_at`
+`id` · `full_name` · `specialty` (weight_loss|sports|clinical|general) · `clinic_name` · `logo_url` · `primary_color` (#1a7a45) · `college_number` · `signature_url` · `subscription_status` · `stripe_customer_id` · `stripe_price_id` · `onboarding_completed_at` · `show_macros` · `show_shopping_list` · `welcome_message` · `font_preference` (clasica|moderna|minimalista) · `profile_photo_url` · `brand_settings_visited_at` · `ai_literacy_acknowledged_at`
 
 ### `patients`
 `id` · `nutritionist_id` · `name` · `email` · `phone` · `date_of_birth` · `sex` (male|female) · `weight_kg` · `height_cm` · `activity_level` (sedentary|lightly_active|moderately_active|very_active|extra_active) · `goal` (weight_loss|weight_gain|maintenance|muscle_gain|health) · `dietary_restrictions text[]` · `allergies text[]` · `intolerances text[]` · `preferences` · `medical_notes` · `tmb` · `tdee` · `intake_token`
@@ -61,7 +63,8 @@ Deploy:    Vercel
 | `plan_access_attempts` | Rate limiting por IP |
 | `recipes` | Recetario personal del nutricionista |
 | `plan_views` | Lectura de recepción (first_opened, open_count) |
-| `customers` / `products` / `prices` / `subscriptions` | Stripe sync |
+| `meal_swaps` | Solicitudes de intercambio de platos (paciente → nutricionista) |
+| `nutritionist_photos` | Bucket privado de fotos de perfil del profesional |
 
 ---
 
@@ -105,7 +108,12 @@ Deploy:    Vercel
 ### PDF
 - Fonts locales en `/public/fonts/` (nunca Google Fonts CDN)
 - Generar solo en status `approved` · cachear con `pdf_generated_at`
-- Distinción Básico/Pro: nombre producto Stripe contiene "pro"/"profesional" (TODO: price_id)
+- Distinción Básico/Pro: `profiles.stripe_price_id === process.env.STRIPE_PRICE_PRO_ID` (ver `get-user-subscription.ts`)
+
+### Monetización (Modelo B freemium)
+- 2 pacientes gratis sin suscripción · al intentar crear el 3º, `PaywallModal` bloquea
+- Muro fuerte también en generación IA y en `/api/plans/swap-meal`
+- Banner de bienvenida en `/dashboard` invita a empezar prueba de 14 días
 
 ### No hacer en MVP
 ❌ Recálculo macros al editar · ❌ BEDCA/USDA · ❌ App nativa · ❌ Multi-nutricionista · ❌ OAuth social · ❌ Plan anual · ❌ Templates dieta · ❌ Wearables · ❌ Chat tiempo real
@@ -122,6 +130,8 @@ SUPABASE_DB_PASSWORD=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_PRICE_BASICO_ID=   # Price ID del plan Básico 46€/mes
+STRIPE_PRICE_PRO_ID=      # Price ID del plan Pro 89€/mes (fuente de verdad para isPro)
 ANTHROPIC_API_KEY=
 RESEND_API_KEY=
 NEXT_PUBLIC_APP_URL=
@@ -133,13 +143,13 @@ PLAN_TOKEN_SECRET=    # HMAC-SHA256 para tokens /p/[token]
 ## Rutas
 
 ### Dashboard (auth requerida)
-`/dashboard` · `/dashboard/patients/new` · `/dashboard/patients/[id]` (tabs: Ficha, Cuestionario, Progreso, Seguimientos) · `/dashboard/plans/[id]` · `/dashboard/agenda` · `/dashboard/recetas` · `/dashboard/ajustes` · `/dashboard/derechos-datos` · `/dashboard/admin/beta`
+`/dashboard` · `/dashboard/patients/new` · `/dashboard/patients/[id]` (tabs: Ficha, Cuestionario, Progreso, Seguimientos) · `/dashboard/plans/[id]` · `/dashboard/intercambios` · `/dashboard/agenda` · `/dashboard/recetas` · `/dashboard/ajustes` · `/dashboard/derechos-datos` · `/dashboard/admin/beta`
 
 ### Paciente (público)
 `/p/[token]` (plan PWA) · `/p/intake/[token]` · `/p/seguimiento/[token]`
 
-### API (17 endpoints)
-`POST /api/plans/generate` (SSE stream) · `GET /api/plans/[id]/status` · `POST /api/plans/[id]/pdf` · `POST /api/pdf/preview` · `POST /api/intake/submit` · `POST /api/followup/submit` · `DELETE /api/patients/[id]/delete` · `GET /api/patients/[id]/export` · `POST /api/data-rights` · `POST /api/stripe/checkout` · `POST /api/stripe/portal` · `POST /api/stripe/webhook` · `GET /api/health`
+### API (21 endpoints)
+`POST /api/plans/generate` (SSE stream) · `GET /api/plans/[id]/status` · `POST /api/plans/[id]/pdf` · `POST /api/plans/[id]/pwa-pdf` · `POST /api/plans/swap-meal` · `POST /api/plans/confirm-swap` · `POST /api/plans/swap-action` · `POST /api/pdf/preview` · `POST /api/intake/submit` · `POST /api/followup/submit` · `DELETE /api/patients/[id]/delete` · `GET /api/patients/[id]/export` · `POST /api/data-rights` · `POST /api/meal-image` · `POST /api/stripe/checkout` · `POST /api/stripe/portal` · `POST /api/stripe/webhook` · `GET /api/health`
 
 ### Marketing / legal
 `/` · `/pricing` · `/login` · `/signup` · `/onboarding` · `/legal/terminos` · `/legal/privacidad`
@@ -160,11 +170,12 @@ src/
 │   ├── ui/             shadcn/ui
 │   ├── pdf/            NutritionPlanPDF.tsx
 │   ├── skeletons/      loading states reutilizables
-│   └── patients/       ConsentForm.tsx
+│   ├── patients/       ConsentForm.tsx
+│   └── PaywallModal.tsx  muro freemium (createPatient, generate, swap-meal)
 ├── features/
-│   ├── account/        user, session, subscription controllers
-│   ├── pricing/        checkout
-│   └── emails/         welcome.tsx, beta-welcome.tsx
+│   ├── account/        get-user, get-session, get-customer-id, get-or-create-customer, get-user-subscription
+│   ├── pricing/        plans-config.ts (DIETLY_PLANS, SoT), components/pricing-section.tsx
+│   └── emails/         welcome, beta-welcome, onboarding-welcome, patient-welcome, plan-ready
 ├── libs/
 │   ├── ai/             plan-prompts, pseudonymize, resilience, logger
 │   ├── anthropic/      client.ts (singleton)
@@ -180,30 +191,28 @@ src/
 
 ---
 
-## Migraciones (34 en `supabase/migrations/`)
+## Migraciones (41 en `supabase/migrations/`)
 
-init→Stripe boilerplate · 001→schema core · 002→subscription_status · 003→appointments · 004→intake_forms · 005→plan_status_enum · 006→logo_url · 007→meeting_url · 008→professional_identity · 009→onboarding · 010→patient_progress · 011→beta_whitelist · 014→brand_settings · 015→brand_visited · 016→ai_request_logs · 017/024→patient_consents · 018→data_rights_requests · 019→validation_acked · 020→audit_logs · 021→rls_hardening+followup · 022→plan_rate_limit · 023→ai_literacy · 025/029→fix_audit_trigger · 026→phone+recipes · 027→plan_views · 028→intake_filled_by · 030→dietary_restrictions_array · 031→primary_color · 032→plan_views_rls · 033→pdf_cache
+init→Stripe boilerplate (legacy, mayoría obsoleto tras Sprint 5) · 001→schema core · 002→subscription_status · 003→appointments · 004→intake_forms · 005→plan_status_enum · 006→logo_url · 007→meeting_url · 008→professional_identity · 009→onboarding · 010→patient_progress · 011→beta_whitelist · 014→brand_settings · 015→brand_visited · 016→ai_request_logs · 017/024→patient_consents · 018→data_rights_requests · 019→validation_acked · 020→audit_logs · 021→rls_hardening+followup · 022→plan_rate_limit · 023→ai_literacy · 025/029→fix_audit_trigger · 026→phone+recipes · 027→plan_views · 028→intake_filled_by · 030→dietary_restrictions_array · 031→primary_color · 032→plan_views_rls · 033→pdf_cache · 034→meal_swaps · 035→allow_meal_swaps · 036→nutritionist_photos_bucket · 037→meal_swaps_status · 038→progress_enhancements · **039→stripe_customer_id a profiles** · **040→stripe_price_id a profiles**
 
 ---
 
 ## Estado actual
 
-**Semana 5 · Beta privada activa · objetivo 8 usuarios beta · MVP completo en Vercel**
+**Semana 5 · Stripe LIVE activo · Modelo B freemium · launch-ready en Vercel**
 
-**Completado**: Auth + onboarding · CRUD pacientes + intake + seguimiento · Generación IA día a día · Editor plan + validación clínica (19 checks) · PDF server-side · Email Resend · PWA paciente `/p/[token]` · Panel admin beta · RGPD (consentimientos, ARCO, audit logs, rate limiting) · Skeletons Suspense · MacroTransparencyCard · Auditoría completa (abr 2026)
+**Completado**: Auth + onboarding (2-3 pasos, sin primer paciente) · CRUD pacientes + intake + seguimiento · Generación IA día a día · Intercambio de platos (paciente → nutricionista, `meal_swaps`) · Editor plan + validación clínica (19 checks) · PDF server-side + caché · Email Resend (templates ES) · PWA paciente `/p/[token]` · Panel admin beta · RGPD (consentimientos, ARCO, audit logs, rate limiting) · **Modelo B freemium + PaywallModal** · **Stripe LIVE con `profiles` como SoT** · Auditoría completa Sprints 1–5 (abr 2026)
 
 **Deuda técnica**:
-- ~46 `as any` restantes
+- ~46 `as any` restantes (no críticos)
 - 92 queries Supabase sin abstracción
 - Art. 28.3 T&Cs incompleta (ok para beta, no para escalar)
-- Detección Pro por nombre Stripe (TODO: price_id)
 
 **Próximos pasos**:
-1. **Intercambio de platos** (prioridad máxima — feature más demandada)
-2. Cláusula Art. 28.3 RGPD completa en T&Cs
-3. Plantilla consentimiento informado descargable
-4. Fotos de comida con Nano Banana 2 (post-beta)
-5. BEDCA integrada (post-beta)
+1. Cláusula Art. 28.3 RGPD completa en T&Cs
+2. Plantilla consentimiento informado descargable
+3. Fotos de comida con Nano Banana 2 (post-launch)
+4. BEDCA integrada (post-launch)
 
 ---
 
@@ -217,7 +226,9 @@ init→Stripe boilerplate · 001→schema core · 002→subscription_status · 0
 
 **Sprint 4 — UX**: 4 `loading.tsx` con skeletons · Header branding nutricionista en PWA · Cookie banner no bloqueante (slide-up, 600ms delay) · 8 queries dashboard → `Promise.all` paralelo
 
-**Infra**: bucket `plan-pdfs` (privado) creado · `PLAN_TOKEN_SECRET` añadida a Vercel + .env.local
+**Sprint 5 — Monetización + limpieza**: Modelo B freemium (límite 2 pacientes sin suscripción) · `PaywallModal` integrado en `createPatient`, `/api/plans/generate` y `/api/plans/swap-meal` · Banner de bienvenida en `/dashboard` · Stripe LIVE · Webhook refactor (escribe `stripe_customer_id` + `subscription_status` + `stripe_price_id` en `profiles`) · Migraciones 039 (stripe_customer_id) y 040 (stripe_price_id) · `get-user-subscription.ts` nuevo (deriva `isActive`/`isPro` de `profiles`) · Erradicación del boilerplate `next-supabase-stripe-starter`: eliminadas tablas `customers`/`products`/`prices`/`subscriptions` nunca usadas, rutas `(account)/`, 3 archivos `upsert-*.ts`, `get-products.ts`, `get-subscription.ts`, `price-card.tsx`, `create-checkout-action.ts`, `product-metadata.ts`, `types.ts` · `DIETLY_PLANS` como fuente única (`features/pricing/plans-config.ts`) · `autoComplete` añadido a todos los formularios auth · Resend como SMTP de Supabase Auth con templates en español · Logos actualizados (`logo.png`, `logo-email.png`, `favicon.svg`) · Onboarding reducido (paso "primer paciente" eliminado)
+
+**Infra**: bucket `plan-pdfs` (privado) · `PLAN_TOKEN_SECRET` · `STRIPE_PRICE_BASICO_ID` + `STRIPE_PRICE_PRO_ID` en Vercel + .env.local
 
 ---
 
