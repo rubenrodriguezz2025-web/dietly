@@ -321,6 +321,8 @@ Si el plan es `profesional` → branding completo del nutricionista
 
 ## Test crítico semana 1: @react-pdf/renderer en Vercel
 
+> ✅ Validado en Semana 1 y funcionando en producción desde entonces. Mantenido como documentación histórica del test original.
+
 Crear API route mínima:
 ```typescript
 // src/app/api/test-pdf/route.ts

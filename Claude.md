@@ -199,7 +199,8 @@ init→Stripe boilerplate (legacy, mayoría obsoleto tras Sprint 5) · 001→sch
 
 ## Estado actual
 
-**Semana 5 · Stripe LIVE activo · Modelo B freemium · launch-ready en Vercel**
+**Semana**: 13+ (post-beta, launch-ready)
+**Estado**: Stripe LIVE operativo, Modelo B freemium funcionando, 0 clientes de pago reales todavía (pre-lanzamiento, outreach pendiente). Sprints 1-5 completados. Último commit: b0dbc28.
 
 **Completado**: Auth + onboarding (2-3 pasos, sin primer paciente) · CRUD pacientes + intake + seguimiento · Generación IA día a día · Intercambio de platos (paciente → nutricionista, `meal_swaps`) · Editor plan + validación clínica (19 checks) · PDF server-side + caché · Email Resend (templates ES) · PWA paciente `/p/[token]` · Panel admin beta · RGPD (consentimientos, ARCO, audit logs, rate limiting) · **Modelo B freemium + PaywallModal** · **Stripe LIVE con `profiles` como SoT** · Auditoría completa Sprints 1–5 (abr 2026)
 

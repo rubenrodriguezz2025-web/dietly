@@ -132,6 +132,8 @@
 
 ## Resumen de prioridades por semana
 
+> 📅 Plan original de desarrollo (Semanas 1-8). Todas las features F-01 a F-17 están implementadas. Ver sección 'Sprint 5' al final para features añadidas post-MVP.
+
 | Semana | Features | Objetivo |
 |--------|----------|----------|
 | 1 | Setup + test PDF Vercel + schema DB + auth | Infraestructura lista |
