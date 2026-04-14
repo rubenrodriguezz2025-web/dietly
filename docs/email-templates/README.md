@@ -37,4 +37,4 @@ Las plantillas usan variables Go template que Supabase reemplaza automaticamente
 - Todas las plantillas usan estilos inline (compatibilidad email clients)
 - Max-width 600px, mobile-first
 - Color primario Dietly: `#1a7a45`
-- Logo: `https://dietly.es/logo.png` (asegurate de que existe y es accesible publicamente)
+- Logo: `https://dietly.es/logo-email.png` (asegurate de que existe y es accesible publicamente)
