@@ -44,3 +44,9 @@ next-env.d.ts
 /supabase/.temp/
 # Browser session screenshots
 .browser-sessions/
+
+# Outreach — datos personales de leads (no commitear, RGPD)
+/outreach/
+
+# Claude Code symlinks (skills instalados regenerables)
+.claude/skills/

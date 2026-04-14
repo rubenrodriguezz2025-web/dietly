@@ -16,10 +16,20 @@
       "sourceType": "github",
       "computedHash": "d3f5281a0299aa4808bbfd4afbfac0e28ff38fb0006c5cde9c4630f372573921"
     },
+    "google-ads-spain": {
+      "source": "Baker-Agency/paid-ads-skills-spain",
+      "sourceType": "github",
+      "computedHash": "a012e44704ed8af45686e87aaf223198548eccf56cff7996975e3748bb03df69"
+    },
     "polish": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "3e101ab23d322abd2de3b8a783009e034f85b46d4b86c36e58389f8670edac21"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "43ca6c197f8ec13055079da7053232d477068b03ca443f9ac1bc819b95cdd432"
     }
   }
 }
