@@ -8,7 +8,7 @@ import { getURL } from '@/utils/get-url';
 
 // POST /api/stripe/checkout
 // Body: { plan: 'basico' | 'pro' }
-// Crea una sesión de checkout con 14 días de prueba gratuita y redirige al usuario.
+// Crea una sesión de checkout de suscripción directa (Modelo B freemium: 2 pacientes gratis previos sin tarjeta).
 // Los price IDs se leen de las variables de entorno STRIPE_PRICE_BASICO_ID / STRIPE_PRICE_PRO_ID.
 
 export async function POST(req: Request) {
@@ -47,7 +47,6 @@ export async function POST(req: Request) {
     line_items: [{ price: priceId, quantity: 1 }],
     mode: 'subscription',
     subscription_data: {
-      trial_period_days: 14,
       metadata: { user_id: session.user.id, plan_tier: planTipo },
     },
     allow_promotion_codes: true,
