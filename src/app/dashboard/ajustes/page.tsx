@@ -36,12 +36,6 @@ export default async function AjustesPage() {
   // Badge config según estado
   type BadgeConfig = { label: string; dotClass: string; textClass: string; bgClass: string };
   const badgeMap: Record<string, BadgeConfig> = {
-    trialing: {
-      label: 'Prueba gratuita',
-      dotClass: 'bg-amber-400',
-      textClass: 'text-amber-300',
-      bgClass: 'border-amber-700/30 bg-amber-950/20',
-    },
     active: isPro
       ? {
           label: 'Plan Profesional',
@@ -68,6 +62,9 @@ export default async function AjustesPage() {
       bgClass: 'border-zinc-800 bg-zinc-950',
     },
   };
+  // Usuarios legacy en trialing se muestran como active
+  // (evita caer al fallback "Sin suscripción")
+  badgeMap.trialing = badgeMap.active;
 
   const badge: BadgeConfig = badgeMap[subStatus] ?? {
     label: 'Sin suscripción',
