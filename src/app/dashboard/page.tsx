@@ -576,7 +576,7 @@ function WelcomeBanner({ hasSubscription, firstName }: { hasSubscription: boolea
             <p className='mt-1 text-sm leading-relaxed text-zinc-400'>
               Crea hasta <span className='font-medium text-zinc-300'>2 pacientes gratis</span> para explorar la plataforma.
               <br className='hidden sm:block' />
-              Activa tu prueba de 14 días cuando quieras generar planes con IA.
+              Suscríbete cuando quieras generar planes con IA.
             </p>
           </div>
         </div>
