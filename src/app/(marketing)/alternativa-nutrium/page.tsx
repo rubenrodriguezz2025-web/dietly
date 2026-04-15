@@ -364,10 +364,10 @@ export default function AlternativaNutrium() {
             <p className='mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 lg:text-lg'>
               Si ya usas Nutrium y quieres probar Dietly, escríbeme directamente a{' '}
               <a
-                href='mailto:hola@dietly.es'
+                href='mailto:rubenrodriguezz2025@gmail.com'
                 className='font-semibold text-[#22c55e] hover:underline'
               >
-                hola@dietly.es
+                rubenrodriguezz2025@gmail.com
               </a>
               . Te ayudo personalmente con la transición — datos de pacientes, formato de
               planes, lo que necesites.
