@@ -71,7 +71,7 @@ export async function createPatient(
 
       if ((count ?? 0) >= 2) {
         return {
-          error: 'Has alcanzado el límite de 2 pacientes en modo prueba. Activa tu suscripción para añadir pacientes ilimitados.',
+          error: 'Has alcanzado el límite de 2 pacientes gratis. Suscríbete para añadir pacientes ilimitados.',
           code: 'LIMIT_REACHED' as const,
         };
       }
