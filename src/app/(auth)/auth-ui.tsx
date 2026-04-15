@@ -14,7 +14,7 @@ const titleMap = {
 
 const subtitleMap = {
   login: 'Bienvenido de nuevo.',
-  signup: 'Genera planes nutricionales completos en 2 minutos. 14 días de prueba gratuita.',
+  signup: 'Sin tarjeta · 2 pacientes gratis · Plan de pago cancelable cuando quieras',
 } as const;
 
 const inputClass =
