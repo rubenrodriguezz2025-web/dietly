@@ -267,7 +267,7 @@ export default function DemoPage() {
               Empieza gratis con Dietly
             </a>
             <p className='text-center text-xs' style={{ color: 'var(--text-muted)' }}>
-              14 días de prueba gratuita. Cancela antes del día 14 sin coste.
+              Sin tarjeta · 2 pacientes gratis · Suscripción solo cuando la necesites.
             </p>
           </div>
         </main>
