@@ -7,7 +7,7 @@ export function HeroSection() {
     <section className="relative overflow-hidden px-6 pt-24 pb-20 sm:pt-32">
       <div className="mx-auto max-w-5xl text-center">
         <div className="fade-in-up fade-delay-1 inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-1.5 text-xs font-medium text-zinc-400">
-          Para nutricionistas colegiados en España
+          Para nutricionistas y dietistas en España
         </div>
 
         <h1 className="fade-in-up fade-delay-2 mt-8 text-balance font-display text-4xl italic leading-[1.08] text-white md:text-5xl lg:text-6xl xl:text-7xl">
