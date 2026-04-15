@@ -148,7 +148,18 @@ function GenericErrorBanner({
 }) {
   return (
     <>
-      <p className='max-w-xs text-right text-xs text-red-400'>{message}</p>
+      <div className='flex max-w-xs flex-col items-end gap-1 text-right'>
+        <p className='text-xs text-red-400'>{message}</p>
+        <p className='text-xs text-zinc-500'>
+          Si el problema persiste, escribe a{' '}
+          <a
+            href='mailto:hola@dietly.es'
+            className='text-zinc-400 underline hover:text-zinc-200'
+          >
+            hola@dietly.es
+          </a>
+        </p>
+      </div>
       <button
         type='button'
         onClick={onRetry}
