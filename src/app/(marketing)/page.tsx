@@ -764,77 +764,7 @@ function FeaturesSection() {
   );
 }
 
-// 7. Social proof
-
-const TESTIMONIOS = [
-  {
-    quote:
-      'Antes tardaba 2 horas con mi hoja de cálculo. Ahora el plan está listo antes de que el paciente salga de consulta.',
-    name: 'Ana',
-    role: 'Nutricionista · Valencia · Patologías digestivas',
-    initials: 'AG',
-  },
-  {
-    quote:
-      'La consistencia es lo que más valoro. El plan número 20 del día tiene la misma calidad que el primero.',
-    name: 'Carlos',
-    role: 'Nutricionista deportivo · Madrid',
-    initials: 'CM',
-  },
-  {
-    quote:
-      'Me preocupaba la privacidad con las IAs generalistas. Con Dietly tengo el contrato de encargo de tratamiento incluido.',
-    name: 'Sara',
-    role: 'Nutricionista autónoma · Barcelona',
-    initials: 'SR',
-  },
-] as const;
-
-function SocialProofSection() {
-  return (
-    <section className='sect-div py-16 lg:py-24'>
-      <div className='mx-auto max-w-6xl px-5'>
-        <div className='text-center'>
-          <SectionLabel>Testimonios</SectionLabel>
-          <H2>Los primeros nutricionistas ya lo usan</H2>
-          <p className='mx-auto mt-3 max-w-lg text-sm text-zinc-500'>
-            Lo que dicen los primeros usuarios de la beta
-          </p>
-        </div>
-
-        <div className='mt-10 grid grid-cols-1 gap-5 sm:grid-cols-3'>
-          {TESTIMONIOS.map((t) => (
-            <figure
-              key={t.name}
-              className='testi-card flex flex-col justify-between rounded-2xl border border-[#1a2e1a] bg-[#0a0f0a] p-6'
-            >
-              {/* Comilla decorativa */}
-              <div aria-hidden className='mb-4 text-3xl font-bold leading-none text-[#1a7a45]/40'>&ldquo;</div>
-              <blockquote className='flex-1 text-sm leading-relaxed text-zinc-300'>
-                {t.quote}
-              </blockquote>
-              <figcaption className='mt-5 flex items-center gap-3'>
-                <div
-                  className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-[#22c55e]'
-                  style={{ background: '#0d1f12', border: '1px solid #1a7a45' }}
-                  aria-hidden
-                >
-                  {t.initials}
-                </div>
-                <div>
-                  <p className='text-sm font-semibold text-zinc-200'>{t.name}</p>
-                  <p className='text-xs text-zinc-600'>{t.role}</p>
-                </div>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// 8. CTA Final
+// 7. CTA Final
 
 function FinalCtaSection() {
   return (
@@ -896,7 +826,6 @@ export default function HomePage() {
         <HowItWorksSection />
         <ComparisonSection />
         <FeaturesSection />
-        <SocialProofSection />
         <FinalCtaSection />
       </div>
     </>
