@@ -133,9 +133,11 @@ export default function TerminosCondiciones() {
           </p>
           <p className='mt-3'>
             Todos los planes incluyen un{' '}
-            <strong className='text-zinc-200'>período de prueba gratuita de 14 días</strong>{' '}
-            sin necesidad de tarjeta de crédito. Al finalizar el período de prueba, se solicitará
-            un método de pago para continuar usando el servicio.
+            <strong className='text-zinc-200'>período de uso gratuito limitado a 2 pacientes activos</strong>,
+            sin necesidad de tarjeta de crédito. Para gestionar más de 2 pacientes, se requiere la
+            contratación de un plan de pago mediante tarjeta. La suscripción se activa en el momento
+            del pago y se renueva automáticamente cada mes hasta su cancelación por parte del usuario.
+            La cancelación puede realizarse en cualquier momento desde el portal de cliente.
           </p>
         </LegalSection>
 
