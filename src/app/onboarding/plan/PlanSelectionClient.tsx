@@ -72,7 +72,7 @@ export function PlanSelectionClient() {
           Elige tu plan para empezar
         </h1>
         <p className="mt-3 text-sm text-zinc-400 sm:text-base">
-          14 días gratis en cualquier plan. Cancela antes del día 14 sin coste.
+          Sin permanencia. Puedes cancelar tu suscripción en cualquier momento desde tu panel.
         </p>
       </div>
 
@@ -145,7 +145,7 @@ export function PlanSelectionClient() {
                     Redirigiendo a Stripe…
                   </span>
                 ) : (
-                  'Empezar prueba de 14 días'
+                  'Suscribirme'
                 )}
               </button>
             </div>
