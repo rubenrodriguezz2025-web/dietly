@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Términos y Condiciones · Dietly',
-  description: 'Condiciones de uso del servicio Dietly para nutricionistas y dietistas.',
+  title: 'Términos y condiciones',
+  description:
+    'Términos y condiciones de uso de Dietly para nutricionistas autónomos en España.',
+  alternates: { canonical: 'https://dietly.es/legal/terminos' },
 };
 
 export default function TerminosCondiciones() {

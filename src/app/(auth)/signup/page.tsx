@@ -1,9 +1,18 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { getSession } from '@/features/account/controllers/get-session';
 
 import { signInWithEmail, signInWithOAuth, signUpWithEmail } from '../auth-actions';
 import { AuthUI } from '../auth-ui';
+
+export const metadata: Metadata = {
+  title: 'Empieza gratis con 2 pacientes',
+  description:
+    'Registro gratuito en Dietly. 2 pacientes gratis sin tarjeta. Cancela cuando quieras.',
+  alternates: { canonical: 'https://dietly.es/signup' },
+  openGraph: { url: 'https://dietly.es/signup' },
+};
 
 export default async function SignUp() {
   let hasSession = false;

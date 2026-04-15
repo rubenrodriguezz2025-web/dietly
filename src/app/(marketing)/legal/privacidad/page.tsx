@@ -2,8 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad · Dietly',
-  description: 'Cómo Dietly recoge, usa y protege tus datos personales conforme al RGPD.',
+  title: 'Política de privacidad',
+  description:
+    'Política de privacidad de Dietly. RGPD, encargado del tratamiento, sub-encargados declarados.',
+  robots: { index: true, follow: true },
+  alternates: { canonical: 'https://dietly.es/legal/privacidad' },
 };
 
 export default function PoliticaPrivacidad() {
