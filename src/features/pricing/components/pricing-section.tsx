@@ -58,9 +58,9 @@ export function PricingSection({ isPricingPage }: { isPricingPage?: boolean }) {
                       : 'border border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800'
                   }`}
                 >
-                  Empezar 14 días gratis
+                  Empieza con 2 pacientes gratis
                 </Link>
-                <p className='mt-2 text-center text-xs text-zinc-500'>Cancela antes del día 14 sin coste</p>
+                <p className='mt-2 text-center text-xs text-zinc-500'>Sin tarjeta · Cancela cuando quieras</p>
               </div>
             </div>
           ))}
