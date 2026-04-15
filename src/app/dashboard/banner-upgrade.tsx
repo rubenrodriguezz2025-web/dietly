@@ -117,7 +117,7 @@ export function BannerUpgrade({ estado, diasRestantesTrialDia }: Props) {
     <div className='overflow-hidden rounded-xl border border-zinc-700 bg-white dark:bg-zinc-900'>
       <div className='relative border-b border-zinc-800 px-5 py-4'>
         <p className='text-sm font-semibold text-zinc-100'>
-          Empieza gratis — 14 días de prueba
+          Pasa a un plan para generar planes sin límites
         </p>
         <p className='mt-0.5 text-xs text-zinc-500'>
           Genera planes nutricionales completos en 2 minutos. Cancela cuando quieras.
@@ -144,7 +144,7 @@ export function BannerUpgrade({ estado, diasRestantesTrialDia }: Props) {
           </p>
           <p className='mt-1 text-xs text-zinc-600'>Hasta 30 pacientes activos</p>
           <BtnPlan
-            label='Empezar gratis 14 días'
+            label='Suscribirme'
             cargando={cargando === 'basico'}
             onClick={() => irACheckout('basico')}
             variante='secundario'
@@ -166,7 +166,7 @@ export function BannerUpgrade({ estado, diasRestantesTrialDia }: Props) {
           </p>
           <p className='mt-1 text-xs text-zinc-600'>Pacientes ilimitados + soporte prioritario</p>
           <BtnPlan
-            label='Empezar gratis 14 días'
+            label='Suscribirme'
             cargando={cargando === 'pro'}
             onClick={() => irACheckout('pro')}
             variante='primario'
