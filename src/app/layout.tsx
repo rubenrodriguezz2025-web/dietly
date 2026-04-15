@@ -4,7 +4,6 @@ import { Instrument_Serif } from 'next/font/google';
 import localFont from 'next/font/local';
 import { headers } from 'next/headers';
 import Link from 'next/link';
-import { IoLogoInstagram, IoLogoTwitter } from 'react-icons/io5';
 
 import { ConsentAnalytics } from '@/components/consent-analytics';
 import { CookieBanner, CookiePreferencesLink } from '@/components/cookie-banner';
@@ -92,7 +91,7 @@ function Footer() {
           <div>
             <Logo />
           </div>
-          <div className='grid grid-cols-2 gap-8 sm:grid-cols-4 lg:gap-16'>
+          <div className='grid grid-cols-2 gap-8 sm:grid-cols-3 lg:gap-16'>
             <div className='flex flex-col gap-2 lg:gap-6'>
               <div className='font-semibold text-neutral-100'>Producto</div>
               <nav className='flex flex-col gap-2 lg:gap-6'>
@@ -111,21 +110,6 @@ function Footer() {
               <div className='font-semibold text-neutral-100'>Contacto</div>
               <nav className='flex flex-col gap-2 lg:gap-6'>
                 <a href='mailto:hola@dietly.es'>hola@dietly.es</a>
-              </nav>
-            </div>
-            <div className='flex flex-col gap-2 lg:gap-6'>
-              <div className='font-semibold text-neutral-100'>Síguenos</div>
-              <nav className='flex flex-col gap-2 lg:gap-6'>
-                <Link href='#'>
-                  <span className='flex items-center gap-2'>
-                    <IoLogoInstagram size={22} /> <span>Instagram</span>
-                  </span>
-                </Link>
-                <Link href='#'>
-                  <span className='flex items-center gap-2'>
-                    <IoLogoTwitter size={22} /> <span>Twitter / X</span>
-                  </span>
-                </Link>
               </nav>
             </div>
           </div>
