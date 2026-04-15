@@ -2,12 +2,15 @@
 export function DashboardMockup({ className = '' }: { className?: string }) {
   const days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   return (
-    <svg
-      viewBox="0 0 800 480"
-      className={className}
-      role="img"
-      aria-label="Vista previa del editor de planes nutricionales de Dietly"
-    >
+    <>
+      <span className="sr-only">
+        Captura del dashboard de Dietly mostrando un plan semanal con siete días, desayuno, comida y cena por día, con calorías y macronutrientes para cada comida, y botón de aprobación.
+      </span>
+      <svg
+        viewBox="0 0 800 480"
+        className={className}
+        aria-hidden="true"
+      >
       <defs>
         <linearGradient id="dmBg" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#0a0f0a" />
@@ -101,6 +104,7 @@ export function DashboardMockup({ className = '' }: { className?: string }) {
           </text>
         </g>
       ))}
-    </svg>
+      </svg>
+    </>
   );
 }
