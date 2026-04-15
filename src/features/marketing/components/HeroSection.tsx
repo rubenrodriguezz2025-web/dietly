@@ -10,7 +10,7 @@ export function HeroSection() {
           Para nutricionistas y dietistas en España
         </div>
 
-        <h1 className="fade-in-up fade-delay-2 mt-8 text-balance font-display text-4xl italic leading-[1.08] text-white md:text-5xl lg:text-6xl xl:text-7xl">
+        <h1 className="fade-in-up fade-delay-2 mt-8 text-balance font-display text-4xl leading-[1.08] text-white md:text-5xl lg:text-6xl xl:text-7xl">
           Tú decides cómo preparar los platos cada semana, dentro de los márgenes que marcas.
         </h1>
 
