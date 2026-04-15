@@ -249,5 +249,5 @@ export async function createPatient(
     }
   }
 
-  redirect(`/dashboard/patients/${patientId}`);
+  redirect(`/dashboard/patients/${patientId}?created=1`);
 }

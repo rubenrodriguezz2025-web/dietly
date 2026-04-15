@@ -6,12 +6,20 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 import { Meal, MealSwap, NutritionPlan, Patient, PatientProgress } from '@/types/dietly';
 import { CalcTargets, calcTargets,CalcTargetsError } from '@/utils/calc-targets';
 
+import { CreatedToast } from './created-toast';
 import { GenerateButton } from './generate-button';
 import { MacroTransparencyCard } from './macro-transparency-card';
 import { PatientTabs } from './patient-tabs';
 
-export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PatientPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ created?: string }>;
+}) {
   const { id } = await params;
+  const { created } = await searchParams;
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -148,6 +156,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className='flex flex-col gap-6'>
+      {created === '1' && <CreatedToast id={id} />}
       {/* Header */}
       <div className='flex items-start justify-between gap-4'>
         <div className='flex items-center gap-4'>
