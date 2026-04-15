@@ -47,7 +47,7 @@ export function CookieBanner() {
     <div
       role='dialog'
       aria-label='Preferencias de cookies'
-      className='fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-xl rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl animate-[slideUpBanner_400ms_cubic-bezier(0.16,1,0.3,1)_600ms_both] motion-reduce:animate-none'
+      className='fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-xl rounded-2xl border border-zinc-700 bg-zinc-900/95 backdrop-blur-sm p-5 shadow-2xl animate-[slideUpBanner_400ms_cubic-bezier(0.16,1,0.3,1)_600ms_both] motion-reduce:animate-none'
     >
       <p className='text-sm font-semibold text-white'>Cookies y privacidad</p>
       <p className='mt-1 text-sm text-zinc-400'>

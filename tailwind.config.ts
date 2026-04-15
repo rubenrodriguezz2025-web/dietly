@@ -55,8 +55,9 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-plus-jakarta-sans)', ...fontFamily.sans],
-        alt: ['var(--font-montserrat-alternates)'],
+        sans: ['var(--font-body)', ...fontFamily.sans],
+        alt: ['var(--font-body)'],
+        display: ['var(--font-display)', ...fontFamily.serif],
       },
       keyframes: {
         'accordion-down': {
