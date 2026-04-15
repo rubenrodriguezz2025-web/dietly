@@ -23,7 +23,7 @@ const COPY: Record<PaywallReason, { title: string; subtitle: string }> = {
     subtitle: 'Deja que la IA haga el borrador. Tú revisas, ajustas y entregas.',
   },
   LIMIT_REACHED: {
-    title: 'Has alcanzado el límite de 2 pacientes en modo prueba',
+    title: 'Has alcanzado el límite de 2 pacientes gratis',
     subtitle: 'Desbloquea pacientes ilimitados y generación de planes con IA.',
   },
 };
@@ -191,7 +191,7 @@ export function PaywallModal({ open, onClose, reason }: PaywallModalProps) {
                       Redirigiendo a Stripe…
                     </span>
                   ) : (
-                    'Empezar prueba 14 días'
+                    'Suscribirme'
                   )}
                 </button>
               </div>
@@ -213,7 +213,6 @@ export function PaywallModal({ open, onClose, reason }: PaywallModalProps) {
               <IoLockClosed className="h-3 w-3" />
               Pago seguro con Stripe
             </span>
-            <span>Sin compromiso · 14 días gratis</span>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
