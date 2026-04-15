@@ -28,11 +28,99 @@ const montserratAlternates = Montserrat_Alternates({
   subsets: ['latin'],
 });
 
+const SITE_DESCRIPTION =
+  'Genera planes nutricionales personalizados en 2 minutos con IA. Tú revisas, ajustas y firmas con tu marca. Diseñado para nutricionistas autónomos en España.';
+
 export const metadata: Metadata = {
-  title: 'Dietly — Planes nutricionales con IA',
-  description:
-    'Software para nutricionistas que genera planes nutricionales completos en 2 minutos con IA. Tú los revisas, ajustas y entregas con tu marca.',
+  metadataBase: new URL('https://dietly.es'),
+  title: {
+    default: 'Dietly — Software para nutricionistas con IA',
+    template: '%s | Dietly',
+  },
+  description: SITE_DESCRIPTION,
+  keywords: [
+    'software nutricionista',
+    'planes nutricionales IA',
+    'dietista España',
+    'app nutricionista',
+    'consulta nutricional online',
+  ],
+  authors: [{ name: 'Dietly' }],
+  creator: 'Dietly',
   icons: { icon: '/favicon.svg' },
+  alternates: { canonical: 'https://dietly.es' },
+  openGraph: {
+    type: 'website',
+    locale: 'es_ES',
+    url: 'https://dietly.es',
+    siteName: 'Dietly',
+    title: 'Dietly — Software para nutricionistas con IA',
+    description: SITE_DESCRIPTION,
+    images: [{ url: '/logo.png', width: 1200, height: 630, alt: 'Dietly' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Dietly — Software para nutricionistas con IA',
+    description: SITE_DESCRIPTION,
+    images: ['/logo.png'],
+  },
+  verification: { google: 'ZAqPEz33rrIhsXhC0hGte5ObU8EvwIHTtdgPu1h2Oh0' },
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://dietly.es/#organization',
+      name: 'Dietly',
+      url: 'https://dietly.es',
+      logo: 'https://dietly.es/logo.png',
+      description: 'Software para nutricionistas con IA',
+      areaServed: { '@type': 'Country', name: 'España' },
+      contactPoint: {
+        '@type': 'ContactPoint',
+        email: 'hola@dietly.es',
+        contactType: 'customer support',
+        availableLanguage: ['Spanish'],
+      },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': 'https://dietly.es/#software',
+      name: 'Dietly',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      offers: [
+        {
+          '@type': 'Offer',
+          name: 'Plan Básico',
+          price: '46',
+          priceCurrency: 'EUR',
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            price: '46',
+            priceCurrency: 'EUR',
+            unitCode: 'MON',
+          },
+        },
+        {
+          '@type': 'Offer',
+          name: 'Plan Profesional',
+          price: '89',
+          priceCurrency: 'EUR',
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            price: '89',
+            priceCurrency: 'EUR',
+            unitCode: 'MON',
+          },
+        },
+      ],
+      provider: { '@id': 'https://dietly.es/#organization' },
+      inLanguage: 'es-ES',
+    },
+  ],
 };
 
 export default async function RootLayout({ children }: PropsWithChildren) {
@@ -43,6 +131,12 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 
   return (
     <html lang='es'>
+      <head>
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className={cn('font-sans antialiased', plusJakartaSans.variable, montserratAlternates.variable)}>
         <ThemeProvider>
           <div className='flex min-h-screen flex-col'>
