@@ -352,7 +352,7 @@ function HeroSection() {
             href='/signup'
             className='glow-btn inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#1a7a45] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#1a7a45]/25 transition-all duration-200 hover:bg-[#22c55e] hover:shadow-[#22c55e]/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a7a45]'
           >
-            Empezar gratis 14 días →
+            Empieza con 2 pacientes gratis →
           </Link>
           <a
             href='/p/demo'
@@ -364,7 +364,7 @@ function HeroSection() {
           </a>
         </div>
         <p className='fu3 mt-3 text-center text-xs text-zinc-400'>
-          14 días gratis · Cancela antes del día 14 sin coste
+          Sin tarjeta · Cancela cuando quieras
         </p>
 
         {/* Precios inline */}
@@ -780,11 +780,11 @@ function FinalCtaSection() {
           Empieza hoy. Tu próximo plan en 2 minutos.
         </h2>
         <p className='mx-auto mt-4 max-w-md text-sm leading-relaxed text-zinc-400'>
-          14 días gratis. Si lo usas, pagas. Si no, cancelas antes del día 14 sin coste.
+          Sin tarjeta. Sin prueba limitada. Si no te convence, no pagas.
         </p>
         <div className='mt-8'>
           <CtaButton href='/signup'>
-            Empezar gratis 14 días →
+            Empieza con 2 pacientes gratis →
           </CtaButton>
         </div>
         <p className='mt-5 text-xs text-zinc-700'>
