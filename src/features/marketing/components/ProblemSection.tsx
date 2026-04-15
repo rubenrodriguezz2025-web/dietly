@@ -3,8 +3,8 @@ import { H2, SectionLabel } from './primitives';
 
 const pains = [
   {
-    title: 'La plantilla es una traición al paciente',
-    body: 'Copiar-pegar documentos genéricos rompe la confianza. Cada persona tiene márgenes distintos y tú lo sabes.',
+    title: 'La plantilla no respeta márgenes individuales',
+    body: 'Copiar-pegar documentos genéricos no captura las restricciones reales de cada paciente. Cada persona tiene márgenes distintos, y tú lo sabes mejor que nadie.',
   },
   {
     title: '1-3 horas por plan, multiplicado por 20 pacientes',
