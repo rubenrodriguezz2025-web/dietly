@@ -335,11 +335,11 @@ export async function POST(req: NextRequest) {
       // antes de cualquier query a DB o llamada a Claude.
       send({ type: 'progress', day: 0, message: 'Iniciando generación...' });
 
-      // Keepalive: envía un comentario SSE cada 15 s para que el proxy/navegador
+      // Keepalive: envía un comentario SSE cada 10 s para que el proxy/navegador
       // no cierre la conexión mientras Claude procesa (puede tardar >30 s por día).
       const keepalive = setInterval(() => {
         try { controller.enqueue(encoder.encode(': keepalive\n\n')); } catch { /* controller ya cerrado */ }
-      }, 15_000);
+      }, 10_000);
 
       const days: PlanDay[] = [];
       let totalTokensInput = 0;
@@ -818,6 +818,18 @@ export async function POST(req: NextRequest) {
           }
 
           days.push(dayData);
+
+          // Guardar progreso incremental: si la función muere, los días
+          // completados persisten en DB en lugar de perderse.
+          await supabaseAdminClient
+            .from('nutrition_plans')
+            .update({
+              content: {
+                ...emptyContent,
+                days: [...days],
+              },
+            })
+            .eq('id', planId);
         }
 
         // Generar lista de la compra
