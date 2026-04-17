@@ -1,6 +1,9 @@
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'rubenrodriguezz2025@gmail.com';
+const BYPASS_EMAILS = [
+  'rubenrodriguezz2025@gmail.com',
+  'rubenrodriguezz2025+test11@gmail.com',
+];
 
 type SubscriptionCheck =
   | { authorized: true; userId: string; email: string }
@@ -32,7 +35,7 @@ export async function requireActiveSubscription(): Promise<SubscriptionCheck> {
   }
 
   // Admin bypass
-  if (user.email === ADMIN_EMAIL) {
+  if (user.email && BYPASS_EMAILS.includes(user.email)) {
     return { authorized: true, userId: user.id, email: user.email };
   }
 
