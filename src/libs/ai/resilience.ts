@@ -4,7 +4,7 @@
  * Capa de resiliencia para todas las llamadas a la API de Anthropic.
  *
  * Características:
- *   - Exponential backoff con jitter (reintentos: 1 s, 2 s, 4 s, 8 s)
+ *   - Exponential backoff con jitter (reintentos: 1 s, 2 s)
  *   - HTTP 429: respeta el header Retry-After
  *   - HTTP 529 (overloaded): backoff de 10–30 s, máximo 3 intentos
  *   - HTTP 400/401: sin reintento + notificación inmediata al equipo
@@ -115,7 +115,7 @@ function withJitter(ms: number): number {
   return Math.round(ms + (Math.random() * variance * 2 - variance));
 }
 
-const BACKOFF_DELAYS_MS = [1_000, 2_000, 4_000, 8_000];
+const BACKOFF_DELAYS_MS = [1_000, 2_000];
 
 function exponentialDelay(attempt: number): number {
   return withJitter(BACKOFF_DELAYS_MS[Math.min(attempt, BACKOFF_DELAYS_MS.length - 1)]);
@@ -249,7 +249,7 @@ export async function callAnthropicWithResilience<T>(
 
   // ── Bucle de reintentos ────────────────────────────────────────────────────
   // Contadores independientes por tipo de error
-  let normalAttempts = 0; // Para errores generales y 429 (máx. 4 reintentos = 5 intentos)
+  let normalAttempts = 0; // Para errores generales y 429 (máx. 2 reintentos = 3 intentos)
   let attempts529    = 0; // Para HTTP 529 overloaded (máx. 3 intentos)
 
   // eslint-disable-next-line no-constant-condition
@@ -301,8 +301,8 @@ export async function callAnthropicWithResilience<T>(
 
       // ── Reintentos normales (429, timeout, unknown) ──────────────────────
       normalAttempts++;
-      if (normalAttempts > 4) {
-        // Agotados los 4 reintentos (5 intentos en total)
+      if (normalAttempts > 2) {
+        // Agotados los 2 reintentos (3 intentos en total)
         recordFailure();
         throw new AnthropicResilienceError(
           code,
@@ -317,13 +317,13 @@ export async function callAnthropicWithResilience<T>(
         const retryAfterMs = parseRetryAfterMs(err as APIError);
         delay = retryAfterMs ?? exponentialDelay(normalAttempts - 1);
         console.warn(
-          `[resilience] [${label}] HTTP 429 rate limit (reintento ${normalAttempts}/4) — esperando ${Math.round(delay / 1000)} s` +
+          `[resilience] [${label}] HTTP 429 rate limit (reintento ${normalAttempts}/2) — esperando ${Math.round(delay / 1000)} s` +
           (retryAfterMs ? ` (Retry-After: ${Math.round(retryAfterMs / 1000)} s)` : ''),
         );
       } else {
         delay = exponentialDelay(normalAttempts - 1);
         console.warn(
-          `[resilience] [${label}] Error ${code} (reintento ${normalAttempts}/4) — esperando ${Math.round(delay / 1000)} s. ` +
+          `[resilience] [${label}] Error ${code} (reintento ${normalAttempts}/2) — esperando ${Math.round(delay / 1000)} s. ` +
           `Detalle: ${err instanceof Error ? err.message : err}`,
         );
       }

@@ -682,9 +682,10 @@ export async function POST(req: NextRequest) {
         // en lugar de dejar el plan en estado 'generating' para siempre.
         const anthropic = new Anthropic({
           apiKey: getEnvVar(process.env.ANTHROPIC_API_KEY, 'ANTHROPIC_API_KEY'),
-          // Timeout por llamada: 45 s. Sin esto el SDK espera 600 s por defecto,
-          // lo que bloquea el stream cuando Claude tarda o hay error de red.
-          timeout: 45_000,
+          // Timeout por llamada: 30 s. Ajustado para encajar en el límite de
+          // 300 s de Vercel Hobby (peor caso: 7 días × ~93 s = 651 s excedería;
+          // con happy-path 30 s × 7 = 210 s + shopping ~30 s = ~240 s < 280 s).
+          timeout: 30_000,
         });
 
         send({ type: 'start', plan_id: planId });
@@ -715,6 +716,7 @@ export async function POST(req: NextRequest) {
 
           send({ type: 'progress', day: dayNum, day_name: DAY_NAMES[dayNum - 1] });
 
+          const dayStartedAt = Date.now();
           let dayData: PlanDay | null = null;
 
           // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
@@ -842,6 +844,11 @@ export async function POST(req: NextRequest) {
           }
 
           days.push(dayData);
+
+          const dayElapsedMs = Date.now() - dayStartedAt;
+          if (dayElapsedMs > 40_000) {
+            console.warn(`[plans/generate] plan=${planId} día=${dayNum} — SLOW_DAY ${Math.round(dayElapsedMs / 1000)}s (>40s)`);
+          }
 
           // Guardar progreso incremental: si la función muere, los días
           // completados persisten en DB en lugar de perderse.
