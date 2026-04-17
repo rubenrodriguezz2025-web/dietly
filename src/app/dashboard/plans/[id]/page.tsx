@@ -12,6 +12,11 @@ import { GeneratingPoller } from './generating-poller';
 import { PlanActionsBar } from './plan-actions-bar';
 import { PlanEditor } from './plan-editor';
 import { ReminderModal } from './reminder-modal';
+import { RetryGenerationButton } from './retry-generation-button';
+
+// Planes en 'generating' más viejos que esto se consideran huérfanos
+// (SIGKILL de Vercel a los 300 s antes de ejecutar el catch).
+const STALE_GENERATING_MS = 5 * 60 * 1000;
 
 export default async function PlanPage({
   params,
@@ -43,8 +48,22 @@ export default async function PlanPage({
   if (!plan) notFound();
 
   const content = plan.content as PlanContent | null;
-  const isGenerating = plan.status === 'generating';
-  const hasError = plan.status === 'error';
+  const createdAtMs = plan.created_at ? new Date(plan.created_at).getTime() : 0;
+  const isStaleGenerating =
+    plan.status === 'generating' && createdAtMs > 0 && Date.now() - createdAtMs > STALE_GENERATING_MS;
+  const isGenerating = plan.status === 'generating' && !isStaleGenerating;
+  const hasError = plan.status === 'error' || isStaleGenerating;
+
+  // Contar días completados para el botón de reintentar
+  let daysCompleted = 0;
+  if (hasError) {
+    const { count } = (await (supabase as any)
+      .from('plan_generations')
+      .select('id', { count: 'exact', head: true })
+      .eq('plan_id', id)
+      .eq('status', 'completed')) as { count: number | null };
+    daysCompleted = count ?? 0;
+  }
 
   // Ejecutar validación clínica sobre el borrador
   const validationResult =
@@ -151,19 +170,25 @@ export default async function PlanPage({
         <PlanLifecycle status={plan.status} />
       )}
 
-      {/* Error state */}
+      {/* Error state (también cubre 'generating' huérfanos de más de 5 min) */}
       {hasError && (
-        <div className='flex flex-col gap-3 rounded-xl border border-red-900 bg-red-950/30 p-6'>
-          <p className='text-sm font-medium text-red-400'>
-            La generación del plan falló en algún punto.
-          </p>
+        <div className='flex flex-col gap-4 rounded-xl border border-red-900 bg-red-950/30 p-6'>
+          <div className='flex flex-col gap-1'>
+            <p className='text-sm font-medium text-red-400'>
+              {isStaleGenerating
+                ? 'La generación se interrumpió antes de terminar.'
+                : 'La generación del plan falló en algún punto.'}
+            </p>
+            <p className='text-xs text-zinc-400'>
+              {daysCompleted} de 7 días completados
+              {daysCompleted > 0 && daysCompleted < 7 ? ' — borrador incompleto' : ''}
+            </p>
+          </div>
           {plan.patients && (
-            <Link
-              href={`/dashboard/patients/${plan.patients.id}`}
-              className='w-fit rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-200 transition-colors hover:bg-zinc-700'
-            >
-              ← Volver al paciente y generar de nuevo
-            </Link>
+            <RetryGenerationButton
+              patientId={plan.patients.id}
+              daysCompleted={daysCompleted}
+            />
           )}
         </div>
       )}
