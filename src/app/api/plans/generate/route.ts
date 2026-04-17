@@ -320,6 +320,15 @@ export async function POST(req: NextRequest) {
   // Detectar abort del request (cliente cierra pestaña/conexión)
   req.signal.addEventListener('abort', () => abortController.abort());
 
+  // Timeout interno a 280 s — 20 s de margen sobre maxDuration=300 s.
+  // Si Claude se atasca, abortamos en lugar de dejar que Vercel mate el proceso
+  // con SIGKILL (que deja planes en status='generating' para siempre).
+  let internalTimedOut = false;
+  const internalTimeoutId = setTimeout(() => {
+    internalTimedOut = true;
+    abortController.abort();
+  }, 280_000);
+
   const stream = new ReadableStream({
     async start(controller) {
       function send(data: object) {
@@ -683,13 +692,23 @@ export async function POST(req: NextRequest) {
 
         // Generar los 7 días
         for (let dayNum = 1; dayNum <= 7; dayNum++) {
-          // A-11: Si el cliente se desconectó, marcar plan como error y salir
+          // A-11: Si se abortó (cliente desconectado o timeout interno 280 s), salir limpio
           if (signal.aborted) {
             await supabaseAdminClient
               .from('nutrition_plans')
               .update({ status: 'error' })
               .eq('id', planId);
-            console.warn(`[plans/generate] plan=${planId} — cliente desconectado en día ${dayNum}`);
+            if (internalTimedOut) {
+              console.warn(`[plans/generate] plan=${planId} — timeout interno 280s en día ${dayNum} (días completados: ${days.length})`);
+              send({
+                type: 'error',
+                message: 'La generación ha tardado demasiado. Los días completados se han guardado. Puedes reintentar.',
+                error_code: 'internal_timeout',
+                days_completed: days.length,
+              });
+            } else {
+              console.warn(`[plans/generate] plan=${planId} — cliente desconectado en día ${dayNum}`);
+            }
             controller.close();
             return;
           }
@@ -709,7 +728,7 @@ export async function POST(req: NextRequest) {
                 tools: [DAY_TOOL],
                 tool_choice: { type: 'tool', name: 'generate_day' },
                 messages: [{ role: 'user', content: dayPrompt }],
-              }),
+              }, { signal }),
               `day_${dayNum}`,
             );
 
@@ -751,7 +770,7 @@ export async function POST(req: NextRequest) {
                     tools: [DAY_TOOL],
                     tool_choice: { type: 'tool', name: 'generate_day' },
                     messages: [{ role: 'user', content: dayPrompt }],
-                  }),
+                  }, { signal }),
                   `day_${dayNum}_retry`,
                 );
                 const retryToolUse = retryResponse.content.find((b) => b.type === 'tool_use');
@@ -850,7 +869,7 @@ export async function POST(req: NextRequest) {
               tools: [SHOPPING_LIST_TOOL],
               tool_choice: { type: 'tool', name: 'generate_shopping_list' },
               messages: [{ role: 'user', content: shoppingPrompt }],
-            }),
+            }, { signal }),
             'shopping_list',
           );
 
@@ -858,7 +877,6 @@ export async function POST(req: NextRequest) {
           const slOutput = shoppingResponse.usage.output_tokens;
           totalTokensInput += slInput;
           totalTokensOutput += slOutput;
-
           // No se inserta en plan_generations: el CHECK limita day_number a 1-7.
           // La telemetría del shopping list se registra en ai_request_logs más abajo.
 
@@ -933,17 +951,27 @@ export async function POST(req: NextRequest) {
             .eq('id', planId);
           void checkAndAlertErrorRate();
         }
-        const isServiceUnavailable =
-          err instanceof AnthropicResilienceError && err.code === 'service_unavailable';
-        send({
-          type:       'error',
-          message:    isServiceUnavailable
-            ? 'El servicio de generación está temporalmente no disponible. Inténtelo en unos minutos.'
-            : 'Error inesperado. Inténtalo de nuevo.',
-          error_code: err instanceof AnthropicResilienceError ? err.code : 'unknown',
-        });
+        if (internalTimedOut) {
+          send({
+            type: 'error',
+            message: 'La generación ha tardado demasiado. Los días completados se han guardado. Puedes reintentar.',
+            error_code: 'internal_timeout',
+            days_completed: days.length,
+          });
+        } else {
+          const isServiceUnavailable =
+            err instanceof AnthropicResilienceError && err.code === 'service_unavailable';
+          send({
+            type:       'error',
+            message:    isServiceUnavailable
+              ? 'El servicio de generación está temporalmente no disponible. Inténtelo en unos minutos.'
+              : 'Error inesperado. Inténtalo de nuevo.',
+            error_code: err instanceof AnthropicResilienceError ? err.code : 'unknown',
+          });
+        }
       } finally {
         clearInterval(keepalive);
+        clearTimeout(internalTimeoutId);
         controller.close();
       }
     },
