@@ -717,14 +717,19 @@ export async function POST(req: NextRequest) {
             const outputTok = response.usage.output_tokens;
             totalTokensInput += inputTok;
             totalTokensOutput += outputTok;
-            void supabaseAdminClient.from('plan_generations').insert({
-              plan_id: planId,
-              nutritionist_id: user.id,
-              day_generated: dayNum,
-              tokens_input: inputTok,
-              tokens_output: outputTok,
-              cost_usd: calcCost(inputTok, outputTok),
-            });
+
+            // Telemetría por día. Tokens/coste viven en ai_request_logs (logAIRequest abajo).
+            const { error: genInsertErr } = await supabaseAdminClient
+              .from('plan_generations')
+              .insert({
+                plan_id: planId,
+                nutritionist_id: user.id,
+                day_number: dayNum,
+                status: 'completed',
+              });
+            if (genInsertErr) {
+              console.error(`[plans/generate] plan=${planId} día=${dayNum} — error insertando plan_generations:`, genInsertErr.message);
+            }
 
             const toolUse = response.content.find((b) => b.type === 'tool_use');
             if (toolUse?.type === 'tool_use') {
@@ -854,14 +859,8 @@ export async function POST(req: NextRequest) {
           totalTokensInput += slInput;
           totalTokensOutput += slOutput;
 
-          void supabaseAdminClient.from('plan_generations').insert({
-            plan_id: planId,
-            nutritionist_id: user.id,
-            day_generated: 8,
-            tokens_input: slInput,
-            tokens_output: slOutput,
-            cost_usd: calcCost(slInput, slOutput),
-          });
+          // No se inserta en plan_generations: el CHECK limita day_number a 1-7.
+          // La telemetría del shopping list se registra en ai_request_logs más abajo.
 
           const shoppingToolUse = shoppingResponse.content.find((b) => b.type === 'tool_use');
           if (shoppingToolUse?.type === 'tool_use') {
