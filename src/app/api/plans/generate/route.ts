@@ -856,33 +856,45 @@ export async function POST(req: NextRequest) {
             .eq('id', planId);
         }
 
-        // Generar lista de la compra
+        // Generar lista de la compra (con reintento x1 y validación de forma).
+        // No se inserta en plan_generations: el CHECK limita day_number a 1-7.
+        // La telemetría se registra en ai_request_logs.
         send({ type: 'progress', day: 8, day_name: 'Lista de la compra' });
+        const shoppingPrompt = buildShoppingListPrompt(days);
         let shoppingList: ShoppingList = { produce: [], protein: [], dairy: [], grains: [], pantry: [] };
-        try {
-          const shoppingPrompt = buildShoppingListPrompt(days);
-          const shoppingResponse = await callAnthropicWithResilience(
-            () => anthropic.messages.create({
-              model: 'claude-sonnet-4-6',
-              max_tokens: 2048,
-              system: systemPrompt,
-              tools: [SHOPPING_LIST_TOOL],
-              tool_choice: { type: 'tool', name: 'generate_shopping_list' },
-              messages: [{ role: 'user', content: shoppingPrompt }],
-            }, { signal }),
-            'shopping_list',
-          );
 
-          const slInput = shoppingResponse.usage.input_tokens;
-          const slOutput = shoppingResponse.usage.output_tokens;
-          totalTokensInput += slInput;
-          totalTokensOutput += slOutput;
-          // No se inserta en plan_generations: el CHECK limita day_number a 1-7.
-          // La telemetría del shopping list se registra en ai_request_logs más abajo.
+        const attemptShoppingList = async (attempt: 1 | 2): Promise<ShoppingList | null> => {
+          try {
+            const response = await callAnthropicWithResilience(
+              () => anthropic.messages.create({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 2048,
+                system: systemPrompt,
+                tools: [SHOPPING_LIST_TOOL],
+                tool_choice: { type: 'tool', name: 'generate_shopping_list' },
+                messages: [{ role: 'user', content: shoppingPrompt }],
+              }, { signal }),
+              attempt === 1 ? 'shopping_list' : 'shopping_list_retry',
+            );
 
-          const shoppingToolUse = shoppingResponse.content.find((b) => b.type === 'tool_use');
-          if (shoppingToolUse?.type === 'tool_use') {
-            shoppingList = shoppingToolUse.input as ShoppingList;
+            totalTokensInput += response.usage.input_tokens;
+            totalTokensOutput += response.usage.output_tokens;
+
+            const toolUse = response.content.find((b) => b.type === 'tool_use');
+            if (toolUse?.type !== 'tool_use') {
+              console.warn(`[plans/generate] plan=${planId} — shopping_list sin tool_use (intento ${attempt}). stop_reason=${response.stop_reason}`);
+              return null;
+            }
+
+            const raw = toolUse.input as Partial<ShoppingList>;
+            const normalized: ShoppingList = {
+              produce: Array.isArray(raw.produce) ? raw.produce : [],
+              protein: Array.isArray(raw.protein) ? raw.protein : [],
+              dairy: Array.isArray(raw.dairy) ? raw.dairy : [],
+              grains: Array.isArray(raw.grains) ? raw.grains : [],
+              pantry: Array.isArray(raw.pantry) ? raw.pantry : [],
+            };
+
             void logAIRequest({
               nutritionistId: user.id,
               sessionPatientId: sessionId,
@@ -890,14 +902,33 @@ export async function POST(req: NextRequest) {
               modelVersion: 'claude-sonnet-4-6',
               requestType: 'shopping_list',
               prompt: shoppingPrompt,
-              responseSummary: JSON.stringify(shoppingToolUse.input),
-              tokensInput: slInput,
-              tokensOutput: slOutput,
-              costUsd: calcCost(slInput, slOutput),
+              responseSummary: JSON.stringify(normalized),
+              tokensInput: response.usage.input_tokens,
+              tokensOutput: response.usage.output_tokens,
+              costUsd: calcCost(response.usage.input_tokens, response.usage.output_tokens),
             });
+
+            return normalized;
+          } catch (err) {
+            console.error(`[plans/generate] plan=${planId} — SHOPPING_LIST_FAILED (intento ${attempt}):`, err instanceof Error ? err.message : err);
+            return null;
           }
-        } catch (err) {
-          console.error(`[plans/generate] plan=${planId} — shopping list error:`, err instanceof Error ? err.message : err);
+        };
+
+        const isEmpty = (sl: ShoppingList) =>
+          sl.produce.length + sl.protein.length + sl.dairy.length + sl.grains.length + sl.pantry.length === 0;
+
+        for (const attempt of [1, 2] as const) {
+          const result = await attemptShoppingList(attempt);
+          if (result && !isEmpty(result)) {
+            shoppingList = result;
+            break;
+          }
+          if (result) shoppingList = result;
+        }
+
+        if (isEmpty(shoppingList)) {
+          console.error(`[plans/generate] plan=${planId} — SHOPPING_LIST_EMPTY tras 2 intentos. Plan se guarda sin lista de la compra.`);
         }
 
         // Promedios semanales
