@@ -66,6 +66,15 @@ function IconWhatsApp({ className }: { className?: string }) {
   );
 }
 
+function IconEye({ className }: { className?: string }) {
+  return (
+    <svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true' className={className}>
+      <path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z' />
+      <circle cx='12' cy='12' r='3' />
+    </svg>
+  );
+}
+
 // ── Toast ─────────────────────────────────────────────────────────────────────
 
 type ToastConfig = { type: 'success' | 'error'; message: string };
@@ -325,6 +334,30 @@ export function PlanActionsBar({
       {/* ── Botones de acción ─────────────────────────────────────────────── */}
       <div className='flex flex-col items-end gap-2'>
         <div className='flex flex-wrap items-center justify-end gap-2'>
+
+          {/* Vista previa paciente — reutiliza la ruta /p/[token] */}
+          {isDraft ? (
+            <button
+              type='button'
+              disabled
+              title='Aprueba el plan para previsualizar'
+              className='inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-500 opacity-60'
+            >
+              <IconEye />
+              Vista previa paciente
+            </button>
+          ) : planUrl ? (
+            <a
+              href={planUrl}
+              target='_blank'
+              rel='noopener noreferrer'
+              title='Abrir vista previa del plan tal como lo verá el paciente'
+              className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-all duration-150 hover:border-zinc-600 hover:bg-zinc-700 active:scale-[0.97]'
+            >
+              <IconEye />
+              Vista previa paciente
+            </a>
+          ) : null}
 
           {/* PDF — dropdown con dos formatos (Completo / Nevera) */}
           {!isDraft && (
