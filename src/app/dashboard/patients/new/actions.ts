@@ -12,6 +12,8 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 import { ActivityLevel } from '@/types/dietly';
 import { render } from '@react-email/components';
 
+import { createPatientSchema } from '../patient-schema';
+
 const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   sedentary: 1.2,
   lightly_active: 1.375,
@@ -85,9 +87,54 @@ export async function createPatient(
   }
   const consentVersion = (formData.get('ai_consent_version') as string) || 'unknown';
 
-  const name = formData.get('name') as string;
-  const email = (formData.get('email') as string) || null;
-  const date_of_birth = (formData.get('date_of_birth') as string) || null;
+  // Extraer y normalizar FormData antes de validar con Zod
+  const allergiesRaw = (formData.get('allergies') as string) || '';
+  const allergiesNormalized = allergiesRaw.includes('|||')
+    ? allergiesRaw.split('|||').filter(Boolean).join(', ')
+    : allergiesRaw;
+  const intolerancesRaw = (formData.get('intolerances') as string) || '';
+  const intolerancesNormalized = intolerancesRaw.includes('|||')
+    ? intolerancesRaw.split('|||').filter(Boolean).join(', ')
+    : intolerancesRaw;
+  const dietaryArr = formData.getAll('dietary_restrictions') as string[];
+
+  const parsed = createPatientSchema.safeParse({
+    name: formData.get('name') ?? '',
+    email: formData.get('email') ?? '',
+    date_of_birth: formData.get('date_of_birth') ?? '',
+    sex: formData.get('sex') ?? '',
+    weight_kg: formData.get('weight_kg') ?? '',
+    height_cm: formData.get('height_cm') ?? '',
+    activity_level: formData.get('activity_level') ?? '',
+    goal: formData.get('goal') ?? '',
+    dietary_restrictions: dietaryArr.length > 0 ? dietaryArr : null,
+    allergies: allergiesNormalized,
+    intolerances: intolerancesNormalized,
+    preferences: formData.get('preferences') ?? '',
+    medical_notes: formData.get('medical_notes') ?? '',
+  });
+
+  if (!parsed.success) {
+    const firstIssue = parsed.error.issues[0];
+    const field = firstIssue?.path?.[0] ? ` (${String(firstIssue.path[0])})` : '';
+    return { error: `${firstIssue?.message ?? 'Datos no válidos'}${field}` };
+  }
+
+  const {
+    name,
+    email,
+    date_of_birth,
+    sex,
+    weight_kg,
+    height_cm,
+    activity_level,
+    goal,
+    dietary_restrictions,
+    allergies,
+    intolerances,
+    preferences,
+    medical_notes,
+  } = parsed.data;
 
   // Bloquear menores de 18 años
   if (date_of_birth) {
@@ -103,23 +150,6 @@ export async function createPatient(
       };
     }
   }
-  const sex = (formData.get('sex') as string) || null;
-  const weight_kg = formData.get('weight_kg') ? Number(formData.get('weight_kg')) : null;
-  const height_cm = formData.get('height_cm') ? Number(formData.get('height_cm')) : null;
-  const activity_level = (formData.get('activity_level') as ActivityLevel) || null;
-  const goal = (formData.get('goal') as string) || null;
-  const dietary_restrictions_arr = formData.getAll('dietary_restrictions') as string[];
-  const dietary_restrictions = dietary_restrictions_arr.length > 0 ? dietary_restrictions_arr : null;
-  const allergiesRaw = (formData.get('allergies') as string) || '';
-  const allergies = allergiesRaw.includes('|||')
-    ? allergiesRaw.split('|||').filter(Boolean).join(', ') || null
-    : allergiesRaw || null;
-  const intolerancesRaw = (formData.get('intolerances') as string) || '';
-  const intolerances = intolerancesRaw.includes('|||')
-    ? intolerancesRaw.split('|||').filter(Boolean).join(', ') || null
-    : intolerancesRaw || null;
-  const preferences = (formData.get('preferences') as string) || null;
-  const medical_notes = (formData.get('medical_notes') as string) || null;
 
   // Calcular TMB y TDEE si hay suficientes datos
   let tmb: number | null = null;

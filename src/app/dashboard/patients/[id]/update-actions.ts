@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { ActivityLevel } from '@/types/dietly';
 
+import { PATIENT_FIELD_SCHEMAS } from '../patient-schema';
+
 // Campos permitidos para actualizar via inline edit
 const ALLOWED_FIELDS = new Set([
   'name', 'email', 'phone', 'date_of_birth', 'sex',
@@ -29,6 +31,15 @@ export async function updatePatientField(
 ): Promise<{ error?: string }> {
   if (!ALLOWED_FIELDS.has(field)) return { error: 'Campo no permitido' };
 
+  const schema = PATIENT_FIELD_SCHEMAS[field];
+  if (!schema) return { error: 'Campo no permitido' };
+  const parsed = schema.safeParse(value);
+  if (!parsed.success) {
+    const firstIssue = parsed.error.issues[0];
+    return { error: firstIssue?.message ?? 'Valor no válido' };
+  }
+  const validatedValue = parsed.data as string | number | boolean | null;
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -36,13 +47,16 @@ export async function updatePatientField(
   if (!user) redirect('/login');
 
   // allow_meal_swaps llega como booleano casteado
-  let dbValue: unknown = value;
+  let dbValue: unknown = validatedValue;
   if (field === 'allow_meal_swaps') {
-    dbValue = value === 'true' || value === 1;
-  } else if (field === 'dietary_restrictions' && typeof value === 'string') {
-    const items = value.split(',').map((s) => s.trim()).filter(Boolean);
+    dbValue = validatedValue === true || validatedValue === 'true' || validatedValue === 1;
+  } else if (field === 'dietary_restrictions' && typeof validatedValue === 'string') {
+    const items = validatedValue.split(',').map((s) => s.trim()).filter(Boolean);
     dbValue = items.length > 0 ? items : null;
-  } else if (field === 'dietary_restrictions' && value === null) {
+  } else if (field === 'dietary_restrictions' && validatedValue === null) {
+    dbValue = null;
+  } else if (validatedValue === '') {
+    // Schemas con z.literal('') aceptan cadena vacía → normalizamos a null en BD
     dbValue = null;
   }
   const update: Record<string, unknown> = { [field]: dbValue };
@@ -57,7 +71,7 @@ export async function updatePatientField(
       .single();
 
     if (patient) {
-      const p = { ...patient, [field]: value };
+      const p = { ...patient, [field]: validatedValue };
       if (p.sex && p.weight_kg && p.height_cm && p.date_of_birth) {
         const age = Math.floor(
           (Date.now() - new Date(p.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25),
