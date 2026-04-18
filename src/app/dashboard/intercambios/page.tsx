@@ -19,7 +19,10 @@ type SwapRow = {
   reason: string | null;
   created_at: string;
   patient_name: string;
+  is_stale: boolean;
 };
+
+const STALE_SWAP_MS = 48 * 60 * 60 * 1000;
 
 export default async function IntercambiosPage() {
   const supabase = await createSupabaseServerClient();
@@ -37,6 +40,7 @@ export default async function IntercambiosPage() {
     .order('created_at', { ascending: false })
     .limit(100);
 
+  const now = Date.now();
   const rows: SwapRow[] = (swaps ?? []).map((s: any) => ({
     id: s.id,
     plan_id: s.plan_id,
@@ -49,6 +53,7 @@ export default async function IntercambiosPage() {
     reason: s.reason,
     created_at: s.created_at,
     patient_name: s.patients?.name ?? 'Paciente',
+    is_stale: now - new Date(s.created_at).getTime() > STALE_SWAP_MS,
   }));
 
   return (

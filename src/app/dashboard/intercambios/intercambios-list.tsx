@@ -31,6 +31,7 @@ type SwapRow = {
   reason: string | null;
   created_at: string;
   patient_name: string;
+  is_stale: boolean;
 };
 
 type Props = {
@@ -192,11 +193,18 @@ function SwapCard({
             })}
           </time>
         </div>
-        {swap.initiated_by === 'nutritionist' && (
-          <span className='rounded-full bg-blue-950/40 px-2 py-0.5 text-[10px] font-medium text-blue-400'>
-            Por ti
-          </span>
-        )}
+        <div className='flex items-center gap-1.5'>
+          {swap.status === 'pending' && swap.is_stale && (
+            <span className='rounded-full bg-red-950/40 px-2 py-0.5 text-[10px] font-medium text-red-400'>
+              Pendiente +48h
+            </span>
+          )}
+          {swap.initiated_by === 'nutritionist' && (
+            <span className='rounded-full bg-blue-950/40 px-2 py-0.5 text-[10px] font-medium text-blue-400'>
+              Por ti
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Original → Sugerido */}

@@ -44,6 +44,9 @@ export default async function DashboardPage() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoISO = thirtyDaysAgo.toISOString().split('T')[0];
 
+  // Umbral 48h para intercambios pendientes
+  const staleSwapCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+
   const [
     { data: patientsRaw },
     { data: allPendingReminders },
@@ -54,6 +57,7 @@ export default async function DashboardPage() {
     { data: whitelistEntry },
     { data: allPlans },
     { data: latestProgressPerPatient },
+    { count: staleSwapsCount },
   ] = await Promise.all([
     // Pacientes activos con estado de planes
     (supabase as any)
@@ -117,6 +121,13 @@ export default async function DashboardPage() {
       .select('patient_id, recorded_at')
       .eq('nutritionist_id', user.id)
       .order('recorded_at', { ascending: false }),
+    // Intercambios pendientes >48h (banner de aviso)
+    (supabase as any)
+      .from('meal_swaps')
+      .select('id', { count: 'exact', head: true })
+      .eq('nutritionist_id', user.id)
+      .eq('status', 'pending')
+      .lt('created_at', staleSwapCutoff) as Promise<{ count: number | null }>,
   ]);
 
   const pendingReminderPatientIds = new Set((allPendingReminders ?? []).map((r) => r.patient_id));
@@ -192,6 +203,11 @@ export default async function DashboardPage() {
       {/* Banner de recordatorios vencidos */}
       {dueReminders && dueReminders.length > 0 && (
         <DueRemindersBanner reminders={dueReminders as Array<{ id: string; remind_at: string; patients: { id: string; name: string } | null }>} />
+      )}
+
+      {/* Banner de intercambios pendientes >48h */}
+      {(staleSwapsCount ?? 0) > 0 && (
+        <StaleSwapsBanner count={staleSwapsCount ?? 0} />
       )}
 
       {/* Checklist de onboarding — desaparece cuando se completan los 4 pasos */}
@@ -520,6 +536,37 @@ function MetricCard({
   return (
     <div className={`rounded-xl border ${s.border} bg-white dark:bg-zinc-950 shadow-sm dark:shadow-none`}>
       {inner}
+    </div>
+  );
+}
+
+function StaleSwapsBanner({ count }: { count: number }) {
+  return (
+    <div className='rounded-xl border border-amber-900/40 bg-amber-950/10 p-4'>
+      <div className='flex flex-wrap items-center gap-3'>
+        <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-950/50'>
+          <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-400' aria-hidden='true'>
+            <circle cx='12' cy='12' r='10' />
+            <polyline points='12 6 12 12 16 14' />
+          </svg>
+        </div>
+        <div className='min-w-0 flex-1'>
+          <p className='text-sm font-semibold text-amber-300'>
+            {count === 1
+              ? 'Tienes 1 intercambio pendiente desde hace más de 48 horas'
+              : `Tienes ${count} intercambios pendientes desde hace más de 48 horas`}
+          </p>
+          <p className='mt-0.5 text-xs text-amber-500/80'>
+            Tus pacientes están esperando tu respuesta.
+          </p>
+        </div>
+        <Link
+          href='/dashboard/intercambios'
+          className='flex-shrink-0 rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:border-amber-700/60 hover:text-amber-200'
+        >
+          Revisar →
+        </Link>
+      </div>
     </div>
   );
 }
