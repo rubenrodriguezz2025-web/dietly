@@ -41,6 +41,9 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   // carbs_pct se almacena como porcentaje 10-80 (se convierte a decimal al enviar).
   const [edits, setEdits] = useState({ calories: '', protein_per_kg: '', carbs_pct: '' });
 
+  // Complejidad de las recetas (afecta al prompt de generación).
+  const [cookingComplexity, setCookingComplexity] = useState<'simple' | 'medium' | 'elaborate'>('medium');
+
   const calcCalories = initialTargets?.calories ?? null;
   const calcProteinPerKg = initialTargets?.protein_per_kg ?? null;
   const calcCarbsPct = initialTargets ? Math.round(initialTargets.carbs_pct * 100) : null;
@@ -122,6 +125,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
         body: JSON.stringify({
           patient_id: patientId,
           ...(hasOverrides ? { macro_overrides: overrides } : {}),
+          cooking_complexity: cookingComplexity,
         }),
         signal: controller.signal,
       });
@@ -188,7 +192,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
     } finally {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     }
-  }, [patientId, router, edits, initialTargets]);
+  }, [patientId, router, edits, initialTargets, cookingComplexity]);
 
   // ── Error ────────────────────────────────────────────────────────────────────
   if (state === 'error') {
@@ -455,6 +459,57 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
               Completa peso, altura y fecha de nacimiento para ver los objetivos estimados.
             </p>
           )}
+
+          {/* Complejidad de las recetas */}
+          <div className='mt-4'>
+            <label className='mb-1.5 block text-[11px] font-medium text-zinc-500'>
+              Complejidad de las recetas
+            </label>
+            <div
+              role='radiogroup'
+              aria-label='Complejidad de las recetas'
+              className='flex overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950/60'
+            >
+              {[
+                { value: 'simple' as const, label: 'Rápidas', hint: '5-10 min' },
+                { value: 'medium' as const, label: 'Normales', hint: '15-20 min' },
+                { value: 'elaborate' as const, label: 'Elaboradas', hint: null },
+              ].map((opt, idx) => {
+                const selected = cookingComplexity === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type='button'
+                    role='radio'
+                    aria-checked={selected}
+                    onClick={() => setCookingComplexity(opt.value)}
+                    className={cn(
+                      'flex-1 px-2 py-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a7a45] focus-visible:ring-inset',
+                      idx > 0 && 'border-l border-zinc-700',
+                      selected
+                        ? 'bg-[#1a7a45] text-white'
+                        : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
+                    )}
+                  >
+                    <span className='block leading-tight'>{opt.label}</span>
+                    {opt.hint && (
+                      <span
+                        className={cn(
+                          'block text-[9px] leading-tight',
+                          selected ? 'text-white/80' : 'text-zinc-600'
+                        )}
+                      >
+                        {opt.hint}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <p className='mt-1.5 text-[10px] leading-snug text-zinc-500'>
+              Adapta las recetas al estilo de cocina del paciente.
+            </p>
+          </div>
 
           {/* Acciones */}
           <div className='mt-4 flex gap-2'>

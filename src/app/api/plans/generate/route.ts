@@ -32,10 +32,24 @@ const macroOverridesSchema = z.object({
   carbs_pct: z.number().min(0.1).max(0.8).optional(),
 }).optional();
 
+const cookingComplexitySchema = z.enum(['simple', 'medium', 'elaborate']).optional();
+
 const generateBodySchema = z.object({
   patient_id: z.string().uuid('patient_id debe ser un UUID válido.'),
   macro_overrides: macroOverridesSchema,
+  cooking_complexity: cookingComplexitySchema,
 });
+
+type CookingComplexity = 'simple' | 'medium' | 'elaborate';
+
+const COOKING_COMPLEXITY_PROMPTS: Record<CookingComplexity, string> = {
+  simple:
+    'IMPORTANTE: Las recetas deben ser MUY sencillas, máximo 5-10 minutos de preparación, pocos ingredientes (3-5), técnicas básicas (plancha, microondas, ensalada, tostada). El paciente no quiere cocinar mucho.',
+  medium:
+    'Las recetas deben ser de complejidad media, 15-20 minutos de preparación, ingredientes accesibles, técnicas estándar (sofrito, horno, salteado).',
+  elaborate:
+    'Las recetas pueden ser elaboradas, sin límite de tiempo, técnicas variadas, ingredientes especializados. El paciente disfruta cocinando.',
+};
 
 // ── Rate limiting (A-03 + A-07) ─────────────────────────────────────────────
 
@@ -222,6 +236,7 @@ function buildDayPrompt(
   nutritionistRecipes?: Recipe[],
   rejectedMealNames?: string[],
   clinicalInsights?: ClinicalInsights | null,
+  cookingComplexity?: CookingComplexity,
 ): string {
   const restrictions = [
     patient.dietary_restrictions?.length ? patient.dietary_restrictions.join(', ') : null,
@@ -244,6 +259,9 @@ function buildDayPrompt(
     ? `\nPLATOS RECHAZADOS POR EL PACIENTE (evita estos platos o variantes muy similares):\n${rejectedMealNames.map((n) => `  - ${n}`).join('\n')}`
     : '';
   const clinicalSection = buildClinicalInsightsSection(clinicalInsights ?? null);
+  const complexitySection = cookingComplexity
+    ? `\n\n${COOKING_COMPLEXITY_PROMPTS[cookingComplexity]}`
+    : '';
 
   const carbsPctDisplay = Math.round(targets.carbs_pct * 100);
   const fatPctDisplay = Math.round(targets.fat_pct * 100);
@@ -265,7 +283,7 @@ PERFIL DEL PACIENTE:
 
 Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}.
 
-Asigna un tema culinario atractivo a este día (campo day_theme), ej: "Mediterráneo", "Atlántico", "Oriental ligero", "De la huerta", "Proteico". El tema debe reflejar el perfil de ingredientes predominante del día.`;
+Asigna un tema culinario atractivo a este día (campo day_theme), ej: "Mediterráneo", "Atlántico", "Oriental ligero", "De la huerta", "Proteico". El tema debe reflejar el perfil de ingredientes predominante del día.${complexitySection}`;
 }
 
 // buildShoppingListPrompt importado desde @/libs/ai/plan-prompts
@@ -295,6 +313,7 @@ export async function POST(req: NextRequest) {
   // leer una vez y no es accesible dentro del ReadableStream callback).
   let patient_id: string;
   let macro_overrides: MacroOverrides | undefined;
+  let cooking_complexity: CookingComplexity | undefined;
   try {
     const body = await req.json();
     const parsed = generateBodySchema.safeParse(body);
@@ -304,6 +323,7 @@ export async function POST(req: NextRequest) {
     }
     patient_id = parsed.data.patient_id;
     macro_overrides = parsed.data.macro_overrides as MacroOverrides | undefined;
+    cooking_complexity = parsed.data.cooking_complexity;
   } catch {
     return Response.json({ error: 'Cuerpo de petición inválido.' }, { status: 400 });
   }
@@ -720,7 +740,7 @@ export async function POST(req: NextRequest) {
           let dayData: PlanDay | null = null;
 
           // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
-          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, filterRecipesForPatient(nutritionistRecipes, pseudoPatient), rejectedMealNames, clinicalInsights);
+          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, filterRecipesForPatient(nutritionistRecipes, pseudoPatient), rejectedMealNames, clinicalInsights, cooking_complexity);
           try {
             const response = await callAnthropicWithResilience(
               () => anthropic.messages.create({
