@@ -13,6 +13,7 @@ import {
 } from '@/libs/ai/plan-prompts';
 import { pseudonymizePatient } from '@/libs/ai/pseudonymize';
 import { generatePlanAccessToken } from '@/libs/auth/plan-tokens';
+import { recalcPlanAggregates } from '@/libs/plan-aggregates';
 import { resendClient } from '@/libs/resend/resend-client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
@@ -142,9 +143,18 @@ export async function updateDay(
     d.day_number === dayNumber ? updatedDay : d
   );
 
+  const { weekly_averages, shopping_list } = recalcPlanAggregates(updatedDays);
+
   const { error } = await supabase
     .from('nutrition_plans')
-    .update({ content: { ...content, days: updatedDays } })
+    .update({
+      content: {
+        ...content,
+        days: updatedDays,
+        week_summary: { ...content.week_summary, weekly_averages },
+        shopping_list,
+      },
+    })
     .eq('id', planId)
     .eq('nutritionist_id', user.id);
 

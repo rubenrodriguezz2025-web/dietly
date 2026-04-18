@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { recalcPlanAggregates } from '@/libs/plan-aggregates';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Meal, PlanContent } from '@/types/dietly';
 
@@ -105,11 +106,19 @@ export async function POST(req: NextRequest) {
       fat_g: day.meals.reduce((sum: number, m: Meal) => sum + m.macros.fat_g, 0),
     };
 
+    // Recalcular agregados semanales (promedios + lista de la compra)
+    const { weekly_averages, shopping_list } = recalcPlanAggregates(content.days);
+    const updatedContent: PlanContent = {
+      ...content,
+      week_summary: { ...content.week_summary, weekly_averages },
+      shopping_list,
+    };
+
     // Actualizar plan y swap en paralelo
     const [planUpdate, swapUpdate] = await Promise.all([
       (supabaseAdminClient as any)
         .from('nutrition_plans')
-        .update({ content, updated_at: new Date().toISOString() })
+        .update({ content: updatedContent, updated_at: new Date().toISOString() })
         .eq('id', swap.plan_id),
       (supabaseAdminClient as any)
         .from('meal_swaps')
