@@ -26,7 +26,7 @@ export function MacrosSummary({ saveStatus }: MacrosSummaryProps) {
         </span>
       )}
       {saveStatus === 'error' && (
-        <span className='text-xs text-amber-500'>Error al guardar — reintentando…</span>
+        <span className='text-xs font-medium text-red-600 dark:text-red-500'>Error al guardar</span>
       )}
     </div>
   );

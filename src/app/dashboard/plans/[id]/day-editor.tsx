@@ -61,7 +61,7 @@ export function DayEditor({
         setTimeout(async () => {
           const retry = await updateDay(planId, day.day_number, day);
           if (!retry.error) markSaved();
-          else setSaveStatus('idle');
+          // Si el reintento también falla, mantener el estado de error (persistente)
         }, 2000);
       } else {
         markSaved();
@@ -75,7 +75,7 @@ export function DayEditor({
     setDirty(false);
     onSavedRef.current();
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+    savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
   }
 
   const invalidMealIndexes = day.meals
