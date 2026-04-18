@@ -9,6 +9,7 @@ import type { AnthropicErrorCode } from '@/libs/ai/resilience';
 import type { PatientGoal } from '@/types/dietly';
 import { GOAL_LABELS } from '@/types/dietly';
 import type { CalcTargets } from '@/utils/calc-targets';
+import { cn } from '@/utils/cn';
 
 import { PlanGenerationStatus } from './plan-generation-status';
 
@@ -35,6 +36,29 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   const [errorMsg, setErrorMsg] = useState('');
   const [errorCode, setErrorCode] = useState<AnthropicErrorCode | string | undefined>();
   const [paywallOpen, setPaywallOpen] = useState(false);
+
+  // Overrides de macros (strings porque los inputs son controlados; '' = usar calculado).
+  // carbs_pct se almacena como porcentaje 10-80 (se convierte a decimal al enviar).
+  const [edits, setEdits] = useState({ calories: '', protein_per_kg: '', carbs_pct: '' });
+
+  const calcCalories = initialTargets?.calories ?? null;
+  const calcProteinPerKg = initialTargets?.protein_per_kg ?? null;
+  const calcCarbsPct = initialTargets ? Math.round(initialTargets.carbs_pct * 100) : null;
+
+  const parsedCalories = edits.calories === '' ? null : Number(edits.calories);
+  const parsedProtein = edits.protein_per_kg === '' ? null : Number(edits.protein_per_kg);
+  const parsedCarbs = edits.carbs_pct === '' ? null : Number(edits.carbs_pct);
+
+  const errCalories = parsedCalories !== null && (Number.isNaN(parsedCalories) || parsedCalories < 1200 || parsedCalories > 5000);
+  const errProtein = parsedProtein !== null && (Number.isNaN(parsedProtein) || parsedProtein < 0.5 || parsedProtein > 4);
+  const errCarbs = parsedCarbs !== null && (Number.isNaN(parsedCarbs) || parsedCarbs < 10 || parsedCarbs > 80);
+  const hasErrors = errCalories || errProtein || errCarbs;
+
+  // Grasa derivada en vivo (solo lectura): 100% − carbs%.
+  const effectiveCarbsPct = !errCarbs && parsedCarbs !== null ? parsedCarbs : calcCarbsPct;
+  const derivedFatPct = effectiveCarbsPct !== null ? 100 - effectiveCarbsPct : null;
+
+  const handleRestore = () => setEdits({ calories: '', protein_per_kg: '', carbs_pct: '' });
 
   // A-11: AbortController ref para cancelar el stream al desmontar
   const abortRef = useRef<AbortController | null>(null);
@@ -76,11 +100,29 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
       setState('timeout');
     }, GENERATION_TIMEOUT_MS);
 
+    // Construir macro_overrides desde el estado actual (solo campos editados
+     // y válidos distintos al calculado).
+    const cal = edits.calories === '' ? null : Number(edits.calories);
+    const pro = edits.protein_per_kg === '' ? null : Number(edits.protein_per_kg);
+    const carb = edits.carbs_pct === '' ? null : Number(edits.carbs_pct);
+    const initCalories = initialTargets?.calories ?? null;
+    const initProtein = initialTargets?.protein_per_kg ?? null;
+    const initCarbs = initialTargets ? Math.round(initialTargets.carbs_pct * 100) : null;
+
+    const overrides: { calories?: number; protein_per_kg?: number; carbs_pct?: number } = {};
+    if (cal !== null && !Number.isNaN(cal) && cal !== initCalories) overrides.calories = cal;
+    if (pro !== null && !Number.isNaN(pro) && pro !== initProtein) overrides.protein_per_kg = pro;
+    if (carb !== null && !Number.isNaN(carb) && carb !== initCarbs) overrides.carbs_pct = carb / 100;
+    const hasOverrides = Object.keys(overrides).length > 0;
+
     try {
       const res = await fetch('/api/plans/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patient_id: patientId }),
+        body: JSON.stringify({
+          patient_id: patientId,
+          ...(hasOverrides ? { macro_overrides: overrides } : {}),
+        }),
         signal: controller.signal,
       });
       if (!res.ok || !res.body) {
@@ -146,7 +188,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
     } finally {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     }
-  }, [patientId, router]);
+  }, [patientId, router, edits, initialTargets]);
 
   // ── Error ────────────────────────────────────────────────────────────────────
   if (state === 'error') {
@@ -199,7 +241,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   // ── Confirmación de generación ────────────────────────────────────────────────
   if (state === 'confirm') {
     return (
-      <div className='w-72 rounded-xl border border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl'>
+      <div className='w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl'>
         <div className='flex items-center justify-between border-b border-zinc-800 px-4 py-3'>
           <span className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
             Confirmar generación
@@ -278,16 +320,136 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
             )}
           </div>
           {initialTargets ? (
-            <div className='grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-lg bg-zinc-800/60 px-3 py-2.5'>
-              <span className='text-[12px] text-zinc-500'>Kcal/día</span>
-              <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.calories} kcal</span>
-              <span className='text-[12px] text-zinc-500'>Proteína</span>
-              <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.protein_g}g · {initialTargets.protein_per_kg}g/kg</span>
-              <span className='text-[12px] text-zinc-500'>Carbohidratos</span>
-              <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.carbs_g}g · {Math.round(initialTargets.carbs_pct * 100)}%</span>
-              <span className='text-[12px] text-zinc-500'>Grasa</span>
-              <span className='text-right text-[12px] font-semibold tabular-nums text-zinc-200'>{initialTargets.fat_g}g · {Math.round(initialTargets.fat_pct * 100)}%</span>
-            </div>
+            <>
+              <div className='space-y-2 rounded-lg bg-zinc-800/60 px-3 py-2.5'>
+                {/* Calorías */}
+                <div className='flex items-center justify-between gap-2'>
+                  <label htmlFor='macro-calories' className='text-[12px] text-zinc-500'>
+                    Kcal/día
+                  </label>
+                  <div className='flex items-center gap-1.5'>
+                    <input
+                      id='macro-calories'
+                      type='number'
+                      inputMode='numeric'
+                      min={1200}
+                      max={5000}
+                      step={10}
+                      placeholder={String(calcCalories)}
+                      value={edits.calories}
+                      onChange={(e) => setEdits((s) => ({ ...s, calories: e.target.value }))}
+                      aria-invalid={errCalories}
+                      className={cn(
+                        'w-20 rounded-md border bg-zinc-950/60 px-2 py-0.5 text-right text-[12px] font-semibold tabular-nums text-zinc-200 transition-colors',
+                        'focus-visible:outline-none focus-visible:ring-1',
+                        errCalories
+                          ? 'border-red-500/70 focus-visible:ring-red-500'
+                          : 'border-zinc-700 hover:border-zinc-600 focus-visible:ring-[#1a7a45]'
+                      )}
+                    />
+                    <span className='w-[60px] text-right text-[10px] text-zinc-600'>
+                      (calc: {calcCalories})
+                    </span>
+                  </div>
+                </div>
+
+                {/* Proteína */}
+                <div className='flex items-center justify-between gap-2'>
+                  <label htmlFor='macro-protein' className='text-[12px] text-zinc-500'>
+                    Proteína g/kg
+                  </label>
+                  <div className='flex items-center gap-1.5'>
+                    <input
+                      id='macro-protein'
+                      type='number'
+                      inputMode='decimal'
+                      min={0.5}
+                      max={4}
+                      step={0.1}
+                      placeholder={String(calcProteinPerKg)}
+                      value={edits.protein_per_kg}
+                      onChange={(e) => setEdits((s) => ({ ...s, protein_per_kg: e.target.value }))}
+                      aria-invalid={errProtein}
+                      className={cn(
+                        'w-20 rounded-md border bg-zinc-950/60 px-2 py-0.5 text-right text-[12px] font-semibold tabular-nums text-zinc-200 transition-colors',
+                        'focus-visible:outline-none focus-visible:ring-1',
+                        errProtein
+                          ? 'border-red-500/70 focus-visible:ring-red-500'
+                          : 'border-zinc-700 hover:border-zinc-600 focus-visible:ring-[#1a7a45]'
+                      )}
+                    />
+                    <span className='w-[60px] text-right text-[10px] text-zinc-600'>
+                      (calc: {calcProteinPerKg})
+                    </span>
+                  </div>
+                </div>
+
+                {/* Carbohidratos */}
+                <div className='flex items-center justify-between gap-2'>
+                  <label htmlFor='macro-carbs' className='text-[12px] text-zinc-500'>
+                    Carbs %
+                  </label>
+                  <div className='flex items-center gap-1.5'>
+                    <input
+                      id='macro-carbs'
+                      type='number'
+                      inputMode='numeric'
+                      min={10}
+                      max={80}
+                      step={1}
+                      placeholder={String(calcCarbsPct)}
+                      value={edits.carbs_pct}
+                      onChange={(e) => setEdits((s) => ({ ...s, carbs_pct: e.target.value }))}
+                      aria-invalid={errCarbs}
+                      className={cn(
+                        'w-20 rounded-md border bg-zinc-950/60 px-2 py-0.5 text-right text-[12px] font-semibold tabular-nums text-zinc-200 transition-colors',
+                        'focus-visible:outline-none focus-visible:ring-1',
+                        errCarbs
+                          ? 'border-red-500/70 focus-visible:ring-red-500'
+                          : 'border-zinc-700 hover:border-zinc-600 focus-visible:ring-[#1a7a45]'
+                      )}
+                    />
+                    <span className='w-[60px] text-right text-[10px] text-zinc-600'>
+                      (calc: {calcCarbsPct})
+                    </span>
+                  </div>
+                </div>
+
+                {/* Grasa (derivada, solo lectura) */}
+                <div className='flex items-center justify-between gap-2 border-t border-zinc-700/50 pt-2'>
+                  <span className='text-[12px] text-zinc-500'>Grasa %</span>
+                  <div className='flex items-center gap-1.5'>
+                    <span className='inline-flex h-[22px] w-20 items-center justify-end rounded-md bg-zinc-950/40 px-2 text-[12px] font-semibold tabular-nums text-zinc-400'>
+                      {derivedFatPct ?? '—'}%
+                    </span>
+                    <span className='w-[60px] text-right text-[10px] text-zinc-600'>
+                      (auto)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hint + restaurar */}
+              <div className='mt-2 flex items-start justify-between gap-2'>
+                <p
+                  className={cn(
+                    'text-[10px] leading-snug',
+                    hasErrors ? 'text-red-400' : 'text-zinc-500'
+                  )}
+                >
+                  {hasErrors
+                    ? 'Hay valores fuera de rango. Revísalos antes de generar.'
+                    : 'Ajusta los macros si necesitas cambiar los valores calculados.'}
+                </p>
+                <button
+                  type='button'
+                  onClick={handleRestore}
+                  className='whitespace-nowrap text-[10px] text-zinc-500 transition-colors hover:text-zinc-300 hover:underline focus-visible:outline-none focus-visible:underline'
+                >
+                  Restaurar calculados
+                </button>
+              </div>
+            </>
           ) : (
             <p className='rounded-lg bg-amber-950/40 px-3 py-2.5 text-[11px] text-amber-400'>
               Completa peso, altura y fecha de nacimiento para ver los objetivos estimados.
@@ -299,7 +461,17 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
             <button type='button' onClick={handleCancel} className='flex-1 rounded-lg border border-zinc-700 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500'>
               Cancelar
             </button>
-            <button type='button' onClick={handleGenerate} className='flex-1 rounded-lg bg-[#1a7a45] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#155f38] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-900 active:bg-[#0f4a2c]'>
+            <button
+              type='button'
+              onClick={handleGenerate}
+              disabled={hasErrors}
+              className={cn(
+                'flex-1 rounded-lg bg-[#1a7a45] py-2 text-xs font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-900',
+                hasErrors
+                  ? 'cursor-not-allowed opacity-50'
+                  : 'hover:bg-[#155f38] active:bg-[#0f4a2c]'
+              )}
+            >
               Generar plan
             </button>
           </div>
