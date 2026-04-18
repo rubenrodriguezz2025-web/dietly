@@ -27,9 +27,10 @@ export type MealCardProps = {
   dayNumber: number;
   mealIndex: number;
   onChange: (updated: Meal) => void;
+  readOnly?: boolean;
 };
 
-export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealIndex, onChange }: MealCardProps) {
+export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealIndex, onChange, readOnly = false }: MealCardProps) {
   const [isRecalculating, startRecalc] = useTransition();
   const [recalcError, setRecalcError] = useState<string | null>(null);
   const [macrosDirty, setMacrosDirty] = useState(false);
@@ -139,6 +140,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
               onChange={(meal_name) => onChange({ ...meal, meal_name })}
               className='text-lg font-semibold text-gray-900 dark:text-zinc-100'
               placeholder='Nombre del plato…'
+              readOnly={readOnly}
             />
           </h4>
         </div>
@@ -151,6 +153,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
               unit='kcal'
               bold
               onChange={(calories) => onChange({ ...meal, calories })}
+              readOnly={readOnly}
             />
             <span className='select-none text-gray-300 dark:text-zinc-800'>·</span>
             <EditableNumber
@@ -160,6 +163,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
               onChange={(protein_g) =>
                 onChange({ ...meal, macros: { ...meal.macros, protein_g } })
               }
+              readOnly={readOnly}
             />
             <EditableNumber
               value={meal.macros.carbs_g}
@@ -168,6 +172,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
               onChange={(carbs_g) =>
                 onChange({ ...meal, macros: { ...meal.macros, carbs_g } })
               }
+              readOnly={readOnly}
             />
             <EditableNumber
               value={meal.macros.fat_g}
@@ -176,6 +181,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
               onChange={(fat_g) =>
                 onChange({ ...meal, macros: { ...meal.macros, fat_g } })
               }
+              readOnly={readOnly}
             />
           </div>
 
@@ -249,14 +255,15 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
             key={i}
             ingredient={ing}
             isDraft={isDraft}
+            readOnly={readOnly}
             onQuantityChanged={() => setMacrosDirty(true)}
             onChange={(updated) => handleIngredientChange(i, updated)}
-            onDelete={isDraft ? () => handleDeleteIngredient(i) : undefined}
+            onDelete={isDraft && !readOnly ? () => handleDeleteIngredient(i) : undefined}
           />
         ))}
 
         {/* Añadir ingrediente */}
-        {isDraft &&
+        {!readOnly && isDraft &&
           (addingIngredient ? (
             <AddIngredientForm
               onAdd={handleAddIngredient}
@@ -287,6 +294,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
           placeholder='Instrucciones de preparación…'
           onChange={(preparation) => onChange({ ...meal, preparation })}
           textClassName='text-sm text-gray-600 dark:text-zinc-300'
+          readOnly={readOnly}
         />
       </div>
 
@@ -301,6 +309,7 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
             placeholder='Notas o sustituciones…'
             onChange={(notes) => onChange({ ...meal, notes })}
             textClassName='text-sm italic text-gray-500 dark:text-zinc-400'
+            readOnly={readOnly}
           />
         </div>
       )}

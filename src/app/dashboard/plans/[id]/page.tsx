@@ -333,6 +333,7 @@ export default async function PlanPage({
           days={content.days}
           planId={id}
           isDraft={plan.status === 'draft'}
+          readOnly={plan.status === 'sent'}
           validationResult={validationResult}
         />
       ) : (

@@ -12,6 +12,7 @@ interface Props {
   days: PlanDay[];
   planId: string;
   isDraft: boolean;
+  readOnly?: boolean;
   validationResult?: ValidationResult;
 }
 
@@ -29,7 +30,7 @@ const DAY_SHORT: Record<string, string> = {
 
 // ── PlanEditor ────────────────────────────────────────────────────────────────
 
-export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
+export function PlanEditor({ days, planId, isDraft, readOnly = false, validationResult }: Props) {
   const [dirtyDays, setDirtyDays] = useState<Set<number>>(new Set());
   const [activeDay, setActiveDay] = useState<number>(days[0]?.day_number ?? 1);
 
@@ -124,6 +125,7 @@ export function PlanEditor({ days, planId, isDraft, validationResult }: Props) {
             day={day}
             planId={planId}
             isDraft={isDraft}
+            readOnly={readOnly}
             onDirty={() => handleDirty(day.day_number)}
             onSaved={() => handleSaved(day.day_number)}
           />

@@ -14,6 +14,7 @@ export type DayHeaderProps = {
   planId: string;
   onUpdateDayTotals: (patch: Partial<Pick<PlanDay, 'total_calories' | 'total_macros'>>) => void;
   onDismissHint: () => void;
+  readOnly?: boolean;
 };
 
 export function DayHeader({
@@ -24,6 +25,7 @@ export function DayHeader({
   planId,
   onUpdateDayTotals,
   onDismissHint,
+  readOnly = false,
 }: DayHeaderProps) {
   return (
     <>
@@ -41,6 +43,7 @@ export function DayHeader({
               value={day.total_calories}
               unit='kcal'
               onChange={(total_calories) => onUpdateDayTotals({ total_calories })}
+              readOnly={readOnly}
             />
             <span className='select-none text-gray-300 dark:text-zinc-800'>·</span>
             <EditableNumber
@@ -50,6 +53,7 @@ export function DayHeader({
               onChange={(protein_g) =>
                 onUpdateDayTotals({ total_macros: { ...day.total_macros, protein_g } })
               }
+              readOnly={readOnly}
             />
             <span className='select-none text-gray-300 dark:text-zinc-800'>·</span>
             <EditableNumber
@@ -59,6 +63,7 @@ export function DayHeader({
               onChange={(carbs_g) =>
                 onUpdateDayTotals({ total_macros: { ...day.total_macros, carbs_g } })
               }
+              readOnly={readOnly}
             />
             <span className='select-none text-gray-300 dark:text-zinc-800'>·</span>
             <EditableNumber
@@ -68,6 +73,7 @@ export function DayHeader({
               onChange={(fat_g) =>
                 onUpdateDayTotals({ total_macros: { ...day.total_macros, fat_g } })
               }
+              readOnly={readOnly}
             />
           </div>
         </div>

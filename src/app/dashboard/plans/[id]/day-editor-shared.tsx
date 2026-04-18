@@ -199,11 +199,13 @@ export function EditableField({
   onChange,
   className = '',
   placeholder = '—',
+  readOnly = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   className?: string;
   placeholder?: string;
+  readOnly?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -211,6 +213,14 @@ export function EditableField({
   function startEdit() { setDraft(value); setEditing(true); }
   function confirm() { onChange(draft); setEditing(false); }
   function cancel() { setEditing(false); }
+
+  if (readOnly) {
+    return (
+      <span className={`inline-flex items-center px-1.5 py-0.5 ${className}`}>
+        {value || <span className='italic text-gray-400 dark:text-zinc-600'>{placeholder}</span>}
+      </span>
+    );
+  }
 
   if (editing) {
     return (
@@ -259,6 +269,7 @@ export function EditableNumber({
   bold,
   size = 'default',
   onQuantityChanged,
+  readOnly = false,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -266,6 +277,7 @@ export function EditableNumber({
   bold?: boolean;
   size?: 'default' | 'sm';
   onQuantityChanged?: () => void;
+  readOnly?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -282,6 +294,15 @@ export function EditableNumber({
   }
 
   function cancel() { setEditing(false); }
+
+  if (readOnly) {
+    return (
+      <span className={`inline-flex items-center gap-0.5 px-0.5 py-0.5 ${bold ? 'font-semibold text-gray-900 dark:text-zinc-100' : size === 'sm' ? 'text-gray-500 dark:text-zinc-400' : 'text-gray-600 dark:text-zinc-300'}`}>
+        <span className='tabular-nums'>{value}</span>
+        {unit && <span className='ml-0.5 text-gray-400 dark:text-zinc-500'>{unit}</span>}
+      </span>
+    );
+  }
 
   if (editing) {
     return (
@@ -329,11 +350,13 @@ export function EditableArea({
   onChange,
   placeholder = '—',
   textClassName = '',
+  readOnly = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   textClassName?: string;
+  readOnly?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -341,6 +364,16 @@ export function EditableArea({
   function startEdit() { setDraft(value); setEditing(true); }
   function confirm() { onChange(draft); setEditing(false); }
   function cancel() { setEditing(false); }
+
+  if (readOnly) {
+    return (
+      <div className='w-full px-3 py-2'>
+        <span className={`block leading-relaxed ${textClassName}`}>
+          {value || <span className='italic text-gray-400 dark:text-zinc-500'>{placeholder}</span>}
+        </span>
+      </div>
+    );
+  }
 
   if (editing) {
     return (
@@ -391,12 +424,14 @@ export function IngredientRow({
   onQuantityChanged,
   onDelete,
   isDraft,
+  readOnly = false,
 }: {
   ingredient: Ingredient;
   onChange: (updated: Ingredient) => void;
   onQuantityChanged?: () => void;
   onDelete?: () => void;
   isDraft?: boolean;
+  readOnly?: boolean;
 }) {
   return (
     <li className='group/ing flex items-center justify-between border-b border-gray-100 dark:border-zinc-800/30 py-1.5 text-sm transition-colors duration-150'>
@@ -406,6 +441,7 @@ export function IngredientRow({
           value={ingredient.name}
           onChange={(name) => onChange({ ...ingredient, name })}
           className='text-gray-700 dark:text-zinc-200'
+          readOnly={readOnly}
         />
       </span>
       <span className='flex items-center gap-1 flex-shrink-0 text-xs'>
@@ -414,13 +450,15 @@ export function IngredientRow({
           onQuantityChanged={onQuantityChanged}
           onChange={(quantity) => onChange({ ...ingredient, quantity })}
           size='sm'
+          readOnly={readOnly}
         />
         <EditableField
           value={ingredient.unit}
           onChange={(unit) => onChange({ ...ingredient, unit })}
           className='text-gray-400 dark:text-zinc-400'
+          readOnly={readOnly}
         />
-        {isDraft && onDelete && (
+        {!readOnly && isDraft && onDelete && (
           <button
             type='button'
             onClick={onDelete}

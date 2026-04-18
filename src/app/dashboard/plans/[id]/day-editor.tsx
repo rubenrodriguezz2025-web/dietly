@@ -15,12 +15,14 @@ export function DayEditor({
   day: initialDay,
   planId,
   isDraft,
+  readOnly = false,
   onDirty,
   onSaved,
 }: {
   day: PlanDay;
   planId: string;
   isDraft: boolean;
+  readOnly?: boolean;
   onDirty: () => void;
   onSaved: () => void;
 }) {
@@ -48,6 +50,7 @@ export function DayEditor({
       isFirstRender.current = false;
       return;
     }
+    if (readOnly) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(async () => {
@@ -120,10 +123,14 @@ export function DayEditor({
         planId={planId}
         onUpdateDayTotals={updateDayTotals}
         onDismissHint={() => setHintDismissed(true)}
+        readOnly={readOnly}
       />
 
       {/* Comidas */}
-      <div className='flex flex-col gap-4 p-4'>
+      <div
+        className={`flex flex-col gap-4 p-4 ${readOnly ? 'pointer-events-none opacity-60' : ''}`}
+        aria-disabled={readOnly}
+      >
         {day.meals.map((meal, i) => (
           <MealCard
             key={i}
@@ -134,6 +141,7 @@ export function DayEditor({
             dayNumber={day.day_number}
             mealIndex={i}
             onChange={(updated) => updateMeal(i, updated)}
+            readOnly={readOnly}
           />
         ))}
       </div>
