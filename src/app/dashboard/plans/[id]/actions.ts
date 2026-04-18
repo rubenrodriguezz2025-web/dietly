@@ -212,12 +212,43 @@ export async function approvePlan(
     welcome_message: string | null;
   };
 
+  // Copiar el logo a una ruta inmutable para que el plan aprobado conserve
+  // su logo original aunque el nutri lo cambie o lo borre después.
+  // Fallback: si la copia falla, usar la ruta mutable (mejor que ningún logo).
+  let snapshotLogoPath: string | null = p.logo_url;
+  if (p.logo_url) {
+    try {
+      const dotIdx = p.logo_url.lastIndexOf('.');
+      const ext = dotIdx >= 0 ? p.logo_url.slice(dotIdx + 1) : 'webp';
+      const snapshotPath = `${user.id}/snapshots/${planId}.${ext}`;
+
+      const { data: original, error: dlError } = await supabaseAdminClient.storage
+        .from('nutritionist-logos')
+        .download(p.logo_url);
+
+      if (dlError || !original) throw dlError ?? new Error('logo descarga vacía');
+
+      const contentType = original.type || 'image/webp';
+      const buffer = Buffer.from(await original.arrayBuffer());
+
+      const { error: upError } = await supabaseAdminClient.storage
+        .from('nutritionist-logos')
+        .upload(snapshotPath, buffer, { contentType, upsert: true });
+
+      if (upError) throw upError;
+
+      snapshotLogoPath = snapshotPath;
+    } catch (err) {
+      console.error('[approvePlan] No se pudo congelar el logo, se usa la ruta original:', err);
+    }
+  }
+
   const branding_snapshot = {
     show_macros: p.show_macros,
     show_shopping_list: p.show_shopping_list,
     primary_color: p.primary_color,
     font_preference: p.font_preference,
-    logo_url: p.logo_url,
+    logo_url: snapshotLogoPath,
     clinic_name: p.clinic_name,
     college_number: p.college_number,
     welcome_message: p.welcome_message,
