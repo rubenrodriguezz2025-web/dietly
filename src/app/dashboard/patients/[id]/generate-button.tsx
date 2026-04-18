@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback,useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { PaywallModal } from '@/components/PaywallModal';
@@ -11,10 +12,11 @@ import { GOAL_LABELS } from '@/types/dietly';
 import type { CalcTargets } from '@/utils/calc-targets';
 import { cn } from '@/utils/cn';
 
+import { checkDuplicatePlan } from './check-duplicate-plan';
 import { PlanGenerationStatus } from './plan-generation-status';
 
 
-type State = 'idle' | 'confirm' | 'generating' | 'error' | 'timeout';
+type State = 'idle' | 'checking' | 'duplicate' | 'confirm' | 'generating' | 'error' | 'timeout';
 
 const GENERATION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos
 
@@ -36,6 +38,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   const [errorMsg, setErrorMsg] = useState('');
   const [errorCode, setErrorCode] = useState<AnthropicErrorCode | string | undefined>();
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [duplicatePlanId, setDuplicatePlanId] = useState<string | null>(null);
 
   // Overrides de macros (strings porque los inputs son controlados; '' = usar calculado).
   // carbs_pct se almacena como porcentaje 10-80 (se convierte a decimal al enviar).
@@ -78,7 +81,24 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   function handleCancel() {
     abortRef.current?.abort();
     setState('idle');
+    setDuplicatePlanId(null);
   }
+
+  const handleStart = useCallback(async () => {
+    setState('checking');
+    try {
+      const result = await checkDuplicatePlan(patientId);
+      if (result.exists) {
+        setDuplicatePlanId(result.planId);
+        setState('duplicate');
+      } else {
+        setState('confirm');
+      }
+    } catch {
+      // Si el check falla, no bloquear — pasar al flujo normal
+      setState('confirm');
+    }
+  }, [patientId]);
 
   function handleRetry() {
     setState('idle');
@@ -240,6 +260,69 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   // ── Generando ────────────────────────────────────────────────────────────────
   if (state === 'generating') {
     return <PlanGenerationStatus variant='generating' currentDay={currentDay} />;
+  }
+
+  // ── Comprobando duplicado ──────────────────────────────────────────────────
+  if (state === 'checking') {
+    return (
+      <div className='inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-400'>
+        <span className='inline-block h-3 w-3 animate-spin rounded-full border border-zinc-500 border-t-transparent' aria-hidden='true' />
+        Comprobando planes existentes…
+      </div>
+    );
+  }
+
+  // ── Aviso de plan duplicado ────────────────────────────────────────────────
+  if (state === 'duplicate') {
+    return (
+      <div className='w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-amber-600/40 bg-amber-950/20 shadow-xl'>
+        <div className='flex items-center justify-between border-b border-amber-900/40 px-4 py-3'>
+          <span className='text-xs font-semibold uppercase tracking-wider text-amber-400'>
+            Plan ya existe
+          </span>
+          <button
+            type='button'
+            onClick={handleCancel}
+            aria-label='Cancelar'
+            className='rounded p-1 text-zinc-600 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500'
+          >
+            <svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+              <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
+            </svg>
+          </button>
+        </div>
+
+        <div className='px-4 pt-3 pb-4'>
+          <p className='text-xs leading-relaxed text-amber-200/90'>
+            Ya existe un plan para este paciente en la semana de inicio. Generar uno nuevo creará un plan duplicado.
+          </p>
+          <div className='mt-4 flex flex-col gap-2'>
+            {duplicatePlanId && (
+              <Link
+                href={`/dashboard/plans/${duplicatePlanId}`}
+                className='rounded-lg border border-zinc-700 bg-zinc-900 py-2 text-center text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500'
+              >
+                Ver plan existente →
+              </Link>
+            )}
+            <button
+              type='button'
+              onClick={() => setState('confirm')}
+              className='rounded-lg bg-amber-600/80 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-900'
+            >
+              Generar uno nuevo de todos modos
+            </button>
+            <button
+              type='button'
+              onClick={handleCancel}
+              className='rounded-lg py-1.5 text-[11px] text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:underline'
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // ── Confirmación de generación ────────────────────────────────────────────────
@@ -568,7 +651,7 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   // ── Idle ────────────────────────────────────────────────────────────────────
   return (
     <>
-      <Button onClick={() => setState('confirm')}>
+      <Button onClick={handleStart}>
         + Generar plan
       </Button>
       <PaywallModal
