@@ -11,6 +11,7 @@ import { GOAL_LABELS, PLAN_STATUS_LABELS } from '@/types/dietly';
 import { GeneratingPoller } from './generating-poller';
 import { PlanActionsBar } from './plan-actions-bar';
 import { PlanEditor } from './plan-editor';
+import { PostApprovalBanner } from './post-approval-banner';
 import { ReminderModal } from './reminder-modal';
 import { RetryGenerationButton } from './retry-generation-button';
 
@@ -140,11 +141,6 @@ export default async function PlanPage({
           {plan.status === 'draft' && (
             <AiBadge generatedAt={plan.generated_at} />
           )}
-          {plan.status === 'approved' && (
-            <p className='mt-1 text-xs text-emerald-500/70'>
-              Plan aprobado por el nutricionista · Listo para enviar al paciente
-            </p>
-          )}
         </div>
 
         {!isGenerating && !hasError && (
@@ -164,6 +160,14 @@ export default async function PlanPage({
           />
         )}
       </div>
+
+      {/* Banner: plan aprobado pero no enviado aún — GRAVE-3 */}
+      {!isGenerating && !hasError && plan.status === 'approved' && !plan.sent_at && (
+        <PostApprovalBanner
+          planId={id}
+          hasEmail={!!plan.patients?.email}
+        />
+      )}
 
       {/* Lifecycle stepper */}
       {!isGenerating && !hasError && (
