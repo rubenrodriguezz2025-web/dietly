@@ -279,6 +279,7 @@ export default async function PaginaPaciente({
 
   // Ajustes de marca + verificación de consentimiento previo (en paralelo)
   let showMacros = true;
+  let showShoppingList = true;
   let nombreDN: string | null = null;
   let colegiado: string | null = null;
   let clinicName: string | null = null;
@@ -294,7 +295,7 @@ export default async function PaginaPaciente({
     const [profileResult, consentResult, swapsResult] = await Promise.all([
       (supabaseAdminClient as any)
         .from('profiles')
-        .select('show_macros, full_name, college_number, primary_color, clinic_name, whatsapp_number, logo_url')
+        .select('show_macros, show_shopping_list, full_name, college_number, primary_color, clinic_name, whatsapp_number, logo_url')
         .eq('id', pacienteData.nutritionist_id)
         .single(),
       pacienteData?.id
@@ -316,6 +317,7 @@ export default async function PaginaPaciente({
 
     const profileBrand = profileResult.data;
     if (profileBrand?.show_macros === false) showMacros = false;
+    if (profileBrand?.show_shopping_list === false) showShoppingList = false;
     nombreDN = profileBrand?.full_name ?? null;
     colegiado = profileBrand?.college_number ?? null;
     clinicName = profileBrand?.clinic_name ?? null;
@@ -421,8 +423,8 @@ export default async function PaginaPaciente({
             mealSwaps={mealSwaps}
           />
 
-          {/* Lista de la compra interactiva */}
-          {content.shopping_list && (
+          {/* Lista de la compra interactiva — oculta si el DN lo desactivó en Ajustes */}
+          {showShoppingList && content.shopping_list && (
             <ListaCompraInteractiva
               shoppingList={aggregatedShoppingList}
               categorias={CATEGORIAS_COMPRA}
