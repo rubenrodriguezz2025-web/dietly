@@ -175,10 +175,10 @@ export async function approvePlan(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'No autenticado.' };
 
-  // Verificar que el nutricionista tiene nº de colegiado antes de aprobar
+  // Cargar perfil completo para validar colegiado + construir snapshot de branding
   const { data: profile } = await supabase
     .from('profiles')
-    .select('college_number')
+    .select('college_number, show_macros, show_shopping_list, primary_color, font_preference, logo_url, clinic_name, welcome_message')
     .eq('id', user.id)
     .single();
 
@@ -186,10 +186,55 @@ export async function approvePlan(
     return { error: 'Necesitas añadir tu número de colegiado en Ajustes antes de aprobar un plan.' };
   }
 
+  // Cargar contenido actual del plan para inyectar branding_snapshot
+  const { data: currentPlan } = (await supabase
+    .from('nutrition_plans')
+    .select('content')
+    .eq('id', planId)
+    .eq('nutritionist_id', user.id)
+    .single()) as { data: { content: PlanContent } | null };
+
+  if (!currentPlan) {
+    return { error: 'No se encontró el plan o no tienes permiso para aprobarlo.' };
+  }
+
+  const p = profile as {
+    college_number: string | null;
+    show_macros: boolean | null;
+    show_shopping_list: boolean | null;
+    primary_color: string | null;
+    font_preference: string | null;
+    logo_url: string | null;
+    clinic_name: string | null;
+    welcome_message: string | null;
+  };
+
+  const branding_snapshot = {
+    show_macros: p.show_macros,
+    show_shopping_list: p.show_shopping_list,
+    primary_color: p.primary_color,
+    font_preference: p.font_preference,
+    logo_url: p.logo_url,
+    clinic_name: p.clinic_name,
+    college_number: p.college_number,
+    welcome_message: p.welcome_message,
+  };
+
+  const updatedContent: PlanContent = {
+    ...currentPlan.content,
+    branding_snapshot,
+  };
+
   const { error, count } = await supabase
     .from('nutrition_plans')
     .update(
-      { status: 'approved', approved_at: new Date().toISOString() },
+      {
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+        content: updatedContent,
+        // Invalidar caché de PDF para regenerar con el snapshot recién congelado
+        pdf_generated_at: null,
+      },
       { count: 'exact' }
     )
     .eq('id', planId)

@@ -56,6 +56,22 @@ export type ShoppingList = {
   pantry: string[];
 };
 
+/**
+ * Snapshot de la marca/toggles del nutricionista capturado en el momento de
+ * aprobar el plan. Evita que cambios posteriores en el perfil modifiquen
+ * retroactivamente planes ya aprobados/enviados.
+ */
+export type BrandingSnapshot = {
+  show_macros: boolean | null;
+  show_shopping_list: boolean | null;
+  primary_color: string | null;
+  font_preference: string | null;
+  logo_url: string | null;
+  clinic_name: string | null;
+  college_number: string | null;
+  welcome_message: string | null;
+};
+
 export type PlanContent = {
   week_summary: {
     target_daily_calories: number;
@@ -69,6 +85,7 @@ export type PlanContent = {
   };
   days: PlanDay[];
   shopping_list: ShoppingList;
+  branding_snapshot?: BrandingSnapshot;
 };
 
 export type Profile = {

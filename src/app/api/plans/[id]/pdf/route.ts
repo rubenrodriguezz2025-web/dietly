@@ -97,6 +97,10 @@ export async function GET(
     console.error('[PDF] Error al cargar perfil del nutricionista:', profileError.message);
   }
 
+  // Snapshot de branding congelado al aprobar — prevalece sobre el perfil actual.
+  // Si el plan es anterior al snapshot (planes antiguos), fallback al perfil.
+  const snapshot = content.branding_snapshot ?? null;
+
   const profile: Pick<Profile, 'full_name' | 'clinic_name' | 'college_number'> & {
     primary_color?: string | null;
     show_macros?: boolean | null;
@@ -104,9 +108,18 @@ export async function GET(
     welcome_message?: string | null;
     font_preference?: FontPreference | null;
     profile_photo_url?: string | null;
+    logo_url?: string | null;
   } = {
     ...(profileData ?? { full_name: '', clinic_name: null, college_number: null }),
-    font_preference: ((profileData?.font_preference as string | null) ?? 'clasica') as FontPreference,
+    // Snapshot-first para los campos que pueden cambiar en Ajustes
+    clinic_name: snapshot?.clinic_name ?? (profileData?.clinic_name as string | null) ?? null,
+    college_number: snapshot?.college_number ?? (profileData?.college_number as string | null) ?? null,
+    primary_color: snapshot?.primary_color ?? (profileData?.primary_color as string | null) ?? null,
+    show_macros: snapshot?.show_macros ?? (profileData?.show_macros as boolean | null) ?? null,
+    show_shopping_list: snapshot?.show_shopping_list ?? (profileData?.show_shopping_list as boolean | null) ?? null,
+    welcome_message: snapshot?.welcome_message ?? (profileData?.welcome_message as string | null) ?? null,
+    font_preference: ((snapshot?.font_preference ?? (profileData?.font_preference as string | null)) ?? 'clasica') as FontPreference,
+    logo_url: snapshot?.logo_url ?? (profileData?.logo_url as string | null) ?? null,
     // Si full_name está vacío (perfil sin completar o query fallida), usar metadatos de auth como fallback
     full_name: profileData?.full_name
       || (user.user_metadata?.full_name as string | undefined)
@@ -141,9 +154,10 @@ export async function GET(
   let profile_photo_uri: string | null = null;
 
   // Descargar logo, firma y foto en paralelo (A-10)
+  // Logo desde el snapshot si existe, fallback a perfil (plan antiguo)
   const downloads = await Promise.all([
-    is_pro && profileData?.logo_url
-      ? downloadAsDataUri('nutritionist-logos', profileData.logo_url as string)
+    is_pro && profile.logo_url
+      ? downloadAsDataUri('nutritionist-logos', profile.logo_url)
       : Promise.resolve(null),
     is_pro && profileData?.signature_url
       ? downloadAsDataUri('nutritionist-signatures', profileData.signature_url as string)

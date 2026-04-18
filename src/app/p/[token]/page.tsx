@@ -316,14 +316,22 @@ export default async function PaginaPaciente({
     ]);
 
     const profileBrand = profileResult.data;
-    if (profileBrand?.show_macros === false) showMacros = false;
-    if (profileBrand?.show_shopping_list === false) showShoppingList = false;
+    // Snapshot congelado al aprobar → fuente de verdad para planes nuevos.
+    // Fallback al perfil actual para planes aprobados antes del snapshot.
+    const snapshot = content.branding_snapshot ?? null;
+
+    const sm = snapshot?.show_macros ?? profileBrand?.show_macros;
+    if (sm === false) showMacros = false;
+    const sl = snapshot?.show_shopping_list ?? profileBrand?.show_shopping_list;
+    if (sl === false) showShoppingList = false;
+
     nombreDN = profileBrand?.full_name ?? null;
-    colegiado = profileBrand?.college_number ?? null;
-    clinicName = profileBrand?.clinic_name ?? null;
-    if (profileBrand?.primary_color) primaryColor = profileBrand.primary_color;
+    colegiado = snapshot?.college_number ?? profileBrand?.college_number ?? null;
+    clinicName = snapshot?.clinic_name ?? profileBrand?.clinic_name ?? null;
+    const pc = snapshot?.primary_color ?? profileBrand?.primary_color;
+    if (pc) primaryColor = pc;
     whatsappNumber = profileBrand?.whatsapp_number ?? null;
-    logoUrl = profileBrand?.logo_url ?? null;
+    logoUrl = snapshot?.logo_url ?? profileBrand?.logo_url ?? null;
 
     consentAlreadyGiven = !!consentResult.data;
     mealSwaps = (swapsResult.data ?? []) as MealSwap[];
