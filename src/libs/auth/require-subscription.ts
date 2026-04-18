@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 const BYPASS_EMAILS = [
   'rubenrodriguezz2025@gmail.com',
   'rubenrodriguezz2025+test11@gmail.com',
+  'davixeb@gmail.com',
 ];
 
 type SubscriptionCheck =
