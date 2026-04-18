@@ -50,11 +50,21 @@ export async function requireActiveSubscription(): Promise<SubscriptionCheck> {
   const hasActive = status === 'trialing' || status === 'active';
 
   if (!hasActive) {
-    return {
-      authorized: false,
-      error: 'Necesitas una suscripción activa para usar esta función.',
-      code: 'SUBSCRIPTION_REQUIRED',
-    };
+    // Freemium: permitir si el usuario tiene ≤2 pacientes (el límite duro se
+    // aplica en createPatient). El tope de pacientes ES el muro freemium,
+    // no la generación de plan.
+    const { count } = await supabase
+      .from('patients')
+      .select('id', { count: 'exact', head: true })
+      .eq('nutritionist_id', user.id);
+
+    if ((count ?? 0) > 2) {
+      return {
+        authorized: false,
+        error: 'Necesitas una suscripción activa para usar esta función.',
+        code: 'SUBSCRIPTION_REQUIRED',
+      };
+    }
   }
 
   return { authorized: true, userId: user.id, email: user.email ?? '' };
