@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { DIETLY_PLANS } from '@/features/pricing/plans-config';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Sistema de diseño — Dietly Landing
 //
@@ -366,19 +368,6 @@ function HeroSection() {
         <p className='fu3 mt-3 text-center text-xs text-zinc-400'>
           Sin tarjeta · Cancela cuando quieras
         </p>
-
-        {/* Precios inline */}
-        <div className='fu3 mt-6 flex items-center justify-center gap-6 text-sm'>
-          <div className='text-center'>
-            <span className='font-bold text-zinc-100'>46€</span>
-            <span className='text-zinc-500'>/mes · Básico</span>
-          </div>
-          <span className='text-zinc-700'>|</span>
-          <div className='text-center'>
-            <span className='font-bold text-zinc-100'>89€</span>
-            <span className='text-zinc-500'>/mes · Pro</span>
-          </div>
-        </div>
         <p className='fu3 mt-4 text-xs text-zinc-700'>
           ¿Ya tienes cuenta?{' '}
           <Link href='/login' className='text-zinc-500 transition-colors hover:text-zinc-400'>
@@ -766,6 +755,117 @@ function FeaturesSection() {
 
 // 7. CTA Final
 
+// ─── Sección Pricing ─────────────────────────────────────────────────────────
+
+function PricingSection() {
+  const basico = DIETLY_PLANS.find((p) => p.id === 'basico')!;
+  const pro = DIETLY_PLANS.find((p) => p.id === 'pro')!;
+
+  const cards = [
+    {
+      name: 'Gratis',
+      price: '0€',
+      priceSuffix: '/mes',
+      features: [
+        '2 pacientes activos',
+        'Generación IA completa',
+        'PDF con tu nombre',
+        'App paciente (PWA)',
+        'Sin tarjeta',
+      ],
+      cta: 'Empieza gratis →',
+      highlight: false,
+      badge: null as string | null,
+    },
+    {
+      name: basico.name,
+      price: `${basico.price}€`,
+      priceSuffix: '/mes',
+      features: basico.features,
+      cta: `Empezar con ${basico.name} →`,
+      highlight: false,
+      badge: null as string | null,
+    },
+    {
+      name: pro.name,
+      price: `${pro.price}€`,
+      priceSuffix: '/mes',
+      features: pro.features,
+      cta: `Empezar con ${pro.name} →`,
+      highlight: true,
+      badge: 'Más popular' as string | null,
+    },
+  ];
+
+  return (
+    <section id='precios' className='sect-div py-16 lg:py-24'>
+      <div className='mx-auto max-w-6xl px-5'>
+        <div className='text-center'>
+          <SectionLabel>Precios</SectionLabel>
+          <H2>Empieza gratis. Paga cuando estés listo.</H2>
+          <p className='mx-auto mt-3 max-w-xl text-sm leading-relaxed text-zinc-500'>
+            2 pacientes gratis sin tarjeta. Funcionalidad completa. Sin compromiso.
+          </p>
+        </div>
+
+        <div className='mt-12 grid grid-cols-1 gap-5 md:grid-cols-3'>
+          {cards.map((card) => (
+            <div
+              key={card.name}
+              className={`relative flex flex-col rounded-2xl border p-6 ${
+                card.highlight
+                  ? 'border-[#1a7a45]/50 bg-[#0d1f12]'
+                  : 'border-[#1a2e1a] bg-[#0a0f0a]'
+              }`}
+            >
+              {card.badge && (
+                <span className='absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#1a7a45] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white'>
+                  {card.badge}
+                </span>
+              )}
+
+              <h3 className='text-sm font-semibold uppercase tracking-wider text-zinc-400'>
+                {card.name}
+              </h3>
+
+              <div className='mt-3 flex items-baseline gap-1'>
+                <span className='text-4xl font-bold text-zinc-100'>{card.price}</span>
+                <span className='text-sm text-zinc-500'>{card.priceSuffix}</span>
+              </div>
+
+              <ul className='mt-6 flex flex-1 flex-col gap-3 text-sm text-zinc-300'>
+                {card.features.map((feature) => (
+                  <li key={feature} className='flex items-start gap-2.5'>
+                    <span className='mt-0.5 flex-shrink-0 text-[#1a7a45]'>
+                      <IconCheck />
+                    </span>
+                    <span className='leading-snug'>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                href='/signup'
+                className={`mt-8 inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                  card.highlight
+                    ? 'bg-[#1a7a45] text-white hover:bg-[#22c55e] hover:text-black focus-visible:outline-[#22c55e]'
+                    : 'border border-[#1a2e1a] text-zinc-300 hover:border-[#1a7a45]/50 hover:text-zinc-100 focus-visible:outline-zinc-500'
+                }`}
+              >
+                {card.cta}
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        <p className='mt-8 text-center text-xs text-zinc-600'>
+          Sin permanencia. Cancela cuando quieras. IVA incluido.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function FinalCtaSection() {
   return (
     <section className='sect-div py-20 text-center lg:py-28'>
@@ -826,6 +926,7 @@ export default function HomePage() {
         <HowItWorksSection />
         <ComparisonSection />
         <FeaturesSection />
+        <PricingSection />
         <FinalCtaSection />
       </div>
     </>
