@@ -131,12 +131,15 @@ export async function updateDay(
 
   const { data: plan } = (await supabase
     .from('nutrition_plans')
-    .select('content')
+    .select('content, status')
     .eq('id', planId)
     .eq('nutritionist_id', user.id)
-    .single()) as { data: { content: PlanContent } | null };
+    .single()) as { data: { content: PlanContent; status: string } | null };
 
   if (!plan) return { error: 'Plan no encontrado.' };
+  if (plan.status === 'sent') {
+    return { error: 'Este plan ya se ha enviado al paciente y no puede editarse. Genera una nueva versión si necesitas cambios.' };
+  }
 
   const content = plan.content as PlanContent;
   const updatedDays = content.days.map((d) =>

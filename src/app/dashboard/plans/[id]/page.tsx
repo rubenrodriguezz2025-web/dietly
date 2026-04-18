@@ -169,6 +169,23 @@ export default async function PlanPage({
         />
       )}
 
+      {/* Banner: plan enviado — solo lectura (LEVE-7) */}
+      {!isGenerating && !hasError && plan.status === 'sent' && (
+        <div className='flex items-start gap-3 rounded-xl border border-blue-700/40 bg-blue-950/25 p-4 sm:p-5'>
+          <span aria-hidden='true' className='mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-900/40 text-base'>
+            🔒
+          </span>
+          <div className='flex flex-col gap-1'>
+            <p className='text-sm font-semibold text-blue-100'>
+              Plan enviado al paciente — ya no es editable.
+            </p>
+            <p className='text-xs leading-relaxed text-blue-200/70'>
+              Si necesitas hacer cambios, genera una nueva versión del plan desde la ficha del paciente.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Lifecycle stepper */}
       {!isGenerating && !hasError && (
         <PlanLifecycle status={plan.status} />
