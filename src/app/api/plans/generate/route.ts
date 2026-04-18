@@ -638,6 +638,9 @@ export async function POST(req: NextRequest) {
           console.warn('[plans/generate] No se pudieron cargar recetas del nutricionista (no bloqueante)');
         }
 
+        // Filtrar recetas relevantes para el paciente una sola vez (resultado determinista)
+        const relevantRecipes = filterRecipesForPatient(nutritionistRecipes, pseudoPatient, 5);
+
         const targetsResult = (() => {
           try { return calcTargets(patient, macro_overrides); }
           catch (err) { return err instanceof Error ? err.message : 'Error al calcular los objetivos nutricionales.'; }
@@ -740,7 +743,7 @@ export async function POST(req: NextRequest) {
           let dayData: PlanDay | null = null;
 
           // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
-          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, filterRecipesForPatient(nutritionistRecipes, pseudoPatient), rejectedMealNames, clinicalInsights, cooking_complexity);
+          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, relevantRecipes, rejectedMealNames, clinicalInsights, cooking_complexity);
           try {
             const response = await callAnthropicWithResilience(
               () => anthropic.messages.create({
