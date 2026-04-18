@@ -1,7 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { after } from 'next/server';
 
 import { logAIRequest } from '@/libs/ai/logger';
 import {
@@ -284,6 +286,26 @@ export async function approvePlan(
   }
 
   revalidatePath(`/dashboard/plans/${planId}`);
+
+  // Precomputar el PDF en background: al aprobar el plan disparamos una
+  // llamada fire-and-forget al endpoint de PDF para que cuando el nutri
+  // (o el paciente) lo descargue, el caché en plan-pdfs ya esté listo.
+  after(async () => {
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      if (!appUrl) return;
+      const cookieStore = await cookies();
+      const cookieHeader = cookieStore
+        .getAll()
+        .map((c) => `${c.name}=${c.value}`)
+        .join('; ');
+      await fetch(`${appUrl}/api/plans/${planId}/pdf`, {
+        headers: { Cookie: cookieHeader },
+      });
+    } catch (err) {
+      console.error('[approvePlan] precomputar PDF falló:', err);
+    }
+  });
 
   // ── Generación de fotos de platos ────────────────────────────────────────────
   // PAUSADO: pendiente de API key Gemini con billing activado
