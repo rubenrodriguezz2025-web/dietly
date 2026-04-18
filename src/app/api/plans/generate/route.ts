@@ -27,9 +27,9 @@ import Anthropic from '@anthropic-ai/sdk';
 // ── Zod schemas (A-02) ──────────────────────────────────────────────────────
 
 const macroOverridesSchema = z.object({
+  calories: z.number().min(1200).max(5000).optional(),
   protein_per_kg: z.number().min(0.5).max(4).optional(),
   carbs_pct: z.number().min(0.1).max(0.8).optional(),
-  fat_pct: z.number().min(0.1).max(0.6).optional(),
 }).optional();
 
 const generateBodySchema = z.object({
