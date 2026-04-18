@@ -135,7 +135,13 @@ export function NewAppointmentForm({ pacientes }: { pacientes: Paciente[] }) {
         <p className='rounded-md bg-red-950 px-3 py-2 text-sm text-red-400'>{state.error}</p>
       )}
 
-      {state?.success && (
+      {state?.success && state.conflictMessage && (
+        <p className='rounded-md bg-amber-950 px-3 py-2 text-sm text-amber-400'>
+          {state.conflictMessage}
+        </p>
+      )}
+
+      {state?.success && !state.conflictMessage && (
         <p className='text-sm text-emerald-500'>Cita guardada correctamente.</p>
       )}
 

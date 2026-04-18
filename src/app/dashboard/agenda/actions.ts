@@ -9,9 +9,9 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 // ── Crear cita ────────────────────────────────────────────────────────────────
 
 export async function createAppointment(
-  _prev: { error?: string; success?: boolean },
+  _prev: { error?: string; success?: boolean; conflictMessage?: string },
   formData: FormData
-): Promise<{ error?: string; success?: boolean }> {
+): Promise<{ error?: string; success?: boolean; conflictMessage?: string }> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -27,6 +27,15 @@ export async function createAppointment(
 
   if (!date || !time) return { error: 'La fecha y la hora son obligatorias.' };
 
+  // Detectar solapamiento: misma fecha + misma hora (slots discretos de 30 min)
+  const { data: conflicts } = await supabase
+    .from('appointments')
+    .select('id, time, patients(name)')
+    .eq('nutritionist_id', user.id)
+    .eq('date', date)
+    .eq('time', time)
+    .neq('status', 'cancelled');
+
   const { error } = await supabase.from('appointments').insert({
     nutritionist_id: user.id,
     patient_id,
@@ -41,6 +50,18 @@ export async function createAppointment(
   if (error) return { error: 'Error al guardar la cita. Inténtalo de nuevo.' };
 
   revalidatePath('/dashboard/agenda');
+
+  if (conflicts && conflicts.length > 0) {
+    const existing = conflicts[0];
+    const patientJoin = Array.isArray(existing.patients) ? existing.patients[0] : existing.patients;
+    const otherName = patientJoin?.name ?? 'otro paciente';
+    const hh = existing.time.substring(0, 5);
+    return {
+      success: true,
+      conflictMessage: `Ya tenías una cita a las ${hh} con ${otherName}. La cita se ha creado igualmente.`,
+    };
+  }
+
   return { success: true };
 }
 
