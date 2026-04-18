@@ -138,6 +138,11 @@ export default async function PlanPage({
             <StatusBadge status={plan.status} />
             <PlanViewBadge view={planView} />
           </div>
+          {plan.status === 'sent' && plan.sent_at && (
+            <p className='mt-1 text-xs text-zinc-500'>
+              Enviado el {formatSentAt(plan.sent_at)}
+            </p>
+          )}
           {plan.status === 'draft' && (
             <AiBadge generatedAt={plan.generated_at} />
           )}
@@ -403,6 +408,23 @@ function PlanLifecycle({ status }: { status: string }) {
 }
 
 // ── Utility components ────────────────────────────────────────────────────────
+
+function formatSentAt(sentAt: string): string {
+  const d = new Date(sentAt);
+  const fecha = new Intl.DateTimeFormat('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'Europe/Madrid',
+  }).format(d);
+  const hora = new Intl.DateTimeFormat('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Europe/Madrid',
+  }).format(d);
+  return `${fecha} a las ${hora}`;
+}
 
 function AiBadge({ generatedAt }: { generatedAt: string | null }) {
   const fechaGeneracion = generatedAt
