@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { FridgePlanPDF } from '@/components/pdf/FridgePlanPDF';
 import { type FontPreference,NutritionPlanPDF } from '@/components/pdf/NutritionPlanPDF';
 import { getImageDimensionsFromDataUri, isRasterDataUri } from '@/libs/image-dimensions';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
@@ -9,10 +10,12 @@ import { renderToBuffer } from '@react-pdf/renderer';
 
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const format = new URL(req.url).searchParams.get('format') === 'fridge' ? 'fridge' : 'full';
+  const isFridge = format === 'fridge';
   const supabase = await createSupabaseServerClient();
 
   // Verificar autenticación
@@ -52,11 +55,14 @@ export async function GET(
   }
 
   // A-12: Comprobar si existe PDF cacheado y sigue vigente
-  const pdfStoragePath = `${user.id}/${id}.pdf`;
-  const pdfGeneratedAt = plan.pdf_generated_at ? new Date(plan.pdf_generated_at as string) : null;
+  // Clave de caché distinta para el formato nevera.
+  const pdfStoragePath = isFridge ? `${user.id}/${id}-fridge.pdf` : `${user.id}/${id}.pdf`;
+  const pdfGeneratedAt = !isFridge && plan.pdf_generated_at ? new Date(plan.pdf_generated_at as string) : null;
   const planUpdatedAt = plan.updated_at ? new Date(plan.updated_at as string) : null;
 
-  if (pdfGeneratedAt && planUpdatedAt && pdfGeneratedAt >= planUpdatedAt) {
+  // El flag pdf_generated_at en DB solo refleja el formato completo. Para el formato nevera
+  // usamos Storage como única fuente y bypasseamos la comprobación de pdf_generated_at.
+  if (!isFridge && pdfGeneratedAt && planUpdatedAt && pdfGeneratedAt >= planUpdatedAt) {
     try {
       const { data: cachedBlob } = await supabase.storage
         .from('plan-pdfs')
@@ -154,18 +160,21 @@ export async function GET(
   let profile_photo_uri: string | null = null;
 
   // Descargar logo, firma y foto en paralelo (A-10)
-  // Logo desde el snapshot si existe, fallback a perfil (plan antiguo)
-  const downloads = await Promise.all([
-    is_pro && profile.logo_url
-      ? downloadAsDataUri('nutritionist-logos', profile.logo_url)
-      : Promise.resolve(null),
-    is_pro && profileData?.signature_url
-      ? downloadAsDataUri('nutritionist-signatures', profileData.signature_url as string)
-      : Promise.resolve(null),
-    profileData?.profile_photo_url
-      ? downloadAsDataUri('nutritionist-photos', profileData.profile_photo_url as string)
-      : Promise.resolve(null),
-  ]);
+  // Logo desde el snapshot si existe, fallback a perfil (plan antiguo).
+  // El formato nevera no usa ninguna de estas imágenes → saltar descargas.
+  const downloads = isFridge
+    ? [null, null, null] as const
+    : await Promise.all([
+        is_pro && profile.logo_url
+          ? downloadAsDataUri('nutritionist-logos', profile.logo_url)
+          : Promise.resolve(null),
+        is_pro && profileData?.signature_url
+          ? downloadAsDataUri('nutritionist-signatures', profileData.signature_url as string)
+          : Promise.resolve(null),
+        profileData?.profile_photo_url
+          ? downloadAsDataUri('nutritionist-photos', profileData.profile_photo_url as string)
+          : Promise.resolve(null),
+      ]);
 
   logo_uri = isRasterDataUri(downloads[0]) ? downloads[0] : null;
   signature_uri = downloads[1];
@@ -187,37 +196,54 @@ export async function GET(
 
   // Generar el PDF
   try {
-    const elemento = React.createElement(NutritionPlanPDF, {
-      plan: { week_start_date: plan.week_start_date },
-      content,
-      patient,
-      profile,
-      logo_uri,
-      signature_uri,
-      profile_photo_uri,
-      logo_dimensions,
-      photo_dimensions,
-      is_pro,
-      approved_at: approved_at ?? undefined,
-    });
+    const elemento = isFridge
+      ? React.createElement(FridgePlanPDF, {
+          plan: { week_start_date: plan.week_start_date },
+          content,
+          patient: { name: patient.name },
+          profile: {
+            full_name: profile.full_name,
+            clinic_name: profile.clinic_name,
+            college_number: profile.college_number,
+            primary_color: profile.primary_color,
+            show_shopping_list: profile.show_shopping_list,
+            font_preference: profile.font_preference,
+          },
+        })
+      : React.createElement(NutritionPlanPDF, {
+          plan: { week_start_date: plan.week_start_date },
+          content,
+          patient,
+          profile,
+          logo_uri,
+          signature_uri,
+          profile_photo_uri,
+          logo_dimensions,
+          photo_dimensions,
+          is_pro,
+          approved_at: approved_at ?? undefined,
+        });
 
     const buffer = await renderToBuffer(elemento as unknown as React.JSX.Element);
 
-    // A-12: Guardar PDF en Storage y marcar pdf_generated_at
-    try {
-      await supabaseAdminClient.storage
-        .from('plan-pdfs')
-        .upload(pdfStoragePath, new Uint8Array(buffer), {
-          contentType: 'application/pdf',
-          upsert: true,
-        });
+    // A-12: Guardar PDF en Storage y marcar pdf_generated_at (solo formato completo).
+    // El formato nevera se regenera siempre (es ligero, 1-2 páginas).
+    if (!isFridge) {
+      try {
+        await supabaseAdminClient.storage
+          .from('plan-pdfs')
+          .upload(pdfStoragePath, new Uint8Array(buffer), {
+            contentType: 'application/pdf',
+            upsert: true,
+          });
 
-      await supabaseAdminClient
-        .from('nutrition_plans')
-        .update({ pdf_generated_at: new Date().toISOString() })
-        .eq('id', id);
-    } catch (cacheErr) {
-      console.error('[PDF] Error guardando caché:', cacheErr);
+        await supabaseAdminClient
+          .from('nutrition_plans')
+          .update({ pdf_generated_at: new Date().toISOString() })
+          .eq('id', id);
+      } catch (cacheErr) {
+        console.error('[PDF] Error guardando caché:', cacheErr);
+      }
     }
 
     // L-06: Audit log — generación de PDF (RGPD Art. 30)
@@ -244,7 +270,8 @@ export async function GET(
       .replace(/[\u0300-\u036f]/g, '') // eliminar tildes
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
-    const nombreArchivo = `plan-${nombrePaciente}-${fechaStr}.pdf`;
+    const sufijo = isFridge ? '-nevera' : '';
+    const nombreArchivo = `plan-${nombrePaciente}-${fechaStr}${sufijo}.pdf`;
 
     return new Response(new Uint8Array(buffer), {
       headers: {

@@ -300,7 +300,25 @@ export function PlanActionsBar({
   }, [planId, closeApproveModal, showToast, router, startApproveTransition]);
 
   const pdfHref = `/api/plans/${planId}/pdf`;
+  const pdfFridgeHref = `/api/plans/${planId}/pdf?format=fridge`;
   const patientInitials = patientName.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
+
+  // ── PDF dropdown ──────────────────────────────────────────────────────────
+  const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
+  const pdfMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!pdfMenuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (pdfMenuRef.current && !pdfMenuRef.current.contains(e.target as Node)) setPdfMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPdfMenuOpen(false); };
+    window.addEventListener('mousedown', onClick);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onClick);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [pdfMenuOpen]);
 
   return (
     <>
@@ -308,16 +326,50 @@ export function PlanActionsBar({
       <div className='flex flex-col items-end gap-2'>
         <div className='flex flex-wrap items-center justify-end gap-2'>
 
-          {/* PDF — solo visible cuando el plan está aprobado o enviado */}
+          {/* PDF — dropdown con dos formatos (Completo / Nevera) */}
           {!isDraft && (
-            <a
-              href={pdfHref}
-              download
-              className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-all duration-150 hover:border-zinc-600 hover:bg-zinc-700 active:scale-[0.97]'
-            >
-              <IconDownload />
-              PDF
-            </a>
+            <div ref={pdfMenuRef} className='relative'>
+              <button
+                type='button'
+                onClick={() => setPdfMenuOpen((v) => !v)}
+                aria-haspopup='menu'
+                aria-expanded={pdfMenuOpen}
+                className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-all duration-150 hover:border-zinc-600 hover:bg-zinc-700 active:scale-[0.97]'
+              >
+                <IconDownload />
+                PDF
+                <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true' className='ml-0.5 opacity-70'>
+                  <polyline points='6 9 12 15 18 9' />
+                </svg>
+              </button>
+              {pdfMenuOpen && (
+                <div
+                  role='menu'
+                  className='absolute right-0 top-full z-20 mt-1.5 w-60 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/50'
+                >
+                  <a
+                    href={pdfHref}
+                    download
+                    role='menuitem'
+                    onClick={() => setPdfMenuOpen(false)}
+                    className='block px-3 py-2.5 text-left text-xs text-zinc-200 transition-colors hover:bg-zinc-800'
+                  >
+                    <div className='font-medium'>PDF Completo</div>
+                    <div className='mt-0.5 text-[11px] text-zinc-500'>Plan detallado · ~20 páginas</div>
+                  </a>
+                  <a
+                    href={pdfFridgeHref}
+                    download
+                    role='menuitem'
+                    onClick={() => setPdfMenuOpen(false)}
+                    className='block border-t border-zinc-800 px-3 py-2.5 text-left text-xs text-zinc-200 transition-colors hover:bg-zinc-800'
+                  >
+                    <div className='font-medium'>PDF Nevera</div>
+                    <div className='mt-0.5 text-[11px] text-zinc-500'>Resumen compacto · 1-2 páginas</div>
+                  </a>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Copiar enlace — aprobado y enviado */}
