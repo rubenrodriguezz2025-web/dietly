@@ -20,6 +20,11 @@ const EVENTOS_RELEVANTES = new Set([
 ]);
 
 export async function POST(req: Request) {
+  // IDEMPOTENCIA: los handlers actuales son idempotentes
+  // (UPDATE profiles con estado actual es seguro de reprocesar).
+  // Si se añaden side-effects (emails, audit logs con acción
+  // única), implementar tabla stripe_webhook_events con
+  // event_id PK. Ver audit-logica-completa.md §14.2.
   const body = await req.text();
   const sig = req.headers.get('stripe-signature') ?? '';
   const secret = getEnvVar(process.env.STRIPE_WEBHOOK_SECRET, 'STRIPE_WEBHOOK_SECRET');
