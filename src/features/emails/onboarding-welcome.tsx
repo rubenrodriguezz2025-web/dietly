@@ -88,6 +88,12 @@ export function OnboardingWelcomeEmail({ name, dashboardUrl }: OnboardingWelcome
             </Text>
           </Section>
         </Container>
+
+        <Section style={unsubscribeStyle}>
+          <Text style={unsubscribeTextStyle}>
+            ¿No quieres recibir más emails? Escribe a hola@dietly.es y te damos de baja.
+          </Text>
+        </Section>
       </Body>
     </Html>
   );
@@ -200,5 +206,19 @@ const signatureStyle: React.CSSProperties = {
   color: '#c8cdd8',
   fontSize: '15px',
   lineHeight: '1.7',
+  margin: '0',
+};
+
+const unsubscribeStyle: React.CSSProperties = {
+  maxWidth: '520px',
+  margin: '32px auto 0',
+  padding: '0 16px',
+  textAlign: 'center',
+};
+
+const unsubscribeTextStyle: React.CSSProperties = {
+  color: '#999999',
+  fontSize: '12px',
+  lineHeight: '1.5',
   margin: '0',
 };

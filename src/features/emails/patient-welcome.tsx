@@ -69,6 +69,13 @@ export function PatientWelcomeEmail({
             </Text>
           </Section>
         </Container>
+
+        <Section style={unsubscribeStyle}>
+          <Text style={unsubscribeTextStyle}>
+            Este email fue enviado por tu nutricionista a través de Dietly.
+            Si no quieres recibirlos, contacta directamente con tu nutricionista.
+          </Text>
+        </Section>
       </Body>
     </Html>
   );
@@ -149,5 +156,19 @@ const footerStyle: React.CSSProperties = {
   color: '#7a8094',
   fontSize: '13px',
   lineHeight: '1.6',
+  margin: '0',
+};
+
+const unsubscribeStyle: React.CSSProperties = {
+  maxWidth: '520px',
+  margin: '32px auto 0',
+  padding: '0 16px',
+  textAlign: 'center',
+};
+
+const unsubscribeTextStyle: React.CSSProperties = {
+  color: '#999999',
+  fontSize: '12px',
+  lineHeight: '1.5',
   margin: '0',
 };

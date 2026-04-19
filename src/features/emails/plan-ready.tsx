@@ -121,6 +121,13 @@ export function PlanReadyEmail({
             </Text>
           </Section>
         </Container>
+
+        <Section style={unsubscribeStyle}>
+          <Text style={unsubscribeTextStyle}>
+            Este email fue enviado por tu nutricionista a través de Dietly.
+            Si no quieres recibirlos, contacta directamente con tu nutricionista.
+          </Text>
+        </Section>
       </Body>
     </Html>
   );
@@ -248,4 +255,18 @@ const itemStyle: React.CSSProperties = {
   lineHeight: '1.5',
   margin: '0 0 2px',
   paddingLeft: '4px',
+};
+
+const unsubscribeStyle: React.CSSProperties = {
+  maxWidth: '520px',
+  margin: '32px auto 0',
+  padding: '0 16px',
+  textAlign: 'center',
+};
+
+const unsubscribeTextStyle: React.CSSProperties = {
+  color: '#999999',
+  fontSize: '12px',
+  lineHeight: '1.5',
+  margin: '0',
 };
