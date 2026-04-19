@@ -291,7 +291,7 @@ PERFIL DEL PACIENTE:
 - Calorías diarias objetivo: ${targets.calories} kcal
 - Proteína objetivo: ${targets.protein_g}g (${targets.protein_per_kg}g/kg peso corporal)
 - Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
-- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${intakeSection}${recipesSection}${rejectedSection}${clinicalSection}${variety}
+- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${sportSection}${intakeSection}${recipesSection}${rejectedSection}${clinicalSection}${variety}
 
 Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}.
 
