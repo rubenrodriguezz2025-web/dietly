@@ -170,15 +170,17 @@ function ChipInput({
   );
 }
 
-export function NewPatientForm() {
+export function NewPatientForm({ specialty }: { specialty?: string | null }) {
   const [state, action, pending] = useActionState(createPatient, {});
   const [dob, setDob] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showClinicalNotes, setShowClinicalNotes] = useState(false);
+  const [showSportSection, setShowSportSection] = useState(true);
   const [allergyChips, setAllergyChips] = useState<string[]>([]);
   const [intoleranceChips, setIntoleranceChips] = useState<string[]>([]);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const isMinor = dob ? calcAge(dob) < 18 : false;
+  const isSportsNutritionist = specialty === 'sports' || specialty === 'deportivo';
 
   useEffect(() => {
     if (state?.code === 'LIMIT_REACHED') setPaywallOpen(true);
@@ -293,6 +295,84 @@ export function NewPatientForm() {
           </Field>
         </div>
       </section>
+
+      {/* Datos deportivos — solo para nutricionistas con especialidad deportiva */}
+      {isSportsNutritionist && (
+        <section className='flex flex-col gap-4'>
+          <button
+            type='button'
+            onClick={() => setShowSportSection((v) => !v)}
+            className='flex items-center gap-2 border-b border-zinc-800 pb-2'
+          >
+            <svg
+              width='14'
+              height='14'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              className={`text-zinc-500 transition-transform ${showSportSection ? 'rotate-90' : ''}`}
+            >
+              <polyline points='9 18 15 12 9 6' />
+            </svg>
+            <span className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+              Datos deportivos
+            </span>
+          </button>
+          {showSportSection && (
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <Field label='Deporte/disciplina'>
+                <Input
+                  name='sport_type'
+                  placeholder='CrossFit, running, ciclismo, natación...'
+                  maxLength={100}
+                  disabled={pending}
+                />
+              </Field>
+              <Field label='Días entrenamiento/semana'>
+                <select name='training_days_per_week' className={selectClass} disabled={pending} defaultValue=''>
+                  <option value=''>No especificado</option>
+                  {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label='Horario entrenamiento'>
+                <select name='training_time' className={selectClass} disabled={pending} defaultValue=''>
+                  <option value=''>No especificado</option>
+                  <option value='morning'>Mañana (antes de las 12:00)</option>
+                  <option value='afternoon'>Tarde (12:00-18:00)</option>
+                  <option value='evening'>Noche (después de las 18:00)</option>
+                </select>
+              </Field>
+              <Field label='Horario detallado'>
+                <Input
+                  name='training_schedule'
+                  placeholder='7:00-8:30 L-M-X-V'
+                  maxLength={200}
+                  disabled={pending}
+                />
+              </Field>
+              <div className='sm:col-span-2'>
+                <Field label='Suplementación'>
+                  <textarea
+                    name='supplementation'
+                    rows={3}
+                    placeholder='Creatina 5g/día, proteína whey post-entreno...'
+                    maxLength={2000}
+                    disabled={pending}
+                    className={textareaClass}
+                  />
+                </Field>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Restricciones dietéticas */}
       <section className='flex flex-col gap-4'>

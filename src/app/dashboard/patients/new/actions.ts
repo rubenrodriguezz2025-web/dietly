@@ -113,6 +113,11 @@ export async function createPatient(
     preferences: formData.get('preferences') ?? '',
     medical_notes: formData.get('medical_notes') ?? '',
     cooking_preference: formData.get('cooking_preference') ?? '',
+    sport_type: formData.get('sport_type') ?? '',
+    training_days_per_week: formData.get('training_days_per_week') ?? '',
+    training_time: formData.get('training_time') ?? '',
+    training_schedule: formData.get('training_schedule') ?? '',
+    supplementation: formData.get('supplementation') ?? '',
   });
 
   if (!parsed.success) {
@@ -136,6 +141,11 @@ export async function createPatient(
     preferences,
     medical_notes,
     cooking_preference,
+    sport_type,
+    training_days_per_week,
+    training_time,
+    training_schedule,
+    supplementation,
   } = parsed.data;
 
   // Bloquear menores de 18 años
@@ -184,6 +194,11 @@ export async function createPatient(
     preferences,
     medical_notes,
     cooking_preference,
+    sport_type,
+    training_days_per_week,
+    training_time,
+    training_schedule,
+    supplementation,
     tmb,
     tdee,
   });

@@ -47,7 +47,7 @@ export default async function PatientPage({
   }
 
   // Consultas en paralelo para minimizar latencia
-  const [plansResult, progressResult, patientExtraResult, followupFormsResult, nextReminderResult, overdueReminderResult, mealSwapsResult] = await Promise.all([
+  const [plansResult, progressResult, patientExtraResult, followupFormsResult, nextReminderResult, overdueReminderResult, mealSwapsResult, profileResult] = await Promise.all([
     (supabase as any)
       .from('nutrition_plans')
       .select('id, status, week_start_date, created_at')
@@ -99,6 +99,12 @@ export default async function PatientPage({
       .eq('patient_id', id)
       .eq('nutritionist_id', user.id)
       .order('created_at', { ascending: false }),
+
+    (supabase as any)
+      .from('profiles')
+      .select('specialty')
+      .eq('id', user.id)
+      .single(),
   ]);
 
   const plans = plansResult.data as NutritionPlan[] | null;
@@ -113,6 +119,7 @@ export default async function PatientPage({
   const nextReminder = nextReminderResult.data as { id: string; remind_at: string; status: string } | null;
   const overdueReminder = overdueReminderResult.data as { id: string; remind_at: string } | null;
   const mealSwaps = (mealSwapsResult.data ?? []) as MealSwap[];
+  const specialty: string | null = profileResult.data?.specialty ?? null;
 
   // Platos rechazados (únicos) para el banner de generación
   const rejectedMealNames = [...new Set(
@@ -314,6 +321,7 @@ export default async function PatientPage({
         nextReminder={nextReminder}
         overdueReminder={overdueReminder}
         mealSwaps={mealSwaps}
+        specialty={specialty}
       />
     </div>
   );

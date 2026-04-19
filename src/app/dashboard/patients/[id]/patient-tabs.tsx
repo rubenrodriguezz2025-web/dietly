@@ -67,6 +67,7 @@ type Props = {
   nextReminder?: NextReminderData;
   overdueReminder?: { id: string; remind_at: string } | null;
   mealSwaps?: MealSwap[];
+  specialty?: string | null;
 };
 
 // ── Orquestador ───────────────────────────────────────────────────────────────
@@ -81,6 +82,7 @@ export function PatientTabs({
   nextReminder,
   overdueReminder,
   mealSwaps = [],
+  specialty = null,
 }: Props) {
   const [activeTab, setActiveTab] = useState('ficha');
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -175,6 +177,7 @@ export function PatientTabs({
           onGoToCuestionario={() => setActiveTab('cuestionario')}
           onOpenQuestionsPreview={() => setSheetOpen(true)}
           rejectedMeals={rejectedMealNames}
+          specialty={specialty}
         />
       </TabsContent>
 

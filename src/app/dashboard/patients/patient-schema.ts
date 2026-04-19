@@ -20,6 +20,8 @@ const SEX_VALUES = ['male', 'female', 'other'] as const;
 
 const COOKING_PREFERENCES = ['simple', 'medium', 'elaborate'] as const;
 
+const TRAINING_TIMES = ['morning', 'afternoon', 'evening'] as const;
+
 const emptyToNull = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((v) => (v === '' || v === undefined ? null : v), schema.nullable());
 
@@ -65,6 +67,13 @@ export const createPatientSchema = z.object({
   preferences: emptyToNull(z.string().max(2000)),
   medical_notes: emptyToNull(z.string().max(5000)),
   cooking_preference: emptyToNull(z.enum(COOKING_PREFERENCES)),
+  sport_type: emptyToNull(z.string().max(100)),
+  training_days_per_week: emptyToNull(
+    z.coerce.number().int().min(1, 'Mínimo 1 día').max(7, 'Máximo 7 días'),
+  ),
+  training_time: emptyToNull(z.enum(TRAINING_TIMES)),
+  training_schedule: emptyToNull(z.string().max(200)),
+  supplementation: emptyToNull(z.string().max(2000)),
 });
 
 export type CreatePatientInput = z.infer<typeof createPatientSchema>;
@@ -95,6 +104,14 @@ export const PATIENT_FIELD_SCHEMAS: Record<string, z.ZodType> = {
   preferences: z.union([z.string().max(2000), z.null()]),
   medical_notes: z.union([z.string().max(5000), z.null()]),
   cooking_preference: z.union([z.literal(''), z.enum(COOKING_PREFERENCES), z.null()]),
+  sport_type: z.union([z.literal(''), z.string().max(100), z.null()]),
+  training_days_per_week: z.union([
+    z.null(),
+    z.coerce.number().int().min(1, 'Mínimo 1 día').max(7, 'Máximo 7 días'),
+  ]),
+  training_time: z.union([z.literal(''), z.enum(TRAINING_TIMES), z.null()]),
+  training_schedule: z.union([z.literal(''), z.string().max(200), z.null()]),
+  supplementation: z.union([z.literal(''), z.string().max(2000), z.null()]),
   // Booleano llega desde el cliente como string 'true'/'false' o número
   allow_meal_swaps: z.union([z.boolean(), z.literal('true'), z.literal('false'), z.literal(0), z.literal(1)]),
 };

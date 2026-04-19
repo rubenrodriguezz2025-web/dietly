@@ -11,6 +11,7 @@ import {
   type Patient,
   PLAN_STATUS_LABELS,
   SEX_LABELS,
+  TRAINING_TIME_LABELS,
 } from '@/types/dietly';
 import { calcTargets } from '@/utils/calc-targets';
 
@@ -284,6 +285,7 @@ export type PatientFichaTabProps = {
   onGoToCuestionario: () => void;
   onOpenQuestionsPreview: () => void;
   rejectedMeals?: string[];
+  specialty?: string | null;
 };
 
 export function PatientFichaTab({
@@ -296,7 +298,9 @@ export function PatientFichaTab({
   onGoToCuestionario,
   onOpenQuestionsPreview,
   rejectedMeals = [],
+  specialty = null,
 }: PatientFichaTabProps) {
+  const isSportsNutritionist = specialty === 'sports' || specialty === 'deportivo';
   return (
     <div className='flex flex-col gap-6'>
 
@@ -522,6 +526,55 @@ export function PatientFichaTab({
               );
             })()}
           </Section>
+
+          {isSportsNutritionist && (
+            <Section title='Datos deportivos'>
+              <div className='grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2'>
+                <InlineField
+                  label='Tipo de deporte'
+                  value={patient.sport_type ?? null}
+                  patientId={patient.id}
+                  field='sport_type'
+                />
+                <InlineField
+                  label='Días de entrenamiento/semana'
+                  value={patient.training_days_per_week ?? null}
+                  type='number'
+                  patientId={patient.id}
+                  field='training_days_per_week'
+                />
+                <InlineField
+                  label='Horario habitual'
+                  value={patient.training_time}
+                  displayValue={
+                    patient.training_time ? TRAINING_TIME_LABELS[patient.training_time] : null
+                  }
+                  type='select'
+                  options={Object.entries(TRAINING_TIME_LABELS).map(([v, l]) => ({
+                    value: v,
+                    label: l,
+                  }))}
+                  patientId={patient.id}
+                  field='training_time'
+                />
+                <InlineField
+                  label='Detalle horario (ej. 7:00-8:30)'
+                  value={patient.training_schedule ?? null}
+                  patientId={patient.id}
+                  field='training_schedule'
+                />
+                <div className='sm:col-span-2'>
+                  <InlineField
+                    label='Suplementación'
+                    value={patient.supplementation ?? null}
+                    type='textarea'
+                    patientId={patient.id}
+                    field='supplementation'
+                  />
+                </div>
+              </div>
+            </Section>
+          )}
 
           <Section title='Configuración del plan'>
             <SwapToggle
