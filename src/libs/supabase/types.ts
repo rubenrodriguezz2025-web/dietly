@@ -829,6 +829,7 @@ export type Database = {
           stripe_customer_id: string | null
           subscription_status: string | null
           updated_at: string
+          upsell_email_sent_at: string | null
           welcome_message: string | null
           whatsapp_number: string | null
         }
@@ -851,6 +852,7 @@ export type Database = {
           stripe_customer_id?: string | null
           subscription_status?: string | null
           updated_at?: string
+          upsell_email_sent_at?: string | null
           welcome_message?: string | null
           whatsapp_number?: string | null
         }
@@ -873,6 +875,7 @@ export type Database = {
           stripe_customer_id?: string | null
           subscription_status?: string | null
           updated_at?: string
+          upsell_email_sent_at?: string | null
           welcome_message?: string | null
           whatsapp_number?: string | null
         }
