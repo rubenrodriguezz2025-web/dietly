@@ -630,8 +630,13 @@ export type Database = {
           phone: string | null
           preferences: string | null
           sex: string | null
+          sport_type: string | null
+          supplementation: string | null
           tdee: number | null
           tmb: number | null
+          training_days_per_week: number | null
+          training_schedule: string | null
+          training_time: string | null
           updated_at: string
           weight_kg: number | null
         }
@@ -657,8 +662,13 @@ export type Database = {
           phone?: string | null
           preferences?: string | null
           sex?: string | null
+          sport_type?: string | null
+          supplementation?: string | null
           tdee?: number | null
           tmb?: number | null
+          training_days_per_week?: number | null
+          training_schedule?: string | null
+          training_time?: string | null
           updated_at?: string
           weight_kg?: number | null
         }
@@ -684,8 +694,13 @@ export type Database = {
           phone?: string | null
           preferences?: string | null
           sex?: string | null
+          sport_type?: string | null
+          supplementation?: string | null
           tdee?: number | null
           tmb?: number | null
+          training_days_per_week?: number | null
+          training_schedule?: string | null
+          training_time?: string | null
           updated_at?: string
           weight_kg?: number | null
         }

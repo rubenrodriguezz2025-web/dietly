@@ -119,6 +119,11 @@ export type Patient = {
   preferences: string | null;
   medical_notes: string | null;
   cooking_preference: CookingPreference | null;
+  sport_type: string | null;
+  training_days_per_week: number | null;
+  training_time: TrainingTime | null;
+  training_schedule: string | null;
+  supplementation: string | null;
   allow_meal_swaps: boolean;
   tmb: number | null;
   tdee: number | null;
@@ -228,6 +233,14 @@ export const COOKING_PREFERENCE_LABELS: Record<CookingPreference, string> = {
   simple: 'Rápido y sencillo (5-10 min)',
   medium: 'Normal (15-20 min)',
   elaborate: 'Le gusta cocinar (sin límite)',
+};
+
+export type TrainingTime = 'morning' | 'afternoon' | 'evening';
+
+export const TRAINING_TIME_LABELS: Record<TrainingTime, string> = {
+  morning: 'Mañana (antes de las 12:00)',
+  afternoon: 'Tarde (12:00-18:00)',
+  evening: 'Noche (después de las 18:00)',
 };
 
 export const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {
