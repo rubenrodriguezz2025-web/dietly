@@ -15,7 +15,7 @@
  *   - TDEE/TMB precalculados (valores numéricos, no identificativos)
  */
 
-import type { ActivityLevel, PatientGoal } from '@/types/dietly';
+import type { ActivityLevel, PatientGoal, TrainingTime } from '@/types/dietly';
 import type { Patient } from '@/types/dietly';
 
 // ── Tipo pseudonimizado ────────────────────────────────────────────────────────
@@ -45,6 +45,12 @@ export type PseudonymizedPatient = {
   tmb: number | null;
   /** TDEE precalculado — valor numérico, sin datos identificativos. */
   tdee: number | null;
+  // Datos deportivos (solo relevantes cuando el nutricionista es de especialidad deportiva)
+  sport_type: string | null;
+  training_days_per_week: number | null;
+  training_time: TrainingTime | null;
+  training_schedule: string | null;
+  supplementation: string | null;
 };
 
 // ── Función principal ──────────────────────────────────────────────────────────
@@ -87,6 +93,11 @@ export function pseudonymizePatient(patient: Patient): {
     medical_notes: patient.medical_notes ?? null,
     tmb: patient.tmb ?? null,
     tdee: patient.tdee ?? null,
+    sport_type: patient.sport_type ?? null,
+    training_days_per_week: patient.training_days_per_week ?? null,
+    training_time: patient.training_time ?? null,
+    training_schedule: patient.training_schedule ?? null,
+    supplementation: patient.supplementation ?? null,
   };
 
   return { pseudoPatient, sessionId };

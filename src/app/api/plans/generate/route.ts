@@ -19,7 +19,7 @@ import {
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Patient, PlanContent, PlanDay, Recipe, ShoppingList } from '@/types/dietly';
-import { GOAL_LABELS } from '@/types/dietly';
+import { GOAL_LABELS, TRAINING_TIME_LABELS } from '@/types/dietly';
 import { calcTargets, type MacroOverrides } from '@/utils/calc-targets';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
@@ -261,6 +261,18 @@ function buildDayPrompt(
   const clinicalSection = buildClinicalInsightsSection(clinicalInsights ?? null);
   const complexitySection = cookingComplexity
     ? `\n\n${COOKING_COMPLEXITY_PROMPTS[cookingComplexity]}`
+    : '';
+
+  // Datos deportivos: solo incluimos líneas con valor para no contaminar el prompt
+  const sportLines = [
+    patient.sport_type ? `- Deporte: ${patient.sport_type}` : null,
+    patient.training_days_per_week ? `- Días de entrenamiento/semana: ${patient.training_days_per_week}` : null,
+    patient.training_time ? `- Horario habitual: ${TRAINING_TIME_LABELS[patient.training_time]}` : null,
+    patient.training_schedule ? `- Detalle horario: ${patient.training_schedule}` : null,
+    patient.supplementation ? `- Suplementación: ${patient.supplementation}` : null,
+  ].filter(Boolean);
+  const sportSection = sportLines.length > 0
+    ? `\n\nDATOS DEPORTIVOS DEL PACIENTE:\n${sportLines.join('\n')}\n\nAdapta las comidas al timing de entrenamiento. Si entrena por la mañana, incluye pre-entreno ligero y post-entreno alto en proteína.`
     : '';
 
   const carbsPctDisplay = Math.round(targets.carbs_pct * 100);
