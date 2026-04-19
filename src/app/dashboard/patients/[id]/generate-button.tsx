@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { PaywallModal } from '@/components/PaywallModal';
 import { Button } from '@/components/ui/button';
 import type { AnthropicErrorCode } from '@/libs/ai/resilience';
-import type { PatientGoal } from '@/types/dietly';
+import type { CookingPreference, PatientGoal } from '@/types/dietly';
 import { GOAL_LABELS } from '@/types/dietly';
 import type { CalcTargets } from '@/utils/calc-targets';
 import { cn } from '@/utils/cn';
@@ -25,13 +25,14 @@ interface Props {
   initialTargets: CalcTargets | null;
   patientWeight: number;
   patientGoal: PatientGoal;
+  patientCookingPreference?: CookingPreference | null;
   hasIntake?: boolean;
   hasConsent?: boolean;
   onGoToIntake?: () => void;
   rejectedMeals?: string[];
 }
 
-export function GenerateButton({ patientId, initialTargets, patientWeight, patientGoal, hasIntake, hasConsent = true, onGoToIntake, rejectedMeals = [] }: Props) {
+export function GenerateButton({ patientId, initialTargets, patientWeight, patientGoal, patientCookingPreference, hasIntake, hasConsent = true, onGoToIntake, rejectedMeals = [] }: Props) {
   const router = useRouter();
   const [state, setState] = useState<State>('idle');
   const [currentDay, setCurrentDay] = useState(0);
@@ -45,7 +46,11 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
   const [edits, setEdits] = useState({ calories: '', protein_per_kg: '', carbs_pct: '' });
 
   // Complejidad de las recetas (afecta al prompt de generación).
-  const [cookingComplexity, setCookingComplexity] = useState<'simple' | 'medium' | 'elaborate'>('medium');
+  // Si el paciente tiene preferencia guardada, se usa como default; si no, 'medium'.
+  const [cookingComplexity, setCookingComplexity] = useState<CookingPreference>(
+    patientCookingPreference ?? 'medium',
+  );
+  const usingPatientDefault = !!patientCookingPreference && cookingComplexity === patientCookingPreference;
 
   const calcCalories = initialTargets?.calories ?? null;
   const calcProteinPerKg = initialTargets?.protein_per_kg ?? null;
@@ -545,8 +550,13 @@ export function GenerateButton({ patientId, initialTargets, patientWeight, patie
 
           {/* Complejidad de las recetas */}
           <div className='mt-4'>
-            <label className='mb-1.5 block text-[11px] font-medium text-zinc-500'>
-              Complejidad de las recetas
+            <label className='mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-zinc-500'>
+              <span>Complejidad de las recetas</span>
+              {usingPatientDefault && (
+                <span className='text-[10px] font-normal text-zinc-600'>
+                  (según preferencia del paciente)
+                </span>
+              )}
             </label>
             <div
               role='radiogroup'

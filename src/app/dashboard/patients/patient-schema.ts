@@ -18,6 +18,8 @@ const GOALS = [
 
 const SEX_VALUES = ['male', 'female', 'other'] as const;
 
+const COOKING_PREFERENCES = ['simple', 'medium', 'elaborate'] as const;
+
 const emptyToNull = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((v) => (v === '' || v === undefined ? null : v), schema.nullable());
 
@@ -62,6 +64,7 @@ export const createPatientSchema = z.object({
   intolerances: emptyToNull(z.string().max(1000)),
   preferences: emptyToNull(z.string().max(2000)),
   medical_notes: emptyToNull(z.string().max(5000)),
+  cooking_preference: emptyToNull(z.enum(COOKING_PREFERENCES)),
 });
 
 export type CreatePatientInput = z.infer<typeof createPatientSchema>;
@@ -91,6 +94,7 @@ export const PATIENT_FIELD_SCHEMAS: Record<string, z.ZodType> = {
   intolerances: z.union([z.string().max(1000), z.null()]),
   preferences: z.union([z.string().max(2000), z.null()]),
   medical_notes: z.union([z.string().max(5000), z.null()]),
+  cooking_preference: z.union([z.literal(''), z.enum(COOKING_PREFERENCES), z.null()]),
   // Booleano llega desde el cliente como string 'true'/'false' o número
   allow_meal_swaps: z.union([z.boolean(), z.literal('true'), z.literal('false'), z.literal(0), z.literal(1)]),
 };

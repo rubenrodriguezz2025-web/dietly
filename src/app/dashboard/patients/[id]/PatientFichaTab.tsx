@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import {
   ACTIVITY_LABELS,
+  COOKING_PREFERENCE_LABELS,
   GOAL_LABELS,
   type NutritionPlan,
   type Patient,
@@ -560,6 +561,22 @@ export function PatientFichaTab({
                 field='preferences'
               />
               <InlineField
+                label='Nivel de cocina del paciente'
+                value={patient.cooking_preference}
+                displayValue={
+                  patient.cooking_preference
+                    ? COOKING_PREFERENCE_LABELS[patient.cooking_preference]
+                    : null
+                }
+                type='select'
+                options={[
+                  { value: '', label: 'No especificado' },
+                  ...Object.entries(COOKING_PREFERENCE_LABELS).map(([v, l]) => ({ value: v, label: l })),
+                ]}
+                patientId={patient.id}
+                field='cooking_preference'
+              />
+              <InlineField
                 label='Notas médicas'
                 value={patient.medical_notes}
                 type='textarea'
@@ -584,6 +601,7 @@ export function PatientFichaTab({
                   initialTargets={patientTargets}
                   patientWeight={patient.weight_kg ?? 70}
                   patientGoal={patient.goal ?? 'health'}
+                  patientCookingPreference={patient.cooking_preference}
                   hasIntake={!!intakeForm}
                   onGoToIntake={intakeUrl ? onGoToCuestionario : undefined}
                   rejectedMeals={rejectedMeals}

@@ -232,6 +232,7 @@ export default async function PatientPage({
             initialTargets={initialTargets}
             patientWeight={patient.weight_kg ?? 70}
             patientGoal={patient.goal ?? 'health'}
+            patientCookingPreference={patient.cooking_preference}
             hasIntake={!!intakeForm}
             hasConsent={hasConsent}
             rejectedMeals={rejectedMealNames}

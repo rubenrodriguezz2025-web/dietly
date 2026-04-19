@@ -614,6 +614,7 @@ export type Database = {
             | null
           allergies: string | null
           allow_meal_swaps: boolean
+          cooking_preference: string | null
           created_at: string
           date_of_birth: string | null
           dietary_restrictions: string[] | null
@@ -640,6 +641,7 @@ export type Database = {
             | null
           allergies?: string | null
           allow_meal_swaps?: boolean
+          cooking_preference?: string | null
           created_at?: string
           date_of_birth?: string | null
           dietary_restrictions?: string[] | null
@@ -666,6 +668,7 @@ export type Database = {
             | null
           allergies?: string | null
           allow_meal_swaps?: boolean
+          cooking_preference?: string | null
           created_at?: string
           date_of_birth?: string | null
           dietary_restrictions?: string[] | null

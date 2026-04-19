@@ -118,6 +118,7 @@ export type Patient = {
   intolerances: string | null;
   preferences: string | null;
   medical_notes: string | null;
+  cooking_preference: CookingPreference | null;
   allow_meal_swaps: boolean;
   tmb: number | null;
   tdee: number | null;
@@ -219,6 +220,14 @@ export const GOAL_LABELS: Record<PatientGoal, string> = {
   maintenance: 'Mantenimiento',
   muscle_gain: 'Ganancia muscular',
   health: 'Mejorar salud general',
+};
+
+export type CookingPreference = 'simple' | 'medium' | 'elaborate';
+
+export const COOKING_PREFERENCE_LABELS: Record<CookingPreference, string> = {
+  simple: 'Rápido y sencillo (5-10 min)',
+  medium: 'Normal (15-20 min)',
+  elaborate: 'Le gusta cocinar (sin límite)',
 };
 
 export const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {

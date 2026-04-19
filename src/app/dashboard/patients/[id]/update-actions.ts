@@ -14,6 +14,7 @@ const ALLOWED_FIELDS = new Set([
   'weight_kg', 'height_cm', 'activity_level', 'goal',
   'dietary_restrictions', 'allergies', 'intolerances',
   'preferences', 'medical_notes', 'allow_meal_swaps',
+  'cooking_preference',
 ]);
 
 const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {

@@ -112,6 +112,7 @@ export async function createPatient(
     intolerances: intolerancesNormalized,
     preferences: formData.get('preferences') ?? '',
     medical_notes: formData.get('medical_notes') ?? '',
+    cooking_preference: formData.get('cooking_preference') ?? '',
   });
 
   if (!parsed.success) {
@@ -134,6 +135,7 @@ export async function createPatient(
     intolerances,
     preferences,
     medical_notes,
+    cooking_preference,
   } = parsed.data;
 
   // Bloquear menores de 18 años
@@ -181,6 +183,7 @@ export async function createPatient(
     intolerances,
     preferences,
     medical_notes,
+    cooking_preference,
     tmb,
     tdee,
   });

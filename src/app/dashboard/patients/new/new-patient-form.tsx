@@ -376,6 +376,15 @@ export function NewPatientForm() {
                 className={textareaClass}
               />
             </Field>
+            <Field label='Nivel de cocina del paciente'>
+              <select name='cooking_preference' className={selectClass} disabled={pending} defaultValue=''>
+                <option value=''>No especificado</option>
+                <option value='simple'>Rápido y sencillo (5-10 min)</option>
+                <option value='medium'>Normal (15-20 min)</option>
+                <option value='elaborate'>Le gusta cocinar (sin límite)</option>
+              </select>
+              <p className='mt-1 text-xs text-zinc-600'>Las recetas del plan se adaptarán a este nivel</p>
+            </Field>
             <Field label='Notas médicas'>
               <textarea
                 name='medical_notes'
