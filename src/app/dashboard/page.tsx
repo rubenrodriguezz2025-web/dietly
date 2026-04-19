@@ -10,6 +10,7 @@ import { cn } from '@/utils/cn';
 import { DueRemindersBanner } from './due-reminders-banner';
 import { OnboardingChecklist } from './onboarding-checklist';
 import { PatientsSection } from './patients-section';
+import { maybeSendUpsellEmail } from './upsell-email';
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -23,11 +24,21 @@ export default async function DashboardPage() {
   // Verificar onboarding
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('full_name, clinic_name, logo_url, onboarding_completed_at, brand_settings_visited_at, subscription_status')
+    .select('full_name, clinic_name, logo_url, onboarding_completed_at, brand_settings_visited_at, subscription_status, created_at, upsell_email_sent_at')
     .eq('id', user.id)
     .single();
 
   if (!profile) redirect('/onboarding');
+
+  // Email de upsell a d+10 tras registro — fire-and-forget, no bloquea render
+  maybeSendUpsellEmail({
+    userId: user.id,
+    email: user.email ?? null,
+    name: profile.full_name,
+    createdAt: profile.created_at,
+    subscriptionStatus: profile.subscription_status,
+    upsellSentAt: profile.upsell_email_sent_at,
+  });
 
   // ── Queries paralelas (todas dependen solo de user.id) ──────────────────
   const startOfMonth = new Date();
