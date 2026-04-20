@@ -4,6 +4,7 @@ const BYPASS_EMAILS = [
   'rubenrodriguezz2025@gmail.com',
   'rubenrodriguezz2025+test11@gmail.com',
   'davixeb@gmail.com',
+  'hola@esthercarazonutricion.com',
 ];
 
 type SubscriptionCheck =
