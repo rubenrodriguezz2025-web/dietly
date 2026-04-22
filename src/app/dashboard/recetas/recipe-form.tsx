@@ -179,8 +179,8 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
     <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
       {/* Nombre */}
       <div>
-        <label className='mb-1.5 block text-sm font-medium text-zinc-300'>
-          Nombre de la receta <span className='text-red-400'>*</span>
+        <label className='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>
+          Nombre de la receta <span className='text-red-600 dark:text-red-400'>*</span>
         </label>
         <input
           ref={nameRef}
@@ -188,18 +188,18 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
           onChange={(e) => setName(e.target.value)}
           placeholder='Ej: Ensalada de quinoa con pollo'
           required
-          className='w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+          className='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-600'
         />
       </div>
 
       {/* Categoría + Raciones */}
       <div className='grid grid-cols-2 gap-4'>
         <div>
-          <label className='mb-1.5 block text-sm font-medium text-zinc-300'>Categoría</label>
+          <label className='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>Categoría</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as RecipeCategory | '')}
-            className='w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+            className='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
           >
             <option value=''>Sin categoría</option>
             {CATEGORIES.map(([val, label]) => (
@@ -208,20 +208,20 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
           </select>
         </div>
         <div>
-          <label className='mb-1.5 block text-sm font-medium text-zinc-300'>Número de raciones</label>
+          <label className='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>Número de raciones</label>
           <input
             type='number'
             min={1}
             value={servings}
             onChange={(e) => setServings(Math.max(1, Number(e.target.value)))}
-            className='w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+            className='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
           />
         </div>
       </div>
 
       {/* Ingredientes */}
       <div>
-        <label className='mb-2 block text-sm font-medium text-zinc-300'>Ingredientes</label>
+        <label className='mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>Ingredientes</label>
         <div className='flex flex-col gap-2'>
           {ingredients.map((ing, i) => (
             <div key={i} className='flex items-center gap-2'>
@@ -229,19 +229,19 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
                 value={ing.name}
                 onChange={(e) => updateIngredient(i, { name: e.target.value })}
                 placeholder='Ingrediente'
-                className='min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+                className='min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-600'
               />
               <input
                 type='number'
                 min={0}
                 value={ing.quantity}
                 onChange={(e) => updateIngredient(i, { quantity: Number(e.target.value) })}
-                className='w-20 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+                className='w-20 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
               />
               <select
                 value={ing.unit}
                 onChange={(e) => updateIngredient(i, { unit: e.target.value })}
-                className='w-28 rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-zinc-100 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+                className='w-28 rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-900 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
               >
                 {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -249,7 +249,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
                 <button
                   type='button'
                   onClick={() => removeIngredient(i)}
-                  className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-zinc-800 text-zinc-600 transition-colors hover:border-red-800/70 hover:bg-red-950/30 hover:text-red-400'
+                  className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-zinc-300 text-zinc-500 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-zinc-800 dark:text-zinc-600 dark:hover:border-red-800/70 dark:hover:bg-red-950/30 dark:hover:text-red-400'
                   title='Eliminar ingrediente'
                 >
                   <TrashIcon />
@@ -261,23 +261,23 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
         <button
           type='button'
           onClick={addIngredient}
-          className='mt-2 flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-700 px-3 py-1.5 text-xs text-zinc-500 transition-colors hover:border-[#1a7a45]/50 hover:text-emerald-500'
+          className='mt-2 flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 px-3 py-1.5 text-xs text-zinc-600 transition-colors hover:border-[#1a7a45]/50 hover:text-emerald-700 dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-emerald-500'
         >
           <PlusIcon /> Añadir ingrediente
         </button>
       </div>
 
       {/* Sección de macros */}
-      <div className='rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 p-4'>
+      <div className='rounded-xl border border-zinc-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50'>
         <div className='mb-3 flex items-center justify-between'>
           <div>
-            <p className='text-sm font-medium text-zinc-300'>Valores nutricionales por ración</p>
+            <p className='text-sm font-medium text-zinc-800 dark:text-zinc-300'>Valores nutricionales por ración</p>
             {hasMacros && (
               <p className='mt-0.5 text-xs'>
                 {macros.source === 'ai_estimated' ? (
-                  <span className='text-zinc-500'>~ Estimación IA · Puedes editarlos manualmente</span>
+                  <span className='text-zinc-600 dark:text-zinc-500'>~ Estimación IA · Puedes editarlos manualmente</span>
                 ) : (
-                  <span className='text-emerald-500'>✓ Verificado por nutricionista</span>
+                  <span className='text-emerald-700 dark:text-emerald-500'>✓ Verificado por nutricionista</span>
                 )}
               </p>
             )}
@@ -286,10 +286,10 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
             type='button'
             onClick={handleCalculate}
             disabled={isCalculating}
-            className='flex items-center gap-1.5 rounded-lg border border-violet-800/60 bg-violet-950/40 px-3 py-1.5 text-xs font-medium text-violet-300 transition-all duration-150 hover:border-violet-700/70 hover:bg-violet-950/60 disabled:opacity-60'
+            className='flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 transition-all duration-150 hover:border-violet-300 hover:bg-violet-100 disabled:opacity-60 dark:border-violet-800/60 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:border-violet-700/70 dark:hover:bg-violet-950/60'
           >
             {isCalculating ? (
-              <span className='h-3 w-3 animate-spin rounded-full border border-violet-400/40 border-t-violet-300' />
+              <span className='h-3 w-3 animate-spin rounded-full border border-violet-500/40 border-t-violet-600 dark:border-violet-400/40 dark:border-t-violet-300' />
             ) : (
               <SparklesIcon />
             )}
@@ -298,7 +298,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
         </div>
 
         {calcError && (
-          <p className='mb-3 rounded-lg border border-red-800/60 bg-red-950/30 px-3 py-2 text-xs text-red-400'>
+          <p className='mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-400'>
             {calcError}
           </p>
         )}
@@ -311,8 +311,8 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
             { field: 'fat_g', label: 'Grasa', unit: 'g' },
           ] as const).map(({ field, label, unit }) => (
             <div key={field}>
-              <label className='mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600'>
-                {label} <span className='normal-case font-normal text-zinc-700'>({unit})</span>
+              <label className='mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-600'>
+                {label} <span className='normal-case font-normal text-zinc-500 dark:text-zinc-700'>({unit})</span>
               </label>
               <input
                 type='number'
@@ -320,7 +320,7 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
                 value={macros[field] ?? ''}
                 onChange={(e) => handleManualMacroChange(field, e.target.value)}
                 placeholder='—'
-                className='w-full rounded-lg border border-zinc-700 bg-white dark:bg-zinc-950 px-2.5 py-2 text-sm text-zinc-100 placeholder:text-zinc-700 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+                className='w-full rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-700'
               />
             </div>
           ))}
@@ -329,37 +329,37 @@ export function RecipeForm({ recipe, onSuccess, onCancel }: Props) {
 
       {/* Instrucciones */}
       <div>
-        <label className='mb-1.5 block text-sm font-medium text-zinc-300'>Instrucciones de preparación</label>
+        <label className='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>Instrucciones de preparación</label>
         <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
           placeholder='Describe los pasos de preparación…'
           rows={4}
-          className='w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+          className='w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-600'
         />
       </div>
 
       {/* Notas */}
       <div>
-        <label className='mb-1.5 block text-sm font-medium text-zinc-400'>
-          Notas / sugerencias <span className='font-normal text-zinc-600'>(opcional)</span>
+        <label className='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-400'>
+          Notas / sugerencias <span className='font-normal text-zinc-500 dark:text-zinc-600'>(opcional)</span>
         </label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder='Variantes, consejos, momentos de consumo…'
           rows={2}
-          className='w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30'
+          className='w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-[#1a7a45]/60 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-600'
         />
       </div>
 
       {/* Acciones */}
-      <div className='flex items-center justify-end gap-3 border-t border-zinc-800 pt-4'>
+      <div className='flex items-center justify-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800'>
         <button
           type='button'
           onClick={onCancel}
           disabled={isPending}
-          className='rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200 disabled:opacity-60'
+          className='rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-200'
         >
           Cancelar
         </button>

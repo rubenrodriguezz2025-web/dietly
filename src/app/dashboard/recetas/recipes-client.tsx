@@ -94,25 +94,25 @@ function RecipeCard({
   const hasNutritionalInfo = recipe.calories_per_serving !== null;
 
   return (
-    <div className='group relative rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-4 transition-all duration-200 hover:border-zinc-700'>
+    <div className='group relative rounded-xl border border-zinc-200 bg-white p-4 transition-all duration-200 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700'>
       {/* Header */}
       <div className='flex items-start justify-between gap-3'>
         <div className='min-w-0 flex-1'>
           <div className='flex flex-wrap items-center gap-2'>
             {recipe.category && (
-              <span className='rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-500'>
+              <span className='rounded-full border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500'>
                 {RECIPE_CATEGORY_LABELS[recipe.category as RecipeCategory] ?? recipe.category}
               </span>
             )}
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
               recipe.values_source === 'nutritionist_verified'
-                ? 'border border-emerald-800/50 bg-emerald-950/30 text-emerald-400'
-                : 'border border-zinc-800 bg-zinc-900 text-zinc-600'
+                ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-400'
+                : 'border border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600'
             }`}>
               {recipe.values_source === 'nutritionist_verified' ? '✓ Verificado' : '~ Estimación IA'}
             </span>
           </div>
-          <h3 className='mt-1.5 font-semibold text-zinc-100 leading-tight'>{recipe.name}</h3>
+          <h3 className='mt-1.5 font-semibold leading-tight text-zinc-900 dark:text-zinc-100'>{recipe.name}</h3>
         </div>
 
         {/* Actions */}
@@ -121,7 +121,7 @@ function RecipeCard({
             type='button'
             onClick={onEdit}
             title='Editar receta'
-            className='flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 text-zinc-600 transition-colors hover:border-zinc-700 hover:text-zinc-300'
+            className='flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors hover:border-zinc-400 hover:text-zinc-800 dark:border-zinc-800 dark:text-zinc-600 dark:hover:border-zinc-700 dark:hover:text-zinc-300'
           >
             <EditIcon />
           </button>
@@ -132,8 +132,8 @@ function RecipeCard({
             title={confirmDelete ? 'Confirmar eliminación' : 'Eliminar receta'}
             className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${
               confirmDelete
-                ? 'border-red-700 bg-red-950/40 text-red-400'
-                : 'border-zinc-800 text-zinc-600 hover:border-red-800/70 hover:bg-red-950/20 hover:text-red-400'
+                ? 'border-red-300 bg-red-50 text-red-600 dark:border-red-700 dark:bg-red-950/40 dark:text-red-400'
+                : 'border-zinc-200 text-zinc-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-zinc-800 dark:text-zinc-600 dark:hover:border-red-800/70 dark:hover:bg-red-950/20 dark:hover:text-red-400'
             }`}
           >
             {deleting ? (
@@ -147,34 +147,34 @@ function RecipeCard({
 
       {/* Macros */}
       {hasNutritionalInfo ? (
-        <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-zinc-800/80 bg-gray-100 dark:bg-zinc-900/60 px-3 py-2 text-xs'>
-          <span className='font-semibold text-zinc-200'>{recipe.calories_per_serving} kcal</span>
-          <span className='text-zinc-700'>·</span>
-          <span className='text-zinc-400'>{recipe.protein_g_per_serving}g P</span>
-          <span className='text-zinc-700'>·</span>
-          <span className='text-zinc-400'>{recipe.carbs_g_per_serving}g C</span>
-          <span className='text-zinc-700'>·</span>
-          <span className='text-zinc-400'>{recipe.fat_g_per_serving}g G</span>
-          <span className='ml-1 text-zinc-700'>· por ración</span>
+        <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs dark:border-zinc-800/80 dark:bg-zinc-900/60'>
+          <span className='font-semibold text-zinc-800 dark:text-zinc-200'>{recipe.calories_per_serving} kcal</span>
+          <span className='text-zinc-400 dark:text-zinc-700'>·</span>
+          <span className='text-zinc-600 dark:text-zinc-400'>{recipe.protein_g_per_serving}g P</span>
+          <span className='text-zinc-400 dark:text-zinc-700'>·</span>
+          <span className='text-zinc-600 dark:text-zinc-400'>{recipe.carbs_g_per_serving}g C</span>
+          <span className='text-zinc-400 dark:text-zinc-700'>·</span>
+          <span className='text-zinc-600 dark:text-zinc-400'>{recipe.fat_g_per_serving}g G</span>
+          <span className='ml-1 text-zinc-500 dark:text-zinc-700'>· por ración</span>
           {recipe.servings > 1 && (
-            <span className='rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-500'>
+            <span className='rounded-full bg-zinc-200 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-500'>
               {recipe.servings} raciones
             </span>
           )}
         </div>
       ) : (
-        <p className='mt-3 text-xs italic text-zinc-700'>Sin valores nutricionales registrados</p>
+        <p className='mt-3 text-xs italic text-zinc-500 dark:text-zinc-700'>Sin valores nutricionales registrados</p>
       )}
 
       {/* Ingredients preview */}
       {recipe.ingredients && (recipe.ingredients as { name: string }[]).length > 0 && (
-        <p className='mt-2 text-xs text-zinc-600 leading-relaxed line-clamp-2'>
+        <p className='mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-600'>
           {(recipe.ingredients as { name: string }[]).map((i) => i.name).join(', ')}
         </p>
       )}
 
       {/* Creation date */}
-      <p className='mt-3 text-[10px] text-zinc-700'>
+      <p className='mt-3 text-[10px] text-zinc-500 dark:text-zinc-700'>
         {new Date(recipe.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
       </p>
     </div>
@@ -191,13 +191,13 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
         onClick={onClose}
         aria-hidden='true'
       />
-      <div className='relative z-10 w-full max-w-2xl rounded-2xl border border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl shadow-black/50'>
-        <div className='flex items-center justify-between border-b border-zinc-800 px-6 py-4'>
-          <h2 className='font-semibold text-zinc-100'>{title}</h2>
+      <div className='relative z-10 w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-900/20 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/50'>
+        <div className='flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800'>
+          <h2 className='font-semibold text-zinc-900 dark:text-zinc-100'>{title}</h2>
           <button
             type='button'
             onClick={onClose}
-            className='rounded-lg p-1 text-zinc-600 transition-colors hover:text-zinc-300'
+            className='rounded-lg p-1 text-zinc-500 transition-colors hover:text-zinc-800 dark:text-zinc-600 dark:hover:text-zinc-300'
           >
             <XIcon />
           </button>
@@ -248,8 +248,8 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) 
       {/* Header */}
       <div className='flex flex-wrap items-center justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-zinc-100'>Mis recetas</h1>
-          <p className='mt-0.5 text-sm text-zinc-500'>
+          <h1 className='text-2xl font-bold text-zinc-900 dark:text-zinc-100'>Mis recetas</h1>
+          <p className='mt-0.5 text-sm text-zinc-600 dark:text-zinc-500'>
             {recipes.length === 0
               ? 'Tu recetario personal'
               : `${recipes.length} receta${recipes.length !== 1 ? 's' : ''} guardada${recipes.length !== 1 ? 's' : ''}`}
@@ -269,14 +269,14 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) 
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
           {/* Search */}
           <div className='relative flex-1'>
-            <span className='absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600'>
+            <span className='absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-600'>
               <SearchIcon />
             </span>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder='Buscar receta…'
-              className='w-full rounded-xl border border-zinc-800 bg-zinc-900 pl-9 pr-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-[#1a7a45]/50 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/20'
+              className='w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-[#1a7a45]/50 focus:outline-none focus:ring-1 focus:ring-[#1a7a45]/20 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-600'
             />
           </div>
           {/* Category filter */}
@@ -288,8 +288,8 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) 
                 onClick={() => setCategoryFilter(cat)}
                 className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${
                   categoryFilter === cat
-                    ? 'bg-[#1a7a45]/20 text-emerald-400'
-                    : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-[#1a7a45]/20 dark:text-emerald-400'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300'
                 }`}
               >
                 {CATEGORY_FILTER_LABELS[cat]}
@@ -301,7 +301,7 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) 
 
       {/* Empty state */}
       {recipes.length === 0 ? (
-        <div className='relative overflow-hidden rounded-2xl border border-dashed border-zinc-800 py-16 text-center'>
+        <div className='relative overflow-hidden rounded-2xl border border-dashed border-zinc-300 py-16 text-center dark:border-zinc-800'>
           {/* Ghost cards de fondo */}
           <div className='pointer-events-none absolute inset-0 flex items-end justify-center gap-3 px-8 opacity-[0.06]' aria-hidden='true'>
             {[120, 180, 140].map((h, i) => (
@@ -322,10 +322,10 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) 
               </svg>
             </div>
 
-            <h2 className='mb-1.5 text-base font-semibold text-zinc-200'>
+            <h2 className='mb-1.5 text-base font-semibold text-zinc-900 dark:text-zinc-200'>
               Crea tu recetario personal
             </h2>
-            <p className='mb-7 max-w-sm text-sm leading-relaxed text-zinc-500'>
+            <p className='mb-7 max-w-sm text-sm leading-relaxed text-zinc-600 dark:text-zinc-500'>
               La IA usará tus recetas al generar planes nutricionales.
               Cuantas más añadas, más personalizados serán los planes.
             </p>
@@ -340,7 +340,7 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) 
           </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className='rounded-xl border border-zinc-800 py-12 text-center text-zinc-600'>
+        <div className='rounded-xl border border-zinc-200 py-12 text-center text-zinc-500 dark:border-zinc-800 dark:text-zinc-600'>
           <p>No se encontraron recetas con ese filtro.</p>
         </div>
       ) : (

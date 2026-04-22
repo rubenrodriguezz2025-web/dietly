@@ -70,9 +70,9 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm'>
-      <div className='mx-4 w-full max-w-md rounded-2xl border border-zinc-700 bg-white dark:bg-zinc-900/95 p-6 shadow-2xl backdrop-blur'>
+      <div className='mx-4 w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95'>
         {/* Icono */}
-        <div className='mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-amber-950/60'>
+        <div className='mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/60'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             width='20'
@@ -83,7 +83,7 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
             strokeWidth='2'
             strokeLinecap='round'
             strokeLinejoin='round'
-            className='text-amber-400'
+            className='text-amber-600 dark:text-amber-400'
             aria-hidden='true'
           >
             <path d='M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9' />
@@ -91,10 +91,10 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
           </svg>
         </div>
 
-        <h2 className='mb-1 text-lg font-semibold text-zinc-100'>
+        <h2 className='mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>
           Programar revisión de {patientName}
         </h2>
-        <p className='mb-5 text-sm text-zinc-500'>
+        <p className='mb-5 text-sm text-zinc-600 dark:text-zinc-500'>
           ¿Cuándo quieres revisar a este paciente? Te avisaremos en el dashboard.
         </p>
 
@@ -107,8 +107,8 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
               onClick={() => { setSelected(days); setError(null); }}
               className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-colors duration-150 ${
                 selected === days
-                  ? 'border-[#1a7a45] bg-[#1a7a45]/15 text-emerald-300'
-                  : 'border-zinc-700 bg-zinc-800/50 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800'
+                  ? 'border-[#1a7a45] bg-emerald-50 text-emerald-800 dark:bg-[#1a7a45]/15 dark:text-emerald-300'
+                  : 'border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800'
               }`}
             >
               <span>{label}</span>
@@ -137,8 +137,8 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
             onClick={() => { setSelected('custom'); setError(null); }}
             className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-colors duration-150 ${
               selected === 'custom'
-                ? 'border-[#1a7a45] bg-[#1a7a45]/15 text-emerald-300'
-                : 'border-zinc-700 bg-zinc-800/50 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800'
+                ? 'border-[#1a7a45] bg-emerald-50 text-emerald-800 dark:bg-[#1a7a45]/15 dark:text-emerald-300'
+                : 'border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800'
             }`}
           >
             <span>Personalizado</span>
@@ -168,9 +168,9 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
                 placeholder='Días'
                 value={customDays}
                 onChange={(e) => { setCustomDays(e.target.value); setError(null); }}
-                className='w-24 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-[#1a7a45] focus:outline-none focus:ring-1 focus:ring-[#1a7a45]'
+                className='w-24 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-[#1a7a45] focus:outline-none focus:ring-1 focus:ring-[#1a7a45] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:placeholder:text-zinc-600'
               />
-              <span className='text-sm text-zinc-500'>días desde hoy</span>
+              <span className='text-sm text-zinc-600 dark:text-zinc-500'>días desde hoy</span>
             </div>
           )}
 
@@ -180,8 +180,8 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
             onClick={() => { setSelected('none'); setError(null); }}
             className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-colors duration-150 ${
               selected === 'none'
-                ? 'border-zinc-600 bg-zinc-800 text-zinc-400'
-                : 'border-zinc-800 bg-zinc-900 text-zinc-600 hover:border-zinc-700 hover:text-zinc-500'
+                ? 'border-zinc-400 bg-zinc-100 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600 dark:hover:border-zinc-700 dark:hover:text-zinc-500'
             }`}
           >
             <span>Sin recordatorio</span>
@@ -204,14 +204,14 @@ export function ReminderModal({ patientId, nutritionistId, patientName }: Props)
           </button>
         </div>
 
-        {error && <p className='mt-3 text-sm text-red-400'>{error}</p>}
+        {error && <p className='mt-3 text-sm text-red-600 dark:text-red-400'>{error}</p>}
 
         {/* Acciones */}
         <div className='mt-5 flex justify-end gap-3'>
           <button
             type='button'
             onClick={handleSkip}
-            className='rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200'
+            className='rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-200'
           >
             Omitir
           </button>

@@ -21,8 +21,8 @@ export function DayStatusBadge({ planId, dayNumber, dayName, status, isDraft }: 
 
   if (isRegenerating) {
     return (
-      <span className='inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-400'>
-        <span className='h-2.5 w-2.5 animate-spin rounded-full border border-zinc-500 border-t-zinc-300' />
+      <span className='inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400'>
+        <span className='h-2.5 w-2.5 animate-spin rounded-full border border-zinc-400 border-t-zinc-700 dark:border-zinc-500 dark:border-t-zinc-300' />
         Regenerando…
       </span>
     );
@@ -30,7 +30,7 @@ export function DayStatusBadge({ planId, dayNumber, dayName, status, isDraft }: 
 
   if (isApproved) {
     return (
-      <span className='inline-flex items-center gap-1 rounded-full border border-[#1a7a45]/30 bg-[#1a7a45]/10 px-2.5 py-1 text-xs font-medium text-emerald-400'>
+      <span className='inline-flex items-center gap-1 rounded-full border border-[#1a7a45]/30 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-[#1a7a45]/10 dark:text-emerald-400'>
         <svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
           <polyline points='20 6 9 17 4 12' />
         </svg>
@@ -51,11 +51,11 @@ export function DayStatusBadge({ planId, dayNumber, dayName, status, isDraft }: 
           await approveSingleDay(planId, dayNumber);
         });
       }}
-      className='inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-400 transition-all duration-150 hover:border-[#1a7a45]/50 hover:bg-[#1a7a45]/10 hover:text-emerald-400 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97]'
+      className='inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs text-zinc-600 transition-all duration-150 hover:border-[#1a7a45]/50 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97] dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:bg-[#1a7a45]/10 dark:hover:text-emerald-400'
     >
       {pending ? (
         <>
-          <span className='h-2.5 w-2.5 animate-spin rounded-full border border-zinc-500 border-t-zinc-300' />
+          <span className='h-2.5 w-2.5 animate-spin rounded-full border border-zinc-400 border-t-zinc-700 dark:border-zinc-500 dark:border-t-zinc-300' />
           Guardando…
         </>
       ) : (

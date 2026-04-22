@@ -342,11 +342,11 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
 
           {swapState.phase === 'error' && (
             <div className='flex items-center gap-2'>
-              <p className='text-xs text-red-400'>{swapState.message}</p>
+              <p className='text-xs text-red-600 dark:text-red-400'>{swapState.message}</p>
               <button
                 type='button'
                 onClick={handleSwapRequest}
-                className='text-xs font-medium text-zinc-400 underline hover:text-zinc-200'
+                className='text-xs font-medium text-zinc-600 underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
               >
                 Reintentar
               </button>
@@ -356,13 +356,13 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
           {swapState.phase === 'choosing' && (
             <div className='flex flex-col gap-2'>
               <div className='flex items-center justify-between'>
-                <p className='text-xs font-medium text-zinc-400'>
+                <p className='text-xs font-medium text-zinc-600 dark:text-zinc-400'>
                   Elige una alternativa para reemplazar este plato:
                 </p>
                 <button
                   type='button'
                   onClick={() => setSwapState({ phase: 'idle' })}
-                  className='text-[10px] text-zinc-500 hover:text-zinc-300'
+                  className='text-[10px] text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300'
                 >
                   Cancelar
                 </button>
@@ -372,18 +372,18 @@ export function MealCard({ meal, isInvalid, isDraft, planId, dayNumber, mealInde
                   key={i}
                   type='button'
                   onClick={() => handlePickAlternative(alt)}
-                  className='rounded-lg border border-zinc-700/50 bg-zinc-800/50 p-3 text-left transition-all hover:border-emerald-700/50 hover:bg-emerald-950/20'
+                  className='rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-left transition-all hover:border-emerald-300 hover:bg-emerald-50 dark:border-zinc-700/50 dark:bg-zinc-800/50 dark:hover:border-emerald-700/50 dark:hover:bg-emerald-950/20'
                 >
                   <div className='flex items-start justify-between gap-2'>
-                    <p className='text-sm font-medium text-zinc-200'>{alt.meal_name}</p>
-                    <span className='flex-shrink-0 rounded-md bg-zinc-700/50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-300'>
+                    <p className='text-sm font-medium text-zinc-800 dark:text-zinc-200'>{alt.meal_name}</p>
+                    <span className='flex-shrink-0 rounded-md bg-zinc-200 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300'>
                       {alt.calories} kcal
                     </span>
                   </div>
-                  <p className='mt-1 text-[11px] tabular-nums text-zinc-500'>
+                  <p className='mt-1 text-[11px] tabular-nums text-zinc-600 dark:text-zinc-500'>
                     P{alt.macros.protein_g} · C{alt.macros.carbs_g} · G{alt.macros.fat_g}
                   </p>
-                  <p className='mt-1 text-[11px] text-zinc-500'>
+                  <p className='mt-1 text-[11px] text-zinc-600 dark:text-zinc-500'>
                     {alt.ingredients.map((ing) => ing.name).join(', ')}
                   </p>
                 </button>

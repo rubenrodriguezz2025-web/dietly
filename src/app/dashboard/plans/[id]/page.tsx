@@ -224,12 +224,12 @@ export default async function PlanPage({
 
       {/* Weekly summary */}
       {content?.week_summary && !isGenerating && (
-        <div className='rounded-xl border border-zinc-800 bg-zinc-950 p-5'>
+        <div className='rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950'>
           {/* Card de criterios del plan */}
           {content.week_summary.protein_per_kg && (
-            <div className='mb-4 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5'>
-              <p className='text-xs text-zinc-400'>
-                <span className='font-medium text-zinc-300'>Plan generado con: </span>
+            <div className='mb-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 dark:border-zinc-700 dark:bg-zinc-900'>
+              <p className='text-xs text-zinc-600 dark:text-zinc-400'>
+                <span className='font-medium text-zinc-800 dark:text-zinc-300'>Plan generado con: </span>
                 {content.week_summary.target_daily_calories} kcal/día
                 {' · '}
                 {content.week_summary.target_macros.protein_g}g proteína ({content.week_summary.protein_per_kg}g/kg)
@@ -247,7 +247,7 @@ export default async function PlanPage({
           )}
 
           <div className='mb-4 flex items-center gap-2'>
-            <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+            <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500'>
               Resumen semanal
             </h2>
             {/* Tooltip de transparencia IA — solo visible para el nutricionista */}
@@ -255,19 +255,19 @@ export default async function PlanPage({
               <button
                 type='button'
                 aria-label='Información sobre los valores nutricionales'
-                className='flex h-4 w-4 items-center justify-center rounded-full border border-zinc-700 text-[9px] font-bold text-zinc-600 transition-colors hover:border-zinc-500 hover:text-zinc-400'
+                className='flex h-4 w-4 items-center justify-center rounded-full border border-zinc-300 text-[9px] font-bold text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-700 dark:border-zinc-700 dark:text-zinc-600 dark:hover:border-zinc-500 dark:hover:text-zinc-400'
               >
                 i
               </button>
-              <div className='pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-72 -translate-x-1/2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-xs leading-relaxed text-zinc-400 opacity-0 shadow-xl shadow-black/40 transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100'>
-                <p className='font-medium text-zinc-300'>Sobre los valores nutricionales</p>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-72 -translate-x-1/2 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-xs leading-relaxed text-zinc-600 opacity-0 shadow-xl shadow-zinc-900/10 transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:shadow-black/40'>
+                <p className='font-medium text-zinc-900 dark:text-zinc-300'>Sobre los valores nutricionales</p>
                 <p className='mt-1.5'>
-                  Los valores nutricionales son <strong className='text-zinc-200'>estimaciones generadas por IA</strong> basadas en la composición media de los alimentos. No proceden de una base de datos verificada externa.
+                  Los valores nutricionales son <strong className='text-zinc-800 dark:text-zinc-200'>estimaciones generadas por IA</strong> basadas en la composición media de los alimentos. No proceden de una base de datos verificada externa.
                 </p>
                 <p className='mt-1.5'>
                   El plan ha sido revisado y aprobado por el nutricionista responsable.
                 </p>
-                <div className='absolute bottom-[-5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-zinc-700 bg-zinc-900' />
+                <div className='absolute bottom-[-5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900' />
               </div>
             </div>
           </div>
@@ -295,8 +295,8 @@ export default async function PlanPage({
           </div>
 
           {content.week_summary.weekly_averages.calories > 0 && (
-            <div className='mt-4 border-t border-zinc-800 pt-4'>
-              <p className='mb-3 text-xs text-zinc-600'>Promedios reales del plan generado</p>
+            <div className='mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800'>
+              <p className='mb-3 text-xs text-zinc-600 dark:text-zinc-600'>Promedios reales del plan generado</p>
               <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
                 <MacroStat
                   label='Kcal media/día'
@@ -343,7 +343,7 @@ export default async function PlanPage({
         />
       ) : (
         !isGenerating && (
-          <div className='rounded-xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500'>
+          <div className='rounded-xl border border-dashed border-zinc-200 p-10 text-center text-zinc-500 dark:border-zinc-800'>
             Sin datos de plan.
           </div>
         )
@@ -381,8 +381,8 @@ function PlanLifecycle({ status }: { status: string }) {
                   done
                     ? 'bg-[#1a7a45] text-white'
                     : active
-                      ? 'border-2 border-[#1a7a45] bg-[#1a7a45]/10 text-emerald-400'
-                      : 'border border-zinc-700 bg-zinc-900 text-zinc-700'
+                      ? 'border-2 border-[#1a7a45] bg-emerald-50 text-emerald-700 dark:bg-[#1a7a45]/10 dark:text-emerald-400'
+                      : 'border border-zinc-300 bg-white text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-700'
                 }`}
               >
                 {done ? (
@@ -393,12 +393,12 @@ function PlanLifecycle({ status }: { status: string }) {
                   i + 1
                 )}
               </div>
-              <span className={`text-center text-[11px] font-medium leading-tight ${done || active ? 'text-zinc-300' : 'text-zinc-700'}`}>
+              <span className={`text-center text-[11px] font-medium leading-tight ${done || active ? 'text-zinc-800 dark:text-zinc-300' : 'text-zinc-400 dark:text-zinc-700'}`}>
                 {step.label}
               </span>
             </div>
             {i < LIFECYCLE_STEPS.length - 1 && (
-              <div className={`mb-5 h-px flex-1 transition-colors ${i < current ? 'bg-[#1a7a45]/60' : 'bg-zinc-800'}`} />
+              <div className={`mb-5 h-px flex-1 transition-colors ${i < current ? 'bg-[#1a7a45]/60' : 'bg-zinc-200 dark:bg-zinc-800'}`} />
             )}
           </div>
         );
@@ -500,9 +500,9 @@ function MacroStat({
 
   return (
     <div className='flex flex-col gap-0.5'>
-      <span className='text-xs text-zinc-600'>{label}</span>
+      <span className='text-xs text-zinc-500 dark:text-zinc-600'>{label}</span>
       <div className='flex items-center gap-1.5'>
-        <span className={`text-sm font-medium ${accent ? 'text-emerald-400' : 'text-zinc-200'}`}>
+        <span className={`text-sm font-medium ${accent ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-900 dark:text-zinc-200'}`}>
           {value}
         </span>
         {indicator}

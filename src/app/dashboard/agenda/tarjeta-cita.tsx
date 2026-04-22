@@ -56,7 +56,7 @@ function ReminderButton({ appointmentId }: { appointmentId: string }) {
         type='submit'
         disabled={pending}
         title='Enviar recordatorio por email al paciente'
-        className='rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-400 transition-colors hover:border-violet-700 hover:text-violet-400 disabled:opacity-40'
+        className='rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-600 transition-colors hover:border-violet-400 hover:text-violet-700 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-violet-700 dark:hover:text-violet-400'
       >
         {pending ? '…' : '✉'}
       </button>
@@ -128,7 +128,7 @@ export function TarjetaCita({ cita }: { cita: Appointment }) {
               <input type='hidden' name='status' value='completed' />
               <button
                 type='submit'
-                className='rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-400 transition-colors hover:border-green-700 hover:text-green-400'
+                className='rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-600 transition-colors hover:border-green-400 hover:text-green-700 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-green-700 dark:hover:text-green-400'
                 title='Marcar como completada'
               >
                 ✓
@@ -144,7 +144,7 @@ export function TarjetaCita({ cita }: { cita: Appointment }) {
             <input type='hidden' name='id' value={cita.id} />
             <button
               type='submit'
-              className='rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-400 transition-colors hover:border-red-800 hover:text-red-400'
+              className='rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-600 transition-colors hover:border-red-400 hover:text-red-700 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-800 dark:hover:text-red-400'
               title='Eliminar cita'
               onClick={handleDeleteClick}
             >

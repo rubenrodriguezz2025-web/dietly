@@ -24,17 +24,17 @@ export function ValidationSuggestions({ result }: { result: ValidationResult }) 
       <button
         type='button'
         onClick={() => setOpen(true)}
-        className='inline-flex items-center gap-1.5 rounded-full border border-zinc-700/60 bg-gray-100 dark:bg-zinc-900/80 px-2.5 py-1 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-300'
+        className='inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-gray-100 px-2.5 py-1 text-xs text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-700/60 dark:bg-zinc-900/80 dark:text-zinc-500 dark:hover:border-zinc-600 dark:hover:text-zinc-300'
       >
         <span aria-hidden='true'>ℹ️</span>
         {n} sugerencia{n !== 1 ? 's' : ''} del sistema
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className='flex w-full flex-col border-zinc-800 bg-white dark:bg-zinc-950 sm:max-w-md'>
-          <SheetHeader className='border-b border-zinc-800 pb-4'>
-            <SheetTitle className='text-zinc-100'>Sugerencias del sistema</SheetTitle>
-            <SheetDescription className='text-zinc-500'>
+        <SheetContent className='flex w-full flex-col border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 sm:max-w-md'>
+          <SheetHeader className='border-b border-zinc-200 pb-4 dark:border-zinc-800'>
+            <SheetTitle className='text-zinc-900 dark:text-zinc-100'>Sugerencias del sistema</SheetTitle>
+            <SheetDescription className='text-zinc-600 dark:text-zinc-500'>
               Observaciones automáticas sobre el plan generado. Puedes aprobar el plan
               en cualquier momento sin necesidad de revisarlas.
             </SheetDescription>
@@ -44,13 +44,13 @@ export function ValidationSuggestions({ result }: { result: ValidationResult }) 
             {result.issues.map((issue) => (
               <div
                 key={issue.code}
-                className='rounded-lg border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 px-4 py-3'
+                className='rounded-lg border border-zinc-200 bg-gray-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/50'
               >
-                <p className='text-sm font-medium text-zinc-300'>{issue.title}</p>
-                <p className='mt-1 text-xs leading-relaxed text-zinc-500'>{issue.detail}</p>
+                <p className='text-sm font-medium text-zinc-800 dark:text-zinc-300'>{issue.title}</p>
+                <p className='mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-500'>{issue.detail}</p>
                 {issue.affected && (
-                  <p className='mt-1.5 text-[11px] text-zinc-600'>
-                    <span className='text-zinc-700'>Afecta a: </span>
+                  <p className='mt-1.5 text-[11px] text-zinc-500 dark:text-zinc-600'>
+                    <span className='text-zinc-600 dark:text-zinc-700'>Afecta a: </span>
                     {issue.affected}
                   </p>
                 )}
@@ -58,8 +58,8 @@ export function ValidationSuggestions({ result }: { result: ValidationResult }) 
             ))}
 
             {/* Métricas de referencia */}
-            <div className='mt-2 border-t border-zinc-800/60 pt-4'>
-              <p className='mb-3 text-[11px] font-medium uppercase tracking-wider text-zinc-600'>
+            <div className='mt-2 border-t border-zinc-200 pt-4 dark:border-zinc-800/60'>
+              <p className='mb-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-600'>
                 Métricas calculadas del plan
               </p>
               <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
@@ -109,8 +109,8 @@ export function ValidationSuggestions({ result }: { result: ValidationResult }) 
 function StatItem({ label, value }: { label: string; value: string }) {
   return (
     <div className='flex flex-col gap-0.5'>
-      <span className='text-[11px] text-zinc-600'>{label}</span>
-      <span className='text-xs font-medium tabular-nums text-zinc-400'>{value}</span>
+      <span className='text-[11px] text-zinc-500 dark:text-zinc-600'>{label}</span>
+      <span className='text-xs font-medium tabular-nums text-zinc-700 dark:text-zinc-400'>{value}</span>
     </div>
   );
 }
