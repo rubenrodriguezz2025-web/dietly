@@ -94,7 +94,7 @@ function RecipeCard({
   const hasNutritionalInfo = recipe.calories_per_serving !== null;
 
   return (
-    <div className='group relative rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-4 transition-all duration-200 hover:border-zinc-700 hover:shadow-md hover:shadow-black/20'>
+    <div className='group relative rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-4 transition-all duration-200 hover:border-zinc-700'>
       {/* Header */}
       <div className='flex items-start justify-between gap-3'>
         <div className='min-w-0 flex-1'>
