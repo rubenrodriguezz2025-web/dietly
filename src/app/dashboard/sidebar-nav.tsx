@@ -228,7 +228,7 @@ function NavLink({
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p className='mb-1 mt-4 px-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-700 first:mt-0'>
+    <p className='mb-1 mt-4 px-3 text-[10px] font-medium uppercase tracking-widest text-zinc-500 first:mt-0 dark:text-zinc-600'>
       {label}
     </p>
   );

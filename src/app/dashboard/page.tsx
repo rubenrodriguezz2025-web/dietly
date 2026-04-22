@@ -278,7 +278,7 @@ export default async function DashboardPage() {
 
       {/* Revisiones pendientes — pacientes sin revisión en 30+ días */}
       {stalePatients.length > 0 && (
-        <div className='rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/40 dark:bg-amber-950/10'>
+        <div className='rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/10 dark:shadow-none'>
           <div className='mb-3 flex items-center gap-2'>
             <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-700 dark:text-amber-400' aria-hidden='true'>
               <circle cx='12' cy='12' r='10' />
@@ -371,7 +371,7 @@ function BetaMeter({ used, limit }: { used: number; limit: number }) {
   const labelColor = isFull ? 'text-red-700 dark:text-red-400' : isWarning ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-600 dark:text-zinc-500';
 
   return (
-    <div className={`rounded-xl border ${borderColor} bg-white dark:bg-zinc-950 px-5 py-4`}>
+    <div className={`rounded-xl border ${borderColor} bg-white shadow-sm dark:bg-zinc-950 dark:shadow-none px-5 py-4`}>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='flex flex-col gap-0.5'>
           <p className='text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500'>
@@ -553,7 +553,7 @@ function MetricCard({
 
 function StaleSwapsBanner({ count }: { count: number }) {
   return (
-    <div className='rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/40 dark:bg-amber-950/10'>
+    <div className='rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/10 dark:shadow-none'>
       <div className='flex flex-wrap items-center gap-3'>
         <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950/50'>
           <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-700 dark:text-amber-400' aria-hidden='true'>
@@ -586,7 +586,7 @@ function WelcomeBanner({ hasSubscription, firstName }: { hasSubscription: boolea
   if (hasSubscription) {
     // Variante sobria — suscriptor sin pacientes
     return (
-      <div className='rounded-xl border border-zinc-200 bg-white p-5 animate-in fade-in slide-in-from-top-2 duration-500'>
+      <div className='rounded-xl border border-zinc-200 bg-white p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-start gap-3'>
             <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100'>
@@ -616,7 +616,7 @@ function WelcomeBanner({ hasSubscription, firstName }: { hasSubscription: boolea
 
   // Variante principal — freemium sin suscripción
   return (
-    <div className='rounded-xl border border-emerald-200 bg-emerald-50 p-6 animate-in fade-in slide-in-from-top-2 duration-500'>
+    <div className='rounded-xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex items-start gap-3'>
           <div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100'>
@@ -678,7 +678,7 @@ function KanbanColumn({
 }) {
   const s = KANBAN_COLORS[color];
   return (
-    <div className={`rounded-xl border ${s.border} bg-gray-50 dark:bg-zinc-950 p-4`}>
+    <div className={`rounded-xl border ${s.border} bg-gray-50 shadow-sm dark:bg-zinc-950 dark:shadow-none p-4`}>
       <div className='mb-3 flex items-center gap-2'>
         <div className={`h-2 w-2 rounded-full ${s.dot}`} />
         <span className={`text-xs font-semibold uppercase tracking-wider ${s.title}`}>

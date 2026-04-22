@@ -40,7 +40,7 @@ export function MacroTransparencyCard({ patient, targets }: Props) {
   const fatPct     = Math.round((targets.fat_g      * 9) / targets.calories * 100);
 
   return (
-    <div className='rounded-xl border border-zinc-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-900/50'>
+    <div className='rounded-xl border border-zinc-200 bg-gray-50 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/50 dark:shadow-none'>
       {/* ── Header / toggle ──────────────────────────────────────────────── */}
       <button
         type='button'
