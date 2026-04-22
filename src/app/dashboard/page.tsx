@@ -191,14 +191,14 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className='flex items-start justify-between gap-4'>
         <div>
-          <p className='text-xs font-medium text-zinc-600'>
+          <p className='text-xs font-medium text-zinc-500 dark:text-zinc-600'>
             {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, c => c.toUpperCase())}
           </p>
-          <h1 className='mt-0.5 text-2xl font-bold text-zinc-100'>
+          <h1 className='mt-0.5 text-2xl font-bold text-zinc-900 dark:text-zinc-100'>
             Hola, {profile.full_name.split(' ')[0]}
           </h1>
           {profile.clinic_name?.trim() && profile.clinic_name.trim().length > 1 ? (
-            <p className='mt-0.5 text-sm text-zinc-500'>{profile.clinic_name}</p>
+            <p className='mt-0.5 text-sm text-zinc-600 dark:text-zinc-500'>{profile.clinic_name}</p>
           ) : null}
         </div>
         <Button asChild className='flex-shrink-0'>
@@ -278,16 +278,16 @@ export default async function DashboardPage() {
 
       {/* Revisiones pendientes — pacientes sin revisión en 30+ días */}
       {stalePatients.length > 0 && (
-        <div className='rounded-xl border border-amber-900/40 bg-amber-950/10 p-5'>
+        <div className='rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/40 dark:bg-amber-950/10'>
           <div className='mb-3 flex items-center gap-2'>
-            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-400' aria-hidden='true'>
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-700 dark:text-amber-400' aria-hidden='true'>
               <circle cx='12' cy='12' r='10' />
               <polyline points='12 6 12 12 16 14' />
             </svg>
-            <span className='text-xs font-semibold uppercase tracking-wider text-amber-400'>
+            <span className='text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400'>
               Revisiones pendientes
             </span>
-            <span className='ml-auto rounded-full bg-amber-900/50 px-2 py-0.5 text-xs tabular-nums font-medium text-amber-300'>
+            <span className='ml-auto rounded-full bg-amber-200 px-2 py-0.5 text-xs tabular-nums font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'>
               {stalePatients.length}
             </span>
           </div>
@@ -296,21 +296,21 @@ export default async function DashboardPage() {
               <Link
                 key={p.id}
                 href={`/dashboard/patients/${p.id}`}
-                className='flex items-center justify-between rounded-lg border border-amber-900/30 bg-zinc-950/50 px-4 py-2.5 transition-colors hover:border-amber-700/50 hover:bg-zinc-900/50'
+                className='flex items-center justify-between rounded-lg border border-amber-200 bg-white px-4 py-2.5 transition-colors hover:border-amber-300 hover:bg-amber-50 dark:border-amber-900/30 dark:bg-zinc-950/50 dark:hover:border-amber-700/50 dark:hover:bg-zinc-900/50'
               >
-                <span className='text-sm font-medium text-zinc-200'>{p.name}</span>
+                <span className='text-sm font-medium text-zinc-900 dark:text-zinc-200'>{p.name}</span>
                 <span className={cn(
                   'rounded-full px-2 py-0.5 text-xs font-medium',
                   p.daysSince >= 60
-                    ? 'bg-red-950 text-red-400'
-                    : 'bg-amber-950 text-amber-400',
+                    ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-400'
+                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400',
                 )}>
                   {p.daysSince >= 60 ? `${p.daysSince} días — urgente` : `${p.daysSince} días`}
                 </span>
               </Link>
             ))}
             {stalePatients.length > 8 && (
-              <p className='pt-1 text-center text-xs text-amber-600'>
+              <p className='pt-1 text-center text-xs text-amber-700 dark:text-amber-600'>
                 +{stalePatients.length - 8} pacientes más
               </p>
             )}
@@ -364,37 +364,37 @@ function BetaMeter({ used, limit }: { used: number; limit: number }) {
 
   const barColor = isFull ? '#dc2626' : isWarning ? '#d97706' : '#1a7a45';
   const borderColor = isFull
-    ? 'border-red-900/50'
+    ? 'border-red-200 dark:border-red-900/50'
     : isWarning
-      ? 'border-amber-900/50'
-      : 'border-zinc-800';
-  const labelColor = isFull ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-zinc-500';
+      ? 'border-amber-200 dark:border-amber-900/50'
+      : 'border-zinc-200 dark:border-zinc-800';
+  const labelColor = isFull ? 'text-red-700 dark:text-red-400' : isWarning ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-600 dark:text-zinc-500';
 
   return (
     <div className={`rounded-xl border ${borderColor} bg-white dark:bg-zinc-950 px-5 py-4`}>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='flex flex-col gap-0.5'>
-          <p className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+          <p className='text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500'>
             Acceso beta
           </p>
-          <p className='text-sm text-zinc-400'>
-            <span className={`text-lg font-bold ${isFull ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-zinc-100'}`}>
+          <p className='text-sm text-zinc-600 dark:text-zinc-400'>
+            <span className={`text-lg font-bold ${isFull ? 'text-red-700 dark:text-red-400' : isWarning ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-900 dark:text-zinc-100'}`}>
               {used}
             </span>
-            <span className='text-zinc-600'> / {limit} planes utilizados</span>
+            <span className='text-zinc-500 dark:text-zinc-600'> / {limit} planes utilizados</span>
           </p>
         </div>
         {isFull ? (
           <a
             href='mailto:hola@dietly.es'
-            className='rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:border-red-700/60 hover:text-red-300'
+            className='rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-800 transition-colors hover:border-red-300 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-700/60 dark:hover:bg-red-950/50 dark:hover:text-red-300'
           >
             Ampliar acceso →
           </a>
         ) : isWarning ? (
           <a
             href='mailto:hola@dietly.es'
-            className='text-xs text-amber-600 transition-colors hover:text-amber-400'
+            className='text-xs text-amber-700 transition-colors hover:text-amber-900 dark:text-amber-600 dark:hover:text-amber-400'
           >
             Solicitar más planes →
           </a>
@@ -426,25 +426,25 @@ function BetaMeter({ used, limit }: { used: number; limit: number }) {
 // Tooltip flotante accessible vía title nativo — sin librería extra
 const METRIC_ACCENT = {
   zinc: {
-    border: 'border-zinc-800',
-    iconBg: 'bg-zinc-900',
-    iconColor: 'text-zinc-500',
-    valueColor: 'text-zinc-100',
+    border: 'border-zinc-200 dark:border-zinc-800',
+    iconBg: 'bg-zinc-100 dark:bg-zinc-900',
+    iconColor: 'text-zinc-600 dark:text-zinc-500',
+    valueColor: 'text-zinc-900 dark:text-zinc-100',
     hoverBorder: '',
   },
   emerald: {
-    border: 'border-zinc-800',
-    iconBg: 'bg-[#1a7a45]/10',
-    iconColor: 'text-emerald-500',
-    valueColor: 'text-zinc-100',
+    border: 'border-zinc-200 dark:border-zinc-800',
+    iconBg: 'bg-emerald-50 dark:bg-[#1a7a45]/10',
+    iconColor: 'text-emerald-700 dark:text-emerald-500',
+    valueColor: 'text-zinc-900 dark:text-zinc-100',
     hoverBorder: '',
   },
   amber: {
-    border: 'border-amber-900/50',
-    iconBg: 'bg-amber-950/50',
-    iconColor: 'text-amber-400',
-    valueColor: 'text-amber-300',
-    hoverBorder: 'hover:border-amber-700/60',
+    border: 'border-amber-200 dark:border-amber-900/50',
+    iconBg: 'bg-amber-100 dark:bg-amber-950/50',
+    iconColor: 'text-amber-700 dark:text-amber-400',
+    valueColor: 'text-amber-800 dark:text-amber-300',
+    hoverBorder: 'hover:border-amber-300 dark:hover:border-amber-700/60',
   },
 } as const;
 
@@ -481,14 +481,14 @@ function MetricCard({
         <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md ${s.iconBg} ${s.iconColor}`}>
           {icon}
         </div>
-        <span className='text-xs font-medium text-zinc-500 leading-tight flex-1'>
+        <span className='text-xs font-medium text-zinc-600 dark:text-zinc-500 leading-tight flex-1'>
           {label}
         </span>
         {tooltip && (
           <span
             title={tooltip}
             aria-label={tooltip}
-            className='cursor-help text-zinc-700 transition-colors hover:text-zinc-500'
+            className='cursor-help text-zinc-400 transition-colors hover:text-zinc-600 dark:text-zinc-700 dark:hover:text-zinc-500'
           >
             <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
               <circle cx='12' cy='12' r='10' />
@@ -506,7 +506,7 @@ function MetricCard({
         <div className='flex flex-col items-end gap-0.5'>
           {trend !== undefined && trend !== 0 && (
             <span className={`flex items-center gap-0.5 text-xs font-medium leading-none tabular-nums ${
-              trendUp ? 'text-emerald-400' : trendDown ? 'text-red-400' : 'text-zinc-600'
+              trendUp ? 'text-emerald-700 dark:text-emerald-400' : trendDown ? 'text-red-700 dark:text-red-400' : 'text-zinc-500 dark:text-zinc-600'
             }`}>
               {trendUp ? (
                 <svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
@@ -521,10 +521,10 @@ function MetricCard({
             </span>
           )}
           {trendLabel && (
-            <span className='text-[10px] text-zinc-700 leading-none'>{trendLabel}</span>
+            <span className='text-[10px] text-zinc-500 dark:text-zinc-700 leading-none'>{trendLabel}</span>
           )}
           {cta && href && (
-            <span className='text-xs text-amber-500/70 leading-none'>
+            <span className='text-xs text-amber-600 dark:text-amber-500/70 leading-none'>
               {cta} →
             </span>
           )}
@@ -553,27 +553,27 @@ function MetricCard({
 
 function StaleSwapsBanner({ count }: { count: number }) {
   return (
-    <div className='rounded-xl border border-amber-900/40 bg-amber-950/10 p-4'>
+    <div className='rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/40 dark:bg-amber-950/10'>
       <div className='flex flex-wrap items-center gap-3'>
-        <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-950/50'>
-          <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-400' aria-hidden='true'>
+        <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950/50'>
+          <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-amber-700 dark:text-amber-400' aria-hidden='true'>
             <circle cx='12' cy='12' r='10' />
             <polyline points='12 6 12 12 16 14' />
           </svg>
         </div>
         <div className='min-w-0 flex-1'>
-          <p className='text-sm font-semibold text-amber-300'>
+          <p className='text-sm font-semibold text-amber-900 dark:text-amber-300'>
             {count === 1
               ? 'Tienes 1 intercambio pendiente desde hace más de 48 horas'
               : `Tienes ${count} intercambios pendientes desde hace más de 48 horas`}
           </p>
-          <p className='mt-0.5 text-xs text-amber-500/80'>
+          <p className='mt-0.5 text-xs text-amber-700 dark:text-amber-500/80'>
             Tus pacientes están esperando tu respuesta.
           </p>
         </div>
         <Link
           href='/dashboard/intercambios'
-          className='flex-shrink-0 rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors hover:border-amber-700/60 hover:text-amber-200'
+          className='flex-shrink-0 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:border-amber-400 hover:bg-amber-100 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:border-amber-700/60 dark:hover:bg-amber-900/30 dark:hover:text-amber-200'
         >
           Revisar →
         </Link>
@@ -645,25 +645,25 @@ function WelcomeBanner({ hasSubscription, firstName }: { hasSubscription: boolea
 
 const KANBAN_COLORS = {
   amber: {
-    border: 'border-amber-900/40',
-    dot: 'bg-amber-400',
-    title: 'text-amber-400',
-    cardBorder: 'border-amber-900/30 hover:border-amber-700/50',
-    empty: 'text-amber-900/60',
+    border: 'border-amber-200 dark:border-amber-900/40',
+    dot: 'bg-amber-500 dark:bg-amber-400',
+    title: 'text-amber-700 dark:text-amber-400',
+    cardBorder: 'border-amber-200 hover:border-amber-300 dark:border-amber-900/30 dark:hover:border-amber-700/50',
+    empty: 'text-amber-700/60 dark:text-amber-900/60',
   },
   emerald: {
-    border: 'border-emerald-900/40',
-    dot: 'bg-emerald-400',
-    title: 'text-emerald-400',
-    cardBorder: 'border-emerald-900/30 hover:border-emerald-700/50',
-    empty: 'text-emerald-900/60',
+    border: 'border-emerald-200 dark:border-emerald-900/40',
+    dot: 'bg-emerald-500 dark:bg-emerald-400',
+    title: 'text-emerald-700 dark:text-emerald-400',
+    cardBorder: 'border-emerald-200 hover:border-emerald-300 dark:border-emerald-900/30 dark:hover:border-emerald-700/50',
+    empty: 'text-emerald-700/60 dark:text-emerald-900/60',
   },
   blue: {
-    border: 'border-blue-900/40',
-    dot: 'bg-blue-400',
-    title: 'text-blue-400',
-    cardBorder: 'border-blue-900/30 hover:border-blue-700/50',
-    empty: 'text-blue-900/60',
+    border: 'border-blue-200 dark:border-blue-900/40',
+    dot: 'bg-blue-500 dark:bg-blue-400',
+    title: 'text-blue-700 dark:text-blue-400',
+    cardBorder: 'border-blue-200 hover:border-blue-300 dark:border-blue-900/30 dark:hover:border-blue-700/50',
+    empty: 'text-blue-700/60 dark:text-blue-900/60',
   },
 } as const;
 
@@ -684,7 +684,7 @@ function KanbanColumn({
         <span className={`text-xs font-semibold uppercase tracking-wider ${s.title}`}>
           {title}
         </span>
-        <span className='ml-auto text-xs tabular-nums text-zinc-600'>{plans.length}</span>
+        <span className='ml-auto text-xs tabular-nums text-zinc-500 dark:text-zinc-600'>{plans.length}</span>
       </div>
       {plans.length === 0 ? (
         <p className={`py-4 text-center text-xs ${s.empty}`}>Sin planes</p>
@@ -696,10 +696,10 @@ function KanbanColumn({
               href={`/dashboard/plans/${plan.id}`}
               className={`rounded-lg border ${s.cardBorder} bg-white dark:bg-zinc-900/50 shadow-sm dark:shadow-none px-3 py-2.5 transition-colors`}
             >
-              <span className='block text-sm font-medium text-zinc-200'>
+              <span className='block text-sm font-medium text-zinc-900 dark:text-zinc-200'>
                 {plan.patients?.name ?? 'Paciente'}
               </span>
-              <span className='text-xs text-zinc-600'>
+              <span className='text-xs text-zinc-500 dark:text-zinc-600'>
                 {new Date(plan.created_at).toLocaleDateString('es-ES', {
                   day: 'numeric',
                   month: 'short',
@@ -708,7 +708,7 @@ function KanbanColumn({
             </Link>
           ))}
           {plans.length > 5 && (
-            <p className='pt-1 text-center text-xs text-zinc-600'>
+            <p className='pt-1 text-center text-xs text-zinc-500 dark:text-zinc-600'>
               +{plans.length - 5} más
             </p>
           )}
