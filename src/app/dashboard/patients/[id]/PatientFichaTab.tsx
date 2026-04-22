@@ -74,7 +74,7 @@ function InlineField({
   if (editing) {
     return (
       <div className='flex flex-col gap-0.5'>
-        <span className='text-xs text-zinc-600'>{label}</span>
+        <span className='text-xs text-zinc-500 dark:text-zinc-600'>{label}</span>
         <div className='flex flex-col gap-1.5'>
           {type === 'textarea' ? (
             <textarea
@@ -82,14 +82,14 @@ function InlineField({
               onChange={(e) => setDraft(e.target.value)}
               autoFocus
               rows={3}
-              className='resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30'
+              className='resize-none rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
             />
           ) : type === 'select' && options ? (
             <select
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               autoFocus
-              className='rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none'
+              className='rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
             >
               <option value=''>— Sin especificar —</option>
               {options.map((opt) => (
@@ -108,7 +108,7 @@ function InlineField({
                 if (e.key === 'Enter') confirm();
                 if (e.key === 'Escape') cancel();
               }}
-              className='rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30'
+              className='rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
             />
           )}
           <div className='flex items-center gap-2'>
@@ -116,7 +116,7 @@ function InlineField({
               type='button'
               onClick={confirm}
               disabled={saving}
-              className='flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-950/50 disabled:opacity-50'
+              className='flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50'
             >
               {saving ? (
                 <span className='h-2.5 w-2.5 animate-spin rounded-full border-2 border-emerald-600/30 border-t-emerald-400' />
@@ -141,7 +141,7 @@ function InlineField({
             <button
               type='button'
               onClick={cancel}
-              className='flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-800 hover:text-zinc-400'
+              className='flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-400'
             >
               <svg
                 xmlns='http://www.w3.org/2000/svg'
@@ -161,7 +161,7 @@ function InlineField({
               Cancelar
             </button>
           </div>
-          {saveError && <p className='text-[11px] text-red-400'>{saveError}</p>}
+          {saveError && <p className='text-[11px] text-red-600 dark:text-red-400'>{saveError}</p>}
         </div>
       </div>
     );
@@ -169,17 +169,17 @@ function InlineField({
 
   return (
     <div className='group/inline flex flex-col gap-0.5'>
-      <span className='text-xs text-zinc-600'>{label}</span>
+      <span className='text-xs text-zinc-500 dark:text-zinc-600'>{label}</span>
       <div className='flex items-center gap-1.5'>
-        <span className='text-sm text-zinc-200'>
-          {shown ?? <span className='text-zinc-700'>—</span>}
+        <span className='text-sm text-zinc-900 dark:text-zinc-200'>
+          {shown ?? <span className='text-zinc-400 dark:text-zinc-700'>—</span>}
         </span>
         <button
           type='button'
           onClick={startEdit}
           title={`Editar ${label.toLowerCase()}`}
           aria-label={`Editar ${label.toLowerCase()}`}
-          className='rounded p-0.5 text-zinc-700 opacity-0 transition-all group-hover/inline:opacity-100 hover:text-zinc-300 focus-visible:opacity-100'
+          className='rounded p-0.5 text-zinc-500 opacity-0 transition-all group-hover/inline:opacity-100 hover:text-zinc-800 focus-visible:opacity-100 dark:text-zinc-700 dark:hover:text-zinc-300'
         >
           <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -237,9 +237,9 @@ function computeTDEEClientSide(
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft:    'bg-amber-950 text-amber-400',
-  approved: 'bg-green-950 text-green-400',
-  sent:     'bg-blue-950 text-blue-400',
+  draft:    'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400',
+  approved: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-400',
+  sent:     'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-400',
 };
 
 // ── Plan row ──────────────────────────────────────────────────────────────────
@@ -248,23 +248,23 @@ function PlanRow({ plan }: { plan: NutritionPlan }) {
   return (
     <Link
       href={`/dashboard/plans/${plan.id}`}
-      className='flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition-colors hover:border-zinc-600 hover:bg-zinc-900'
+      className='flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-600 dark:hover:bg-zinc-900'
     >
       <div className='flex flex-col gap-1'>
-        <span className='text-sm font-medium text-zinc-200'>
+        <span className='text-sm font-medium text-zinc-900 dark:text-zinc-200'>
           Semana del{' '}
           {new Date(plan.week_start_date).toLocaleDateString('es-ES', {
             day: 'numeric',
             month: 'short',
           })}
         </span>
-        <span className='text-xs text-zinc-600'>
+        <span className='text-xs text-zinc-500 dark:text-zinc-600'>
           {new Date(plan.created_at).toLocaleDateString('es-ES')}
         </span>
       </div>
       <span
         className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-          STATUS_COLORS[plan.status] ?? 'bg-zinc-800 text-zinc-400'
+          STATUS_COLORS[plan.status] ?? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
         }`}
       >
         {PLAN_STATUS_LABELS[plan.status]}
@@ -306,7 +306,7 @@ export function PatientFichaTab({
 
       {/* Estado del cuestionario — visible en ficha principal */}
       {intakeForm ? (
-        <div className='flex items-center gap-2 rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-4 py-2.5'>
+        <div className='flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 dark:border-emerald-900/50 dark:bg-emerald-950/30'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             width='14'
@@ -317,20 +317,20 @@ export function PatientFichaTab({
             strokeWidth='2.5'
             strokeLinecap='round'
             strokeLinejoin='round'
-            className='flex-shrink-0 text-emerald-500'
+            className='flex-shrink-0 text-emerald-600 dark:text-emerald-500'
             aria-hidden='true'
           >
             <polyline points='20 6 9 17 4 12' />
           </svg>
-          <p className='text-[13px] text-emerald-400'>
+          <p className='text-[13px] text-emerald-800 dark:text-emerald-400'>
             Cuestionario completado —{' '}
-            <span className='text-emerald-500/70'>
+            <span className='text-emerald-700/80 dark:text-emerald-500/70'>
               el plan usará toda la información del paciente
             </span>
           </p>
         </div>
       ) : intakeUrl ? (
-        <div className='rounded-xl border border-[#1a7a45]/40 bg-[#0a1f12] p-4'>
+        <div className='rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-[#1a7a45]/40 dark:bg-[#0a1f12]'>
           <div className='flex gap-3'>
             <div className='mt-0.5 flex-shrink-0'>
               <svg
@@ -354,10 +354,10 @@ export function PatientFichaTab({
               </svg>
             </div>
             <div className='flex flex-col gap-2'>
-              <p className='text-[13px] font-semibold text-zinc-200'>
+              <p className='text-[13px] font-semibold text-emerald-900 dark:text-zinc-200'>
                 Personaliza el plan con más detalle
               </p>
-              <p className='text-[13px] leading-relaxed text-zinc-400'>
+              <p className='text-[13px] leading-relaxed text-emerald-800 dark:text-zinc-400'>
                 Envía un cuestionario al paciente para conocer sus horarios, preferencias
                 y hábitos. El plan generado será mucho más preciso.
               </p>
@@ -365,7 +365,7 @@ export function PatientFichaTab({
                 <button
                   type='button'
                   onClick={onGoToCuestionario}
-                  className='flex items-center gap-1.5 rounded-lg border border-[#1a7a45]/60 bg-[#1a7a45]/20 px-3 py-1.5 text-[12px] font-semibold text-emerald-400 transition-colors hover:border-[#1a7a45] hover:bg-[#1a7a45]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45]'
+                  className='flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:border-emerald-700 hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] dark:border-[#1a7a45]/60 dark:bg-[#1a7a45]/20 dark:text-emerald-400 dark:hover:border-[#1a7a45] dark:hover:bg-[#1a7a45]/30'
                 >
                   Enviar cuestionario
                   <svg
@@ -387,7 +387,7 @@ export function PatientFichaTab({
                 <button
                   type='button'
                   onClick={onOpenQuestionsPreview}
-                  className='text-[12px] text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:underline'
+                  className='text-[12px] text-emerald-700 transition-colors hover:text-emerald-900 focus-visible:outline-none focus-visible:underline dark:text-zinc-500 dark:hover:text-zinc-300'
                 >
                   Ver preguntas del cuestionario →
                 </button>
@@ -642,12 +642,12 @@ export function PatientFichaTab({
 
         {/* Right: nutrition plans */}
         <div className='flex flex-col gap-4'>
-          <h2 className='text-sm font-semibold uppercase tracking-wider text-zinc-500'>
+          <h2 className='text-sm font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500'>
             Planes nutricionales
           </h2>
           {!plans || plans.length === 0 ? (
-            <div className='flex flex-col items-center rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
-              <p className='text-sm text-zinc-500'>Sin planes todavía.</p>
+            <div className='flex flex-col items-center rounded-xl border border-dashed border-zinc-300 py-10 text-center dark:border-zinc-800'>
+              <p className='text-sm text-zinc-600 dark:text-zinc-500'>Sin planes todavía.</p>
               <div className='mt-4'>
                 <GenerateButton
                   patientId={patient.id}
@@ -692,8 +692,8 @@ function SwapToggle({ patientId, initialValue }: { patientId: string; initialVal
   return (
     <div className='flex items-center justify-between'>
       <div className='flex flex-col gap-0.5'>
-        <span className='text-sm text-zinc-200'>Permitir intercambio de platos</span>
-        <span className='text-xs text-zinc-500'>
+        <span className='text-sm text-zinc-900 dark:text-zinc-200'>Permitir intercambio de platos</span>
+        <span className='text-xs text-zinc-600 dark:text-zinc-500'>
           El paciente podrá cambiar platos desde su plan. Serás notificado de cada cambio.
         </span>
       </div>
@@ -703,7 +703,7 @@ function SwapToggle({ patientId, initialValue }: { patientId: string; initialVal
         aria-checked={enabled}
         onClick={toggle}
         disabled={saving}
-        className='relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:opacity-50'
+        className='relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 dark:focus-visible:ring-offset-zinc-900'
         style={{ background: enabled ? '#1a7a45' : '#3f3f46' }}
       >
         <span
