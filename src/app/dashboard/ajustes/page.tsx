@@ -39,27 +39,27 @@ export default async function AjustesPage() {
     active: isPro
       ? {
           label: 'Plan Profesional',
-          dotClass: 'bg-emerald-400',
-          textClass: 'text-emerald-300',
-          bgClass: 'border-[#1a7a45]/30 bg-[#1a7a45]/10',
+          dotClass: 'bg-emerald-500 dark:bg-emerald-400',
+          textClass: 'text-emerald-700 dark:text-emerald-300',
+          bgClass: 'border-[#1a7a45]/30 bg-emerald-50 dark:bg-[#1a7a45]/10',
         }
       : {
           label: 'Plan Básico',
-          dotClass: 'bg-emerald-400',
-          textClass: 'text-emerald-300',
-          bgClass: 'border-[#1a7a45]/30 bg-[#1a7a45]/10',
+          dotClass: 'bg-emerald-500 dark:bg-emerald-400',
+          textClass: 'text-emerald-700 dark:text-emerald-300',
+          bgClass: 'border-[#1a7a45]/30 bg-emerald-50 dark:bg-[#1a7a45]/10',
         },
     past_due: {
       label: 'Pago pendiente',
-      dotClass: 'bg-red-400',
-      textClass: 'text-red-300',
-      bgClass: 'border-red-800/30 bg-red-950/20',
+      dotClass: 'bg-red-500 dark:bg-red-400',
+      textClass: 'text-red-700 dark:text-red-300',
+      bgClass: 'border-red-200 bg-red-50 dark:border-red-800/30 dark:bg-red-950/20',
     },
     canceled: {
       label: 'Suscripción cancelada',
-      dotClass: 'bg-zinc-500',
-      textClass: 'text-zinc-400',
-      bgClass: 'border-zinc-800 bg-zinc-950',
+      dotClass: 'bg-zinc-400 dark:bg-zinc-500',
+      textClass: 'text-zinc-600 dark:text-zinc-400',
+      bgClass: 'border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950',
     },
   };
   // Usuarios legacy en trialing se muestran como active
@@ -68,9 +68,9 @@ export default async function AjustesPage() {
 
   const badge: BadgeConfig = badgeMap[subStatus] ?? {
     label: 'Sin suscripción',
-    dotClass: 'bg-zinc-600',
-    textClass: 'text-zinc-400',
-    bgClass: 'border-zinc-800 bg-zinc-950',
+    dotClass: 'bg-zinc-400 dark:bg-zinc-600',
+    textClass: 'text-zinc-600 dark:text-zinc-400',
+    bgClass: 'border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950',
   };
 
   // URL firmada del logo para previsualización (1 hora de validez)
@@ -104,8 +104,8 @@ export default async function AjustesPage() {
     <div className='flex flex-col gap-8'>
       <div className='flex items-start justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-zinc-100'>Ajustes</h1>
-          <p className='mt-1 text-sm text-zinc-500'>
+          <h1 className='text-2xl font-bold text-zinc-900 dark:text-zinc-100'>Ajustes</h1>
+          <p className='mt-1 text-sm text-zinc-600 dark:text-zinc-500'>
             Información que aparecerá en los planes PDF que generes.
           </p>
         </div>
@@ -122,18 +122,18 @@ export default async function AjustesPage() {
 
       {/* CTA upgrade para plan básico */}
       {!isPro && (
-        <div className='flex items-center justify-between gap-4 rounded-xl border border-amber-900/40 bg-amber-950/15 px-5 py-4'>
+        <div className='flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-900/40 dark:bg-amber-950/15'>
           <div>
-            <p className='text-sm font-semibold text-amber-300'>
+            <p className='text-sm font-semibold text-amber-900 dark:text-amber-200'>
               Logo, firma digital y colores personalizados — Plan Profesional
             </p>
-            <p className='mt-0.5 text-xs text-amber-600'>
+            <p className='mt-0.5 text-xs text-amber-700 dark:text-amber-600'>
               Añade tu identidad visual a todos los PDFs que entregas a tus pacientes.
             </p>
           </div>
           <a
             href='/dashboard/admin/beta'
-            className='flex-shrink-0 rounded-lg border border-amber-700/50 bg-amber-950/40 px-3 py-1.5 text-xs font-semibold text-amber-300 transition-colors hover:border-amber-600 hover:bg-amber-950/60'
+            className='flex-shrink-0 rounded-lg border border-amber-300 bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:border-amber-400 hover:bg-amber-200 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:border-amber-600 dark:hover:bg-amber-950/60'
           >
             Ver planes →
           </a>
@@ -147,8 +147,8 @@ export default async function AjustesPage() {
       <div id='mi-marca'>
         {!profile?.brand_settings_visited_at && <BrandVisitTracker />}
 
-        <h2 className='mb-1 text-xl font-bold text-zinc-100'>Mi marca</h2>
-        <p className='mb-6 text-sm text-zinc-500'>
+        <h2 className='mb-1 text-xl font-bold text-zinc-900 dark:text-zinc-100'>Mi marca</h2>
+        <p className='mb-6 text-sm text-zinc-600 dark:text-zinc-500'>
           Personaliza el aspecto y contenido de todos tus planes nutricionales en PDF.
         </p>
         <BrandSettings
@@ -162,28 +162,28 @@ export default async function AjustesPage() {
       </div>
 
       {/* ── Logo de la clínica (solo Pro) ── */}
-      <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-800 bg-white dark:bg-zinc-950' : 'border-zinc-800/60 bg-gray-50 dark:bg-zinc-950/50'}`}>
-        <div className='mb-4 flex items-center justify-between border-b border-zinc-800 pb-3'>
-          <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+      <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950' : 'border-zinc-200 bg-zinc-50 dark:border-zinc-800/60 dark:bg-zinc-950/50'}`}>
+        <div className='mb-4 flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800'>
+          <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500'>
             Logo de la clínica
           </h2>
           {isPro ? (
-            <span className='rounded-full bg-[#1a7a45]/20 px-2 py-0.5 text-xs font-medium text-emerald-400'>
+            <span className='rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-[#1a7a45]/20 dark:text-emerald-400'>
               ✓ Activo
             </span>
           ) : (
-            <span className='flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-xs font-medium text-amber-500'>
+            <span className='flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-500'>
               <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'><rect x='3' y='11' width='18' height='11' rx='2' ry='2' /><path d='M7 11V7a5 5 0 0 1 10 0v4' /></svg>
               Solo Pro
             </span>
           )}
         </div>
-        <p className='mb-1 text-xs text-zinc-500'>
+        <p className='mb-1 text-xs text-zinc-600 dark:text-zinc-500'>
           El logo aparece en el encabezado y portada de los PDFs que generas para tus
           pacientes.{' '}
           {!isPro && 'Disponible en el Plan Profesional.'}
         </p>
-        <p className='mb-4 text-xs text-zinc-600'>
+        <p className='mb-4 text-xs text-zinc-500 dark:text-zinc-600'>
           Si no tienes logo, puedes usar tu nombre o el de tu clínica — el PDF quedará
           igualmente profesional.
         </p>
@@ -191,23 +191,23 @@ export default async function AjustesPage() {
       </section>
 
       {/* ── Firma digital (solo Pro) ── */}
-      <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-800 bg-white dark:bg-zinc-950' : 'border-zinc-800/60 bg-gray-50 dark:bg-zinc-950/50'}`}>
-        <div className='mb-4 flex items-center justify-between border-b border-zinc-800 pb-3'>
-          <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+      <section className={`rounded-xl border p-6 ${isPro ? 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950' : 'border-zinc-200 bg-zinc-50 dark:border-zinc-800/60 dark:bg-zinc-950/50'}`}>
+        <div className='mb-4 flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800'>
+          <h2 className='text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-500'>
             Firma digital
           </h2>
           {isPro ? (
-            <span className='rounded-full bg-[#1a7a45]/20 px-2 py-0.5 text-xs font-medium text-emerald-400'>
+            <span className='rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-[#1a7a45]/20 dark:text-emerald-400'>
               ✓ Activo
             </span>
           ) : (
-            <span className='flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-xs font-medium text-amber-500'>
+            <span className='flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-500'>
               <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'><rect x='3' y='11' width='18' height='11' rx='2' ry='2' /><path d='M7 11V7a5 5 0 0 1 10 0v4' /></svg>
               Solo Pro
             </span>
           )}
         </div>
-        <p className='mb-4 text-xs text-zinc-500'>
+        <p className='mb-4 text-xs text-zinc-600 dark:text-zinc-500'>
           La firma aparece sobre el pie de página en los PDFs aprobados.{' '}
           Usa PNG o WebP con fondo transparente para mejor resultado.{' '}
           {!isPro && 'Disponible en el Plan Profesional.'}
@@ -216,8 +216,8 @@ export default async function AjustesPage() {
       </section>
 
       {/* ── Información personal ── */}
-      <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
-        <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+      <section className='rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950'>
+        <h2 className='mb-4 border-b border-zinc-200 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:text-zinc-500'>
           Información del perfil
         </h2>
         <ProfileForm

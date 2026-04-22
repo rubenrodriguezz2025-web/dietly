@@ -48,8 +48,8 @@ function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className='relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-[#1a7a45] focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-40'
-      style={{ backgroundColor: checked ? '#1a7a45' : '#3f3f46' }}
+      className='relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-[#1a7a45] focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-40 dark:focus:ring-offset-zinc-950'
+      style={{ backgroundColor: checked ? '#1a7a45' : '#a1a1aa' }}
     >
       <span
         className='pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-out'
@@ -91,7 +91,7 @@ function PreviewButton() {
         type='button'
         onClick={handleClick}
         disabled={loading}
-        className='inline-flex w-fit items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50'
+        className='inline-flex w-fit items-center gap-2 rounded-lg border border-zinc-300 bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-400 hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-700'
       >
         {loading ? (
           <>
@@ -134,7 +134,7 @@ function PreviewButton() {
           </>
         )}
       </button>
-      {error && <p className='text-xs text-red-400'>{error}</p>}
+      {error && <p className='text-xs text-red-600 dark:text-red-400'>{error}</p>}
     </div>
   );
 }
@@ -266,7 +266,7 @@ export function BrandSettings({
   return (
     <div className='flex flex-col gap-8'>
       {/* Aviso de marca invisible */}
-      <div className='flex items-start gap-3 rounded-xl border border-emerald-800/40 bg-emerald-950/30 px-4 py-3'>
+      <div className='flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/40 dark:bg-emerald-950/30'>
         <svg
           viewBox='0 0 24 24'
           fill='none'
@@ -274,28 +274,28 @@ export function BrandSettings({
           strokeWidth='2'
           strokeLinecap='round'
           strokeLinejoin='round'
-          className='mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400'
+          className='mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400'
           aria-hidden='true'
         >
           <circle cx='12' cy='12' r='10' />
           <path d='M12 16v-4M12 8h.01' />
         </svg>
-        <p className='text-sm text-emerald-300/90'>
+        <p className='text-sm text-emerald-800 dark:text-emerald-300/90'>
           Tus pacientes solo ven tu nombre y tu marca. Dietly es invisible para ellos.
         </p>
       </div>
 
       {/* ── Subsección 1: Identidad visual ── */}
-      <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
-        <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+      <section className='rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950'>
+        <h2 className='mb-4 border-b border-zinc-200 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:text-zinc-500'>
           Identidad visual
         </h2>
 
         <div className='flex flex-col gap-8'>
           {/* Foto de perfil */}
           <div>
-            <p className='mb-3 text-sm font-medium text-zinc-300'>Foto de perfil</p>
-            <p className='mb-4 text-xs text-zinc-500'>
+            <p className='mb-3 text-sm font-medium text-zinc-800 dark:text-zinc-300'>Foto de perfil</p>
+            <p className='mb-4 text-xs text-zinc-600 dark:text-zinc-500'>
               Aparece en la página final del PDF junto a tu nombre y firma.
             </p>
 
@@ -304,7 +304,7 @@ export function BrandSettings({
               const isWide = photoPreview ? ratio > 1.2 : false;
               return (
                 <div className='mb-4 flex items-center gap-4'>
-                  <div className={`relative overflow-hidden border border-zinc-700 bg-gray-100 dark:bg-zinc-900 ${isWide ? 'h-12 w-40 rounded-lg' : 'h-16 w-16 rounded-full'}`}>
+                  <div className={`relative overflow-hidden border border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 ${isWide ? 'h-12 w-40 rounded-lg' : 'h-16 w-16 rounded-full'}`}>
                     <Image
                       src={photoPreview ?? profilePhotoUrl!}
                       alt='Foto de perfil'
@@ -313,7 +313,7 @@ export function BrandSettings({
                       unoptimized
                     />
                   </div>
-                  <p className='text-xs text-zinc-500'>
+                  <p className='text-xs text-zinc-600 dark:text-zinc-500'>
                     {photoPreview ? 'Vista previa de la nueva foto' : 'Foto actual'}
                   </p>
                 </div>
@@ -322,7 +322,7 @@ export function BrandSettings({
 
             <form action={uploadPhotoAction} className='flex flex-col gap-3'>
               <div
-                className='flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-zinc-700 px-6 py-6 transition-colors hover:border-zinc-500'
+                className='flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 px-6 py-6 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500'
                 onClick={() => photoInputRef.current?.click()}
                 role='button'
                 tabIndex={0}
@@ -334,7 +334,7 @@ export function BrandSettings({
                     fill='none'
                     stroke='currentColor'
                     strokeWidth='1.5'
-                    className='mx-auto mb-2 h-7 w-7 text-zinc-600'
+                    className='mx-auto mb-2 h-7 w-7 text-zinc-500 dark:text-zinc-600'
                   >
                     <path
                       strokeLinecap='round'
@@ -342,10 +342,10 @@ export function BrandSettings({
                       d='M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z'
                     />
                   </svg>
-                  <p className='text-sm text-zinc-400'>
+                  <p className='text-sm text-zinc-600 dark:text-zinc-400'>
                     {photoPreview ? 'Cambiar foto' : 'Subir foto de perfil'}
                   </p>
-                  <p className='mt-1 text-xs text-zinc-600'>PNG, JPG, WebP, SVG o GIF · máx. 5 MB</p>
+                  <p className='mt-1 text-xs text-zinc-500 dark:text-zinc-600'>PNG, JPG, WebP, SVG o GIF · máx. 5 MB</p>
                 </div>
               </div>
               <input
@@ -357,10 +357,10 @@ export function BrandSettings({
                 onChange={handlePhotoFileChange}
               />
               {uploadPhotoState.error && (
-                <p className='text-sm text-red-400'>{uploadPhotoState.error}</p>
+                <p className='text-sm text-red-600 dark:text-red-400'>{uploadPhotoState.error}</p>
               )}
               {uploadPhotoState.success && (
-                <p className='text-sm text-green-400'>Foto actualizada correctamente.</p>
+                <p className='text-sm text-green-600 dark:text-green-400'>Foto actualizada correctamente.</p>
               )}
               <button
                 type='submit'
@@ -374,12 +374,12 @@ export function BrandSettings({
             {profilePhotoUrl && !photoPreview && (
               <form action={deletePhotoAction} className='mt-2'>
                 {deletePhotoState.error && (
-                  <p className='mb-2 text-sm text-red-400'>{deletePhotoState.error}</p>
+                  <p className='mb-2 text-sm text-red-600 dark:text-red-400'>{deletePhotoState.error}</p>
                 )}
                 <button
                   type='submit'
                   disabled={deletePhotoPending}
-                  className='text-xs text-zinc-600 underline-offset-2 hover:text-red-400 hover:underline disabled:opacity-40'
+                  className='text-xs text-zinc-500 underline-offset-2 hover:text-red-600 hover:underline disabled:opacity-40 dark:text-zinc-600 dark:hover:text-red-400'
                 >
                   {deletePhotoPending ? 'Eliminando...' : 'Eliminar foto'}
                 </button>
@@ -389,8 +389,8 @@ export function BrandSettings({
 
           {/* Color de marca */}
           <div>
-            <p className='mb-1 text-sm font-medium text-zinc-300'>Color de marca</p>
-            <p className='mb-4 text-xs text-zinc-500'>
+            <p className='mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-300'>Color de marca</p>
+            <p className='mb-4 text-xs text-zinc-600 dark:text-zinc-500'>
               Se usa en cabeceras, portada y elementos destacados del PDF.
             </p>
             <div className='flex items-center gap-3'>
@@ -398,7 +398,7 @@ export function BrandSettings({
                 type='color'
                 value={color}
                 onChange={(e) => handleColorChange(e.target.value)}
-                className='h-10 w-14 cursor-pointer rounded-lg border border-zinc-700 bg-gray-100 dark:bg-zinc-900 p-1'
+                className='h-10 w-14 cursor-pointer rounded-lg border border-zinc-300 bg-zinc-100 p-1 dark:border-zinc-700 dark:bg-zinc-900'
               />
               <input
                 type='text'
@@ -406,17 +406,17 @@ export function BrandSettings({
                 onChange={handleColorInputChange}
                 maxLength={7}
                 placeholder='#1a7a45'
-                className='h-10 w-32 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-3 font-mono text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none'
+                className='h-10 w-32 rounded-lg border border-zinc-300 bg-white px-3 font-mono text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder-zinc-600 dark:focus:border-zinc-600'
               />
               <div
-                className='h-10 w-10 rounded-lg border border-zinc-700'
+                className='h-10 w-10 rounded-lg border border-zinc-300 dark:border-zinc-700'
                 style={{ backgroundColor: color }}
               />
               <button
                 type='button'
                 onClick={handleSaveColor}
                 disabled={isPending}
-                className='rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-700 disabled:opacity-40'
+                className='rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-300 disabled:opacity-40 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
               >
                 {colorSaved ? 'Guardado' : 'Guardar color'}
               </button>
@@ -425,8 +425,8 @@ export function BrandSettings({
 
           {/* Tipografía */}
           <div>
-            <p className='mb-1 text-sm font-medium text-zinc-300'>Tipografía del PDF</p>
-            <p className='mb-4 text-xs text-zinc-500'>
+            <p className='mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-300'>Tipografía del PDF</p>
+            <p className='mb-4 text-xs text-zinc-600 dark:text-zinc-500'>
               Afecta al estilo de los títulos y textos en el PDF.
             </p>
             <div className='grid grid-cols-3 gap-3'>
@@ -438,23 +438,23 @@ export function BrandSettings({
                   disabled={isPending}
                   className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-colors duration-150 disabled:opacity-50 ${
                     fontPref === opt.id
-                      ? 'border-[#1a7a45] bg-[#1a7a45]/10'
-                      : 'border-zinc-800 bg-white dark:bg-zinc-950 hover:border-zinc-600'
+                      ? 'border-[#1a7a45] bg-emerald-50 dark:bg-[#1a7a45]/10'
+                      : 'border-zinc-200 bg-white hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-600'
                   }`}
                 >
                   <span
-                    className={`text-sm text-zinc-100 ${
+                    className={`text-sm text-zinc-900 dark:text-zinc-100 ${
                       opt.id === 'moderna' ? 'font-extrabold' : opt.id === 'minimalista' ? 'font-light tracking-widest' : 'font-medium'
                     }`}
                   >
                     {opt.preview}
                   </span>
                   <span className={`text-xs font-semibold ${
-                    fontPref === opt.id ? 'text-[#22c55e]' : 'text-zinc-400'
+                    fontPref === opt.id ? 'text-emerald-700 dark:text-[#22c55e]' : 'text-zinc-600 dark:text-zinc-400'
                   }`}>
                     {opt.label}
                   </span>
-                  <span className='text-[10px] text-zinc-600'>{opt.desc}</span>
+                  <span className='text-[10px] text-zinc-500 dark:text-zinc-600'>{opt.desc}</span>
                 </button>
               ))}
             </div>
@@ -463,8 +463,8 @@ export function BrandSettings({
       </section>
 
       {/* ── Subsección 2: Contenido del PDF ── */}
-      <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
-        <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+      <section className='rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950'>
+        <h2 className='mb-4 border-b border-zinc-200 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:text-zinc-500'>
           Contenido del PDF
         </h2>
 
@@ -472,10 +472,10 @@ export function BrandSettings({
           {/* Toggle: mostrar macros */}
           <div className='flex items-center justify-between gap-4'>
             <div>
-              <p className='text-sm font-medium text-zinc-200'>
+              <p className='text-sm font-medium text-zinc-900 dark:text-zinc-200'>
                 Mostrar calorías y macros al paciente
               </p>
-              <p className='mt-0.5 text-xs text-zinc-500'>
+              <p className='mt-0.5 text-xs text-zinc-600 dark:text-zinc-500'>
                 Kcal, proteína, carbohidratos y grasa en cada comida y el resumen semanal.
               </p>
             </div>
@@ -489,8 +489,8 @@ export function BrandSettings({
           {/* Toggle: incluir lista de la compra */}
           <div className='flex items-center justify-between gap-4'>
             <div>
-              <p className='text-sm font-medium text-zinc-200'>Incluir lista de la compra</p>
-              <p className='mt-0.5 text-xs text-zinc-500'>
+              <p className='text-sm font-medium text-zinc-900 dark:text-zinc-200'>Incluir lista de la compra</p>
+              <p className='mt-0.5 text-xs text-zinc-600 dark:text-zinc-500'>
                 Página final con todos los alimentos agrupados por categoría.
               </p>
             </div>
@@ -505,12 +505,12 @@ export function BrandSettings({
           <div>
             <label
               htmlFor='welcome_message'
-              className='mb-1 block text-sm font-medium text-zinc-200'
+              className='mb-1 block text-sm font-medium text-zinc-900 dark:text-zinc-200'
             >
               Mensaje de bienvenida{' '}
-              <span className='font-normal text-zinc-600'>(opcional)</span>
+              <span className='font-normal text-zinc-500 dark:text-zinc-600'>(opcional)</span>
             </label>
-            <p className='mb-3 text-xs text-zinc-500'>
+            <p className='mb-3 text-xs text-zinc-600 dark:text-zinc-500'>
               Aparece en la portada del PDF justo debajo de los objetivos nutricionales.
             </p>
             <textarea
@@ -525,18 +525,18 @@ export function BrandSettings({
               rows={3}
               maxLength={300}
               placeholder='Hola [nombre], este plan está diseñado especialmente para ti...'
-              className='w-full resize-none rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none'
+              className='w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder-zinc-600 dark:focus:border-zinc-600'
             />
             <div className='mt-1 flex items-center justify-between'>
               <button
                 type='button'
                 onClick={handleSaveWelcome}
                 disabled={isPending}
-                className='rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-100 transition-colors hover:bg-zinc-700 disabled:opacity-40'
+                className='rounded-lg bg-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-300 disabled:opacity-40 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
               >
                 {welcomeSaved ? 'Guardado' : 'Guardar mensaje'}
               </button>
-              <span className='text-xs text-zinc-600'>
+              <span className='text-xs text-zinc-500 dark:text-zinc-600'>
                 {welcomeMessage.length}/300
               </span>
             </div>
@@ -545,15 +545,15 @@ export function BrandSettings({
       </section>
 
       {/* ── Subsección 3: Preview ── */}
-      <section className='rounded-xl border border-zinc-800 bg-white dark:bg-zinc-950 p-6'>
-        <h2 className='mb-4 border-b border-zinc-800 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500'>
+      <section className='rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950'>
+        <h2 className='mb-4 border-b border-zinc-200 pb-3 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:text-zinc-500'>
           Vista previa
         </h2>
-        <p className='mb-4 text-sm text-zinc-400'>
+        <p className='mb-4 text-sm text-zinc-700 dark:text-zinc-400'>
           Genera un PDF de ejemplo con tus ajustes actuales de marca.
         </p>
         <PreviewButton />
-        <p className='mt-2 text-xs text-zinc-600'>
+        <p className='mt-2 text-xs text-zinc-500 dark:text-zinc-600'>
           Este es el aspecto que tendrán todos tus planes nutricionales.
         </p>
       </section>
