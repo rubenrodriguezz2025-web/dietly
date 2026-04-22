@@ -55,13 +55,13 @@ export function PatientCuestionarioTab({
           <div className='flex flex-col gap-4'>
             <div className='flex flex-wrap items-center justify-between gap-3'>
               <div className='flex items-center gap-2'>
-                <span className='flex items-center gap-1.5 rounded-full border border-emerald-800/50 bg-emerald-950/30 px-2.5 py-1 text-xs font-medium text-emerald-400'>
-                  <span className='h-1.5 w-1.5 rounded-full bg-emerald-400' />
+                <span className='flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-400'>
+                  <span className='h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400' />
                   {intakeForm.filled_by === 'nutritionist'
                     ? 'Completado en consulta'
                     : 'Completado por el paciente'}
                 </span>
-                <span className='text-xs text-zinc-600'>
+                <span className='text-xs text-zinc-500 dark:text-zinc-600'>
                   {new Date(intakeForm.completed_at).toLocaleDateString('es-ES', {
                     day: 'numeric',
                     month: 'long',
@@ -72,7 +72,7 @@ export function PatientCuestionarioTab({
               <button
                 type='button'
                 onClick={() => onIntakeSheetOpenChange(true)}
-                className='flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200'
+                className='flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-200'
               >
                 <svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
                   <path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' />
@@ -102,9 +102,9 @@ export function PatientCuestionarioTab({
               <button
                 type='button'
                 onClick={() => onIntakeSheetOpenChange(true)}
-                className='group flex flex-1 flex-col items-center gap-2.5 rounded-xl border border-[#1a7a45]/40 bg-[#0a1f12] px-5 py-5 text-center transition-all duration-200 hover:border-[#1a7a45]/70 hover:bg-[#0d2716] active:scale-[0.99]'
+                className='group flex flex-1 flex-col items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-5 text-center transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-100 active:scale-[0.99] dark:border-[#1a7a45]/40 dark:bg-[#0a1f12] dark:hover:border-[#1a7a45]/70 dark:hover:bg-[#0d2716]'
               >
-                <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[#1a7a45]/20 text-emerald-400 transition-colors group-hover:bg-[#1a7a45]/30'>
+                <div className='flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 transition-colors group-hover:bg-emerald-200 dark:bg-[#1a7a45]/20 dark:text-emerald-400 dark:group-hover:bg-[#1a7a45]/30'>
                   <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
                     <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' />
                     <circle cx='9' cy='7' r='4' />
@@ -113,8 +113,8 @@ export function PatientCuestionarioTab({
                   </svg>
                 </div>
                 <div>
-                  <p className='text-sm font-semibold text-zinc-100'>Rellenar ahora</p>
-                  <p className='mt-0.5 text-xs text-zinc-500'>Rellénalo tú en consulta</p>
+                  <p className='text-sm font-semibold text-emerald-900 dark:text-zinc-100'>Rellenar ahora</p>
+                  <p className='mt-0.5 text-xs text-emerald-700 dark:text-zinc-500'>Rellénalo tú en consulta</p>
                 </div>
               </button>
 
@@ -125,20 +125,20 @@ export function PatientCuestionarioTab({
               />
             </div>
 
-            <p className='text-center text-xs text-zinc-600'>
+            <p className='text-center text-xs text-zinc-500 dark:text-zinc-600'>
               Rellénalo tú en consulta o envíaselo al paciente para que lo complete antes de la cita.
             </p>
 
             {intakeUrl && (
               <div className='flex flex-col gap-2'>
-                <p className='text-xs text-zinc-600'>Enlace para el paciente:</p>
+                <p className='text-xs text-zinc-500 dark:text-zinc-600'>Enlace para el paciente:</p>
                 <div className='flex items-center gap-2'>
-                  <code className='flex-1 truncate rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400'>
+                  <code className='flex-1 truncate rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400'>
                     {intakeUrl}
                   </code>
                   <CopyButton text={intakeUrl} />
                 </div>
-                <p className='text-[11px] text-zinc-700'>
+                <p className='text-[11px] text-zinc-500 dark:text-zinc-700'>
                   El link incluye la cláusula de consentimiento IA que el paciente debe aceptar.
                 </p>
               </div>
@@ -151,13 +151,13 @@ export function PatientCuestionarioTab({
       <Sheet open={intakeSheetOpen} onOpenChange={onIntakeSheetOpenChange}>
         <SheetContent
           side='right'
-          className='flex w-full flex-col gap-0 overflow-y-auto border-zinc-800 bg-zinc-950 p-0 sm:max-w-xl'
+          className='flex w-full flex-col gap-0 overflow-y-auto border-zinc-200 bg-white p-0 sm:max-w-xl dark:border-zinc-800 dark:bg-zinc-950'
         >
-          <SheetHeader className='border-b border-zinc-800 px-6 py-5'>
-            <SheetTitle className='text-zinc-100'>
+          <SheetHeader className='border-b border-zinc-200 px-6 py-5 dark:border-zinc-800'>
+            <SheetTitle className='text-zinc-900 dark:text-zinc-100'>
               {intakeForm ? 'Editar cuestionario' : 'Rellenar cuestionario'}
             </SheetTitle>
-            <SheetDescription className='text-zinc-500'>
+            <SheetDescription className='text-zinc-600 dark:text-zinc-500'>
               {intakeForm
                 ? 'Actualiza las respuestas del paciente.'
                 : `Rellena el cuestionario de salud de ${patient.name} en consulta.`}
