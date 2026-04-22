@@ -157,6 +157,7 @@ function NutritionistAvatar({
     weight_loss: 'Pérdida de peso',
     sports: 'Nutrición deportiva',
     clinical: 'Nutrición clínica',
+    tca: 'TCA / Psiconutrición',
     general: 'Nutrición general',
   };
 

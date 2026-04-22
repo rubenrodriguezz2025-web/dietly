@@ -999,7 +999,7 @@ export type Database = {
         | "muscle_gain"
         | "health"
       plan_status_type: "draft" | "approved" | "sent" | "generating" | "error"
-      specialty_type: "weight_loss" | "sports" | "clinical" | "general"
+      specialty_type: "weight_loss" | "sports" | "clinical" | "tca" | "general"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1143,7 +1143,7 @@ export const Constants = {
         "health",
       ],
       plan_status_type: ["draft", "approved", "sent", "generating", "error"],
-      specialty_type: ["weight_loss", "sports", "clinical", "general"],
+      specialty_type: ["weight_loss", "sports", "clinical", "tca", "general"],
     },
   },
 } as const

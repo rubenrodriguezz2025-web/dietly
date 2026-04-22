@@ -1,7 +1,7 @@
 // Tipos para las tablas propias de Dietly
 // Actualizar cuando se regenere types.ts desde Supabase
 
-export type Specialty = 'weight_loss' | 'sports' | 'clinical' | 'general';
+export type Specialty = 'weight_loss' | 'sports' | 'clinical' | 'tca' | 'general';
 export type ActivityLevel =
   | 'sedentary'
   | 'lightly_active'
@@ -208,6 +208,7 @@ export const SPECIALTY_LABELS: Record<Specialty, string> = {
   weight_loss: 'Pérdida de peso',
   sports: 'Deportiva',
   clinical: 'Clínica',
+  tca: 'TCA / Psiconutrición',
   general: 'General',
 };
 

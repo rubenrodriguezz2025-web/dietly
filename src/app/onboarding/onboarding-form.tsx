@@ -13,6 +13,7 @@ const SPECIALTIES = [
   { value: 'weight_loss', label: 'Pérdida de peso' },
   { value: 'sports', label: 'Deportiva' },
   { value: 'clinical', label: 'Clínica' },
+  { value: 'tca', label: 'TCA / Psiconutrición' },
   { value: 'general', label: 'General' },
 ] as const;
 

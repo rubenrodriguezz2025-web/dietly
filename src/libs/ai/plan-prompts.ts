@@ -86,6 +86,13 @@ const SPECIALTY_CONTEXT: Record<string, string> = {
     'El nutricionista se especializa en pérdida de peso. ' +
     'Prioriza saciedad, déficit calórico moderado (-300 a -500 kcal), ' +
     'alimentos de bajo índice glucémico y alta adherencia a largo plazo.',
+  tca:
+    'El nutricionista es especialista en TCA y psiconutrición. ' +
+    'Evita lenguaje restrictivo o pesocentrista. No uses términos ' +
+    'como "dieta", "prohibido", "trampa", "pecado". Prioriza ' +
+    'variedad, flexibilidad alimentaria, normalización de comidas ' +
+    'y relación saludable con la comida. Las recetas deben ser ' +
+    'apetecibles y no generar culpa.',
 };
 
 const SPECIALTY_DEFAULT =
