@@ -71,14 +71,14 @@ export function IntercambiosList({ swaps: initialSwaps }: Props) {
             onClick={() => setTab(key)}
             className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
               tab === key
-                ? 'bg-[#1a7a45]/20 text-emerald-400'
-                : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-[#1a7a45]/20 dark:text-emerald-400'
+                : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900 dark:bg-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300'
             }`}
           >
             {label}
             {counts[key] > 0 && (
               <span className={`ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums ${
-                key === 'pending' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-800 text-zinc-500'
+                key === 'pending' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-500'
               }`}>
                 {counts[key]}
               </span>
@@ -90,15 +90,15 @@ export function IntercambiosList({ swaps: initialSwaps }: Props) {
       {/* Lista */}
       {filtered.length === 0 ? (
         <div className='flex flex-col items-center gap-3 py-16'>
-          <div className='flex h-14 w-14 items-center justify-center rounded-full bg-zinc-800/50'>
-            <svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='#71717a' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
+          <div className='flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800/50'>
+            <svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' className='text-zinc-500 dark:text-zinc-500'>
               <polyline points='17 1 21 5 17 9' />
               <path d='M3 11V9a4 4 0 014-4h14' />
               <polyline points='7 23 3 19 7 15' />
               <path d='M21 13v2a4 4 0 01-4 4H3' />
             </svg>
           </div>
-          <p className='text-sm text-zinc-500'>
+          <p className='text-sm text-zinc-600 dark:text-zinc-500'>
             {tab === 'pending' ? 'No hay intercambios pendientes.' :
              tab === 'approved' ? 'No hay intercambios aprobados.' :
              'No hay intercambios rechazados.'}
@@ -167,24 +167,24 @@ function SwapCard({
   }
 
   return (
-    <div className='rounded-xl border border-zinc-800 bg-zinc-900/50 p-4'>
+    <div className='rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50'>
       {/* Header */}
       <div className='mb-3 flex items-start justify-between'>
         <div className='flex flex-col gap-0.5'>
           <div className='flex items-center gap-2'>
-            <span className='text-sm font-medium text-zinc-200'>
+            <span className='text-sm font-medium text-zinc-900 dark:text-zinc-200'>
               {swap.patient_name}
             </span>
-            <span className='text-zinc-700'>·</span>
-            <span className='text-xs font-medium text-zinc-500'>
+            <span className='text-zinc-400 dark:text-zinc-700'>·</span>
+            <span className='text-xs font-medium text-zinc-600 dark:text-zinc-500'>
               {NOMBRE_DIA[swap.day_number] ?? `Día ${swap.day_number}`}
             </span>
-            <span className='text-zinc-700'>·</span>
-            <span className='text-xs font-medium text-zinc-500'>
+            <span className='text-zinc-400 dark:text-zinc-700'>·</span>
+            <span className='text-xs font-medium text-zinc-600 dark:text-zinc-500'>
               {NOMBRE_TIPO[original.meal_type] ?? original.meal_type}
             </span>
           </div>
-          <time className='text-[11px] text-zinc-600'>
+          <time className='text-[11px] text-zinc-500 dark:text-zinc-600'>
             {new Date(swap.created_at).toLocaleDateString('es-ES', {
               day: 'numeric',
               month: 'short',
@@ -195,12 +195,12 @@ function SwapCard({
         </div>
         <div className='flex items-center gap-1.5'>
           {swap.status === 'pending' && swap.is_stale && (
-            <span className='rounded-full bg-red-950/40 px-2 py-0.5 text-[10px] font-medium text-red-400'>
+            <span className='rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400'>
               Pendiente +48h
             </span>
           )}
           {swap.initiated_by === 'nutritionist' && (
-            <span className='rounded-full bg-blue-950/40 px-2 py-0.5 text-[10px] font-medium text-blue-400'>
+            <span className='rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'>
               Por ti
             </span>
           )}
@@ -209,50 +209,50 @@ function SwapCard({
 
       {/* Original → Sugerido */}
       <div className='flex items-center gap-3'>
-        <div className='flex-1 rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2.5'>
-          <p className='mb-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-600'>
+        <div className='flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/50'>
+          <p className='mb-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-600'>
             Original
           </p>
-          <p className='text-sm font-medium text-zinc-300'>
+          <p className='text-sm font-medium text-zinc-800 dark:text-zinc-300'>
             {original.meal_name}
           </p>
-          <p className='mt-1 text-xs tabular-nums text-zinc-500'>
+          <p className='mt-1 text-xs tabular-nums text-zinc-600 dark:text-zinc-500'>
             {original.calories} kcal · P{original.macros.protein_g} C{original.macros.carbs_g} G{original.macros.fat_g}
           </p>
         </div>
 
-        <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#3f3f46' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='flex-shrink-0'>
+        <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='flex-shrink-0 text-zinc-300 dark:text-zinc-700'>
           <path d='M5 12h14M12 5l7 7-7 7' />
         </svg>
 
-        <div className='flex-1 rounded-lg border border-amber-900/40 bg-amber-950/20 px-3 py-2.5'>
-          <p className='mb-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700'>
+        <div className='flex-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-900/40 dark:bg-amber-950/20'>
+          <p className='mb-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-500'>
             Sugerido
           </p>
-          <p className='text-sm font-medium text-zinc-200'>
+          <p className='text-sm font-medium text-zinc-900 dark:text-zinc-200'>
             {selected.meal_name}
           </p>
-          <p className='mt-1 text-xs tabular-nums text-zinc-500'>
+          <p className='mt-1 text-xs tabular-nums text-zinc-600 dark:text-zinc-500'>
             {selected.calories} kcal · P{selected.macros.protein_g} C{selected.macros.carbs_g} G{selected.macros.fat_g}
           </p>
         </div>
       </div>
 
       {/* Diferencia de macros */}
-      <p className='mt-2 text-[11px] tabular-nums text-zinc-600'>
+      <p className='mt-2 text-[11px] tabular-nums text-zinc-500 dark:text-zinc-600'>
         {sign(diffKcal)} kcal · {sign(diffP)}g P · {sign(diffC)}g C · {sign(diffG)}g G
       </p>
 
       {/* Motivo del paciente */}
       {swap.reason && (
-        <p className='mt-2 text-xs italic text-zinc-500'>
+        <p className='mt-2 text-xs italic text-zinc-600 dark:text-zinc-500'>
           &ldquo;{swap.reason}&rdquo;
         </p>
       )}
 
       {/* Error */}
       {actionError && (
-        <p className='mt-2 text-xs text-red-400'>{actionError}</p>
+        <p className='mt-2 text-xs text-red-600 dark:text-red-400'>{actionError}</p>
       )}
 
       {/* Botones aprobar/rechazar (solo pendientes) */}
@@ -273,7 +273,7 @@ function SwapCard({
             type='button'
             onClick={() => handleAction('reject')}
             disabled={isPending}
-            className='flex items-center gap-1.5 rounded-lg bg-red-600/20 px-3.5 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-600/30 disabled:opacity-50'
+            className='flex items-center gap-1.5 rounded-lg bg-red-100 px-3.5 py-2 text-xs font-semibold text-red-700 transition-colors hover:bg-red-200 disabled:opacity-50 dark:bg-red-600/20 dark:text-red-400 dark:hover:bg-red-600/30'
           >
             <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'>
               <path d='M18 6L6 18M6 6l12 12' />
@@ -281,14 +281,14 @@ function SwapCard({
             Rechazar
           </button>
           {isPending && (
-            <div className='h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-300' />
+            <div className='h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600 dark:border-zinc-600 dark:border-t-zinc-300' />
           )}
         </div>
       )}
 
       {/* Estado final */}
       {swap.status === 'approved' && (
-        <div className='mt-3 flex items-center gap-1.5 text-xs text-emerald-400'>
+        <div className='mt-3 flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400'>
           <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'>
             <polyline points='20 6 9 17 4 12' />
           </svg>
@@ -296,7 +296,7 @@ function SwapCard({
         </div>
       )}
       {swap.status === 'rejected' && (
-        <div className='mt-3 flex items-center gap-1.5 text-xs text-red-400'>
+        <div className='mt-3 flex items-center gap-1.5 text-xs text-red-700 dark:text-red-400'>
           <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'>
             <path d='M18 6L6 18M6 6l12 12' />
           </svg>
