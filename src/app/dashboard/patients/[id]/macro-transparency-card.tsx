@@ -40,7 +40,7 @@ export function MacroTransparencyCard({ patient, targets }: Props) {
   const fatPct     = Math.round((targets.fat_g      * 9) / targets.calories * 100);
 
   return (
-    <div className='rounded-xl border border-zinc-800 bg-gray-50 dark:bg-zinc-900/50'>
+    <div className='rounded-xl border border-zinc-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-900/50'>
       {/* ── Header / toggle ──────────────────────────────────────────────── */}
       <button
         type='button'
@@ -48,7 +48,7 @@ export function MacroTransparencyCard({ patient, targets }: Props) {
         className='flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left'
       >
         <div className='flex flex-wrap items-center gap-2'>
-          <span className='text-sm font-medium text-zinc-300'>Objetivos calculados</span>
+          <span className='text-sm font-medium text-zinc-800 dark:text-zinc-300'>Objetivos calculados</span>
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${GOAL_BADGE_CLASS[goal] ?? GOAL_BADGE_CLASS.health}`}
           >
@@ -72,35 +72,35 @@ export function MacroTransparencyCard({ patient, targets }: Props) {
         }}
       >
         <div className='overflow-hidden'>
-          <div className='border-t border-zinc-800 px-5 py-4'>
+          <div className='border-t border-zinc-200 px-5 py-4 dark:border-zinc-800'>
             <div className='grid gap-5 sm:grid-cols-2'>
 
               {/* Columna izquierda — metabolismo */}
               <div>
-                <p className='mb-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-600'>
+                <p className='mb-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-600'>
                   Metabolismo
                 </p>
                 <dl className='grid grid-cols-2 gap-x-4 gap-y-2.5'>
                   {targets.tmb !== null && (
                     <>
-                      <dt className='text-xs text-zinc-500'>TMB</dt>
-                      <dd className='text-right text-xs font-medium tabular-nums text-zinc-300'>
+                      <dt className='text-xs text-zinc-600 dark:text-zinc-500'>TMB</dt>
+                      <dd className='text-right text-xs font-medium tabular-nums text-zinc-800 dark:text-zinc-300'>
                         {targets.tmb}{' '}
-                        <span className='font-normal text-zinc-600'>kcal</span>
+                        <span className='font-normal text-zinc-500 dark:text-zinc-600'>kcal</span>
                       </dd>
                     </>
                   )}
-                  <dt className='text-xs text-zinc-500'>TDEE</dt>
-                  <dd className='text-right text-xs font-medium tabular-nums text-zinc-300'>
+                  <dt className='text-xs text-zinc-600 dark:text-zinc-500'>TDEE</dt>
+                  <dd className='text-right text-xs font-medium tabular-nums text-zinc-800 dark:text-zinc-300'>
                     {targets.tdee}{' '}
-                    <span className='font-normal text-zinc-600'>kcal</span>
+                    <span className='font-normal text-zinc-500 dark:text-zinc-600'>kcal</span>
                   </dd>
-                  <dt className='text-xs text-zinc-500'>Objetivo</dt>
-                  <dd className='text-right text-xs font-semibold tabular-nums text-zinc-200'>
+                  <dt className='text-xs text-zinc-600 dark:text-zinc-500'>Objetivo</dt>
+                  <dd className='text-right text-xs font-semibold tabular-nums text-zinc-900 dark:text-zinc-200'>
                     {targets.calories}{' '}
-                    <span className='font-normal text-zinc-600'>kcal</span>
+                    <span className='font-normal text-zinc-500 dark:text-zinc-600'>kcal</span>
                   </dd>
-                  <dt className='text-xs text-zinc-500'>Balance</dt>
+                  <dt className='text-xs text-zinc-600 dark:text-zinc-500'>Balance</dt>
                   <dd className='text-right'>
                     <BalanceValue value={targets.calorie_balance} />
                   </dd>
@@ -108,34 +108,34 @@ export function MacroTransparencyCard({ patient, targets }: Props) {
               </div>
 
               {/* Columna derecha — macronutrientes */}
-              <div className='sm:border-l sm:border-zinc-800 sm:pl-5'>
-                <p className='mb-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-600'>
+              <div className='sm:border-l sm:border-zinc-200 sm:pl-5 dark:sm:border-zinc-800'>
+                <p className='mb-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-600'>
                   Macronutrientes
                 </p>
                 <dl className='grid grid-cols-2 gap-x-4 gap-y-2.5'>
-                  <dt className='text-xs text-zinc-500'>Proteína</dt>
-                  <dd className='text-right text-xs font-medium tabular-nums text-zinc-300'>
+                  <dt className='text-xs text-zinc-600 dark:text-zinc-500'>Proteína</dt>
+                  <dd className='text-right text-xs font-medium tabular-nums text-zinc-800 dark:text-zinc-300'>
                     {targets.protein_g}g{' '}
-                    <span className='font-normal text-zinc-600'>
+                    <span className='font-normal text-zinc-500 dark:text-zinc-600'>
                       · {targets.protein_per_kg} g/kg · {proteinPct}%
                     </span>
                   </dd>
-                  <dt className='text-xs text-zinc-500'>Carbohidratos</dt>
-                  <dd className='text-right text-xs font-medium tabular-nums text-zinc-300'>
+                  <dt className='text-xs text-zinc-600 dark:text-zinc-500'>Carbohidratos</dt>
+                  <dd className='text-right text-xs font-medium tabular-nums text-zinc-800 dark:text-zinc-300'>
                     {targets.carbs_g}g{' '}
-                    <span className='font-normal text-zinc-600'>· {carbsPct}%</span>
+                    <span className='font-normal text-zinc-500 dark:text-zinc-600'>· {carbsPct}%</span>
                   </dd>
-                  <dt className='text-xs text-zinc-500'>Grasa</dt>
-                  <dd className='text-right text-xs font-medium tabular-nums text-zinc-300'>
+                  <dt className='text-xs text-zinc-600 dark:text-zinc-500'>Grasa</dt>
+                  <dd className='text-right text-xs font-medium tabular-nums text-zinc-800 dark:text-zinc-300'>
                     {targets.fat_g}g{' '}
-                    <span className='font-normal text-zinc-600'>· {fatPct}%</span>
+                    <span className='font-normal text-zinc-500 dark:text-zinc-600'>· {fatPct}%</span>
                   </dd>
                 </dl>
               </div>
             </div>
 
             {targets.estimated && (
-              <p className='mt-4 text-[10px] text-zinc-700'>
+              <p className='mt-4 text-[10px] text-zinc-500 dark:text-zinc-700'>
                 * TDEE estimado con Mifflin-St Jeor a partir de los datos del paciente. Para mayor
                 precisión, introduce el TDEE medido en la ficha del paciente.
               </p>
@@ -151,18 +151,18 @@ export function MacroTransparencyCard({ patient, targets }: Props) {
 
 function BalanceValue({ value }: { value: number }) {
   if (value === 0)
-    return <span className='text-xs font-medium text-zinc-500'>±0 kcal</span>;
+    return <span className='text-xs font-medium text-zinc-600 dark:text-zinc-500'>±0 kcal</span>;
   if (value < 0)
     return (
-      <span className='text-xs font-semibold tabular-nums text-sky-400'>
+      <span className='text-xs font-semibold tabular-nums text-sky-600 dark:text-sky-400'>
         {value}{' '}
-        <span className='font-normal text-sky-600/70'>kcal</span>
+        <span className='font-normal text-sky-700/80 dark:text-sky-600/70'>kcal</span>
       </span>
     );
   return (
-    <span className='text-xs font-semibold tabular-nums text-emerald-400'>
+    <span className='text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400'>
       +{value}{' '}
-      <span className='font-normal text-emerald-600/70'>kcal</span>
+      <span className='font-normal text-emerald-700/80 dark:text-emerald-600/70'>kcal</span>
     </span>
   );
 }
@@ -178,7 +178,7 @@ function ChevronIcon({ open }: { open: boolean }) {
       strokeWidth='2.5'
       strokeLinecap='round'
       strokeLinejoin='round'
-      className='flex-shrink-0 text-zinc-600'
+      className='flex-shrink-0 text-zinc-500 dark:text-zinc-600'
       style={{
         transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
         transition: 'transform 350ms cubic-bezier(0.25, 1, 0.5, 1)',
