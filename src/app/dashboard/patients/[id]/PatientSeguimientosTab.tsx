@@ -76,7 +76,7 @@ export function PatientSeguimientosTab({
       <div className='flex flex-col gap-6'>
         {/* Estado del recordatorio */}
         {overdueReminder && (
-          <div className='flex items-center gap-3 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3'>
+          <div className='flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30'>
             <svg
               xmlns='http://www.w3.org/2000/svg'
               width='15'
@@ -87,14 +87,14 @@ export function PatientSeguimientosTab({
               strokeWidth='2'
               strokeLinecap='round'
               strokeLinejoin='round'
-              className='flex-shrink-0 text-red-400'
+              className='flex-shrink-0 text-red-600 dark:text-red-400'
               aria-hidden='true'
             >
               <circle cx='12' cy='12' r='10' />
               <line x1='12' y1='8' x2='12' y2='12' />
               <line x1='12' y1='16' x2='12.01' y2='16' />
             </svg>
-            <p className='text-sm text-red-400'>
+            <p className='text-sm text-red-700 dark:text-red-400'>
               Revisión vencida el{' '}
               <span className='font-semibold'>
                 {new Date(overdueReminder.remind_at).toLocaleDateString('es-ES', {
@@ -107,7 +107,7 @@ export function PatientSeguimientosTab({
         )}
 
         {nextReminder && !overdueReminder && (
-          <div className='flex items-center gap-3 rounded-xl border border-amber-900/40 bg-amber-950/20 px-4 py-3'>
+          <div className='flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-950/20'>
             <svg
               xmlns='http://www.w3.org/2000/svg'
               width='15'
@@ -118,7 +118,7 @@ export function PatientSeguimientosTab({
               strokeWidth='2'
               strokeLinecap='round'
               strokeLinejoin='round'
-              className='flex-shrink-0 text-amber-400'
+              className='flex-shrink-0 text-amber-600 dark:text-amber-400'
               aria-hidden='true'
             >
               <rect x='3' y='4' width='18' height='18' rx='2' ry='2' />
@@ -126,7 +126,7 @@ export function PatientSeguimientosTab({
               <line x1='8' y1='2' x2='8' y2='6' />
               <line x1='3' y1='10' x2='21' y2='10' />
             </svg>
-            <p className='text-sm text-amber-400'>
+            <p className='text-sm text-amber-700 dark:text-amber-400'>
               Próxima revisión programada:{' '}
               <span className='font-semibold'>
                 {new Date(nextReminder.remind_at).toLocaleDateString('es-ES', {
@@ -142,7 +142,7 @@ export function PatientSeguimientosTab({
         {/* Enviar cuestionario de seguimiento */}
         <Section title='Cuestionario de seguimiento'>
           {followupSent ? (
-            <div className='flex items-center gap-2 text-sm text-emerald-400'>
+            <div className='flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400'>
               <svg
                 xmlns='http://www.w3.org/2000/svg'
                 width='14'
@@ -161,28 +161,28 @@ export function PatientSeguimientosTab({
             </div>
           ) : (
             <div className='flex flex-col gap-3'>
-              <p className='text-sm text-zinc-500'>
+              <p className='text-sm text-zinc-600 dark:text-zinc-500'>
                 Envía al paciente un cuestionario de 8 preguntas para evaluar cómo ha seguido el
                 plan y detectar posibles ajustes.
               </p>
               {!patient.email && (
-                <p className='text-xs text-amber-500'>
+                <p className='text-xs text-amber-600 dark:text-amber-500'>
                   Este paciente no tiene email registrado. Añádelo en la ficha para poder enviar el cuestionario.
                 </p>
               )}
               {followupSendError && (
-                <p className='text-sm text-red-400'>{followupSendError}</p>
+                <p className='text-sm text-red-600 dark:text-red-400'>{followupSendError}</p>
               )}
               <div className='flex items-center gap-2'>
                 <button
                   type='button'
                   disabled={!patient.email || sendingFollowup}
                   onClick={onSendFollowup}
-                  className='inline-flex items-center gap-1.5 rounded-lg border border-[#1a7a45]/60 bg-[#1a7a45]/20 px-3 py-1.5 text-[12px] font-semibold text-emerald-400 transition-colors hover:border-[#1a7a45] hover:bg-[#1a7a45]/30 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45]'
+                  className='inline-flex items-center gap-1.5 rounded-lg border border-[#1a7a45]/30 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-800 transition-colors hover:border-[#1a7a45]/60 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] dark:border-[#1a7a45]/60 dark:bg-[#1a7a45]/20 dark:text-emerald-400 dark:hover:border-[#1a7a45] dark:hover:bg-[#1a7a45]/30'
                 >
                   {sendingFollowup ? (
                     <>
-                      <span className='h-3 w-3 animate-spin rounded-full border-2 border-emerald-600/30 border-t-emerald-400' />
+                      <span className='h-3 w-3 animate-spin rounded-full border-2 border-emerald-300 border-t-emerald-600 dark:border-emerald-600/30 dark:border-t-emerald-400' />
                       Enviando...
                     </>
                   ) : (
@@ -209,7 +209,7 @@ export function PatientSeguimientosTab({
                 <button
                   type='button'
                   onClick={() => onFollowupSheetOpenChange(true)}
-                  className='text-[12px] text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:underline'
+                  className='text-[12px] text-zinc-600 transition-colors hover:text-zinc-900 focus-visible:outline-none focus-visible:underline dark:text-zinc-500 dark:hover:text-zinc-300'
                 >
                   Ver preguntas →
                 </button>
@@ -225,11 +225,11 @@ export function PatientSeguimientosTab({
               {followupForms.map((form) => (
                 <div
                   key={form.id}
-                  className='rounded-xl border border-zinc-800 bg-zinc-900 p-4'
+                  className='rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900'
                 >
                   <div className='flex items-start justify-between gap-3'>
                     <div className='flex flex-col gap-0.5'>
-                      <p className='text-sm font-medium text-zinc-200'>
+                      <p className='text-sm font-medium text-zinc-900 dark:text-zinc-200'>
                         Cuestionario del{' '}
                         {new Date(form.created_at).toLocaleDateString('es-ES', {
                           day: 'numeric',
@@ -238,7 +238,7 @@ export function PatientSeguimientosTab({
                         })}
                       </p>
                       {form.completed_at ? (
-                        <p className='text-xs text-emerald-500'>
+                        <p className='text-xs text-emerald-700 dark:text-emerald-500'>
                           Completado el{' '}
                           {new Date(form.completed_at).toLocaleDateString('es-ES', {
                             day: 'numeric',
@@ -246,18 +246,18 @@ export function PatientSeguimientosTab({
                           })}
                         </p>
                       ) : (
-                        <p className='text-xs text-zinc-600'>Pendiente de respuesta</p>
+                        <p className='text-xs text-zinc-500 dark:text-zinc-600'>Pendiente de respuesta</p>
                       )}
                     </div>
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${form.completed_at ? 'bg-emerald-950 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${form.completed_at ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-500'}`}
                     >
                       {form.completed_at ? 'Completado' : 'Pendiente'}
                     </span>
                   </div>
 
                   {form.completed_at && form.answers && (
-                    <div className='mt-3 border-t border-zinc-800 pt-3'>
+                    <div className='mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800'>
                       <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                         {Object.entries(form.answers).map(([key, value]) =>
                           value !== null && value !== '' ? (
@@ -278,8 +278,8 @@ export function PatientSeguimientosTab({
         )}
 
         {followupForms.length === 0 && !followupSent && (
-          <div className='rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
-            <p className='text-sm text-zinc-600'>
+          <div className='rounded-xl border border-dashed border-zinc-300 py-10 text-center dark:border-zinc-800'>
+            <p className='text-sm text-zinc-500 dark:text-zinc-600'>
               Aún no se ha enviado ningún cuestionario de seguimiento a este paciente.
             </p>
           </div>
@@ -288,10 +288,10 @@ export function PatientSeguimientosTab({
 
       {/* Sheet: preview preguntas del cuestionario de seguimiento */}
       <Sheet open={followupSheetOpen} onOpenChange={onFollowupSheetOpenChange}>
-        <SheetContent className='flex w-full flex-col border-zinc-800 bg-zinc-950 sm:max-w-md'>
-          <SheetHeader className='border-b border-zinc-800 pb-4'>
-            <SheetTitle className='text-zinc-100'>Preguntas del cuestionario de seguimiento</SheetTitle>
-            <SheetDescription className='text-zinc-500'>
+        <SheetContent className='flex w-full flex-col border-zinc-200 bg-white sm:max-w-md dark:border-zinc-800 dark:bg-zinc-950'>
+          <SheetHeader className='border-b border-zinc-200 pb-4 dark:border-zinc-800'>
+            <SheetTitle className='text-zinc-900 dark:text-zinc-100'>Preguntas del cuestionario de seguimiento</SheetTitle>
+            <SheetDescription className='text-zinc-600 dark:text-zinc-500'>
               8 preguntas para evaluar cómo ha seguido el plan el paciente.
             </SheetDescription>
           </SheetHeader>
@@ -299,15 +299,15 @@ export function PatientSeguimientosTab({
           <ol className='flex flex-1 flex-col gap-4 overflow-y-auto py-5'>
             {FOLLOWUP_QUESTIONS_PREVIEW.map((q, i) => (
               <li key={i} className='flex gap-3'>
-                <span className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-semibold tabular-nums text-zinc-500'>
+                <span className='mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[11px] font-semibold tabular-nums text-zinc-600 dark:bg-zinc-800 dark:text-zinc-500'>
                   {i + 1}
                 </span>
-                <p className='text-[13px] leading-snug text-zinc-200'>{q}</p>
+                <p className='text-[13px] leading-snug text-zinc-800 dark:text-zinc-200'>{q}</p>
               </li>
             ))}
           </ol>
 
-          <div className='border-t border-zinc-800 pt-4'>
+          <div className='border-t border-zinc-200 pt-4 dark:border-zinc-800'>
             <button
               type='button'
               disabled={!patient.email || sendingFollowup}
@@ -315,7 +315,7 @@ export function PatientSeguimientosTab({
                 onFollowupSheetOpenChange(false);
                 onSendFollowup();
               }}
-              className='flex w-full items-center justify-center gap-2 rounded-lg bg-[#1a7a45] py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#155f38] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950'
+              className='flex w-full items-center justify-center gap-2 rounded-lg bg-[#1a7a45] py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#155f38] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950'
             >
               Enviar cuestionario →
               <svg

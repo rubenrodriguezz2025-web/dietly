@@ -41,11 +41,11 @@ const METRIC_KEYS = Object.keys(METRIC_CONFIG) as MetricKey[];
 // ── Adherence config ─────────────────────────────────────────────────────
 
 const ADHERENCE_LABELS: Record<number, { label: string; color: string; bg: string }> = {
-  1: { label: 'Muy baja', color: 'text-red-400',    bg: 'bg-red-950' },
-  2: { label: 'Baja',     color: 'text-orange-400', bg: 'bg-orange-950' },
-  3: { label: 'Regular',  color: 'text-amber-400',  bg: 'bg-amber-950' },
-  4: { label: 'Buena',    color: 'text-emerald-400', bg: 'bg-emerald-950' },
-  5: { label: 'Excelente', color: 'text-green-400', bg: 'bg-green-950' },
+  1: { label: 'Muy baja',  color: 'text-red-700 dark:text-red-400',         bg: 'bg-red-100 dark:bg-red-950' },
+  2: { label: 'Baja',      color: 'text-orange-700 dark:text-orange-400',   bg: 'bg-orange-100 dark:bg-orange-950' },
+  3: { label: 'Regular',   color: 'text-amber-700 dark:text-amber-400',     bg: 'bg-amber-100 dark:bg-amber-950' },
+  4: { label: 'Buena',     color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-950' },
+  5: { label: 'Excelente', color: 'text-green-700 dark:text-green-400',     bg: 'bg-green-100 dark:bg-green-950' },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ function TrendIcon({ trend, inverse }: { trend: 'up' | 'down' | 'same' | null; i
       strokeWidth='2.5'
       strokeLinecap='round'
       strokeLinejoin='round'
-      className={cn('inline-block ml-0.5', isPositive ? 'text-emerald-400' : 'text-red-400')}
+      className={cn('inline-block ml-0.5', isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400')}
       aria-label={trend === 'up' ? 'Subida' : 'Bajada'}
     >
       {trend === 'up' ? (
@@ -119,19 +119,19 @@ function ChartTooltip({
   const entry = payload[0]?.payload;
 
   return (
-    <div className='pointer-events-none rounded-lg border border-zinc-700/40 bg-white dark:bg-zinc-950 px-3 py-2.5 shadow-xl'>
-      <p className='mb-1.5 text-[11px] text-zinc-600'>{fmtLong(entry.recorded_at)}</p>
-      <p className='text-sm font-semibold text-zinc-100'>
+    <div className='pointer-events-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 shadow-xl dark:border-zinc-700/40 dark:bg-zinc-950'>
+      <p className='mb-1.5 text-[11px] text-zinc-600 dark:text-zinc-500'>{fmtLong(entry.recorded_at)}</p>
+      <p className='text-sm font-semibold text-zinc-900 dark:text-zinc-100'>
         {value}
-        <span className='ml-0.5 text-xs font-normal text-zinc-500'> {unit}</span>
+        <span className='ml-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-500'> {unit}</span>
       </p>
       {entry.adherence_score && (
-        <p className='mt-1.5 text-[11px] text-zinc-500'>
+        <p className='mt-1.5 text-[11px] text-zinc-600 dark:text-zinc-500'>
           Adherencia: <span className={ADHERENCE_LABELS[entry.adherence_score]?.color}>{ADHERENCE_LABELS[entry.adherence_score]?.label}</span>
         </p>
       )}
       {entry.notes && (
-        <p className='mt-2 max-w-[180px] border-t border-zinc-800 pt-2 text-[11px] leading-relaxed text-zinc-500'>
+        <p className='mt-2 max-w-[180px] border-t border-zinc-200 pt-2 text-[11px] leading-relaxed text-zinc-600 dark:border-zinc-800 dark:text-zinc-500'>
           {entry.notes}
         </p>
       )}
@@ -146,19 +146,19 @@ function EmptyState({ firstName, onAdd }: { firstName: string; onAdd: () => void
     <div className='flex flex-col gap-10 py-8 lg:flex-row lg:items-center'>
       <div className='flex flex-col gap-5 lg:max-w-sm'>
         <div>
-          <h3 className='text-lg font-semibold leading-snug text-zinc-100'>
+          <h3 className='text-lg font-semibold leading-snug text-zinc-900 dark:text-zinc-100'>
             Empieza a medir
             <br />
             el progreso de {firstName}
           </h3>
-          <p className='mt-2 text-sm leading-relaxed text-zinc-500'>
+          <p className='mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-500'>
             Registra peso, grasa corporal, masa muscular y cintura. La evolución
             aparecerá en una gráfica para identificar tendencias de un vistazo.
           </p>
         </div>
         <button
           onClick={onAdd}
-          className='self-start rounded-lg bg-[#1a7a45] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#22c55e] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950'
+          className='self-start rounded-lg bg-[#1a7a45] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#22c55e] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950'
         >
           + Registrar primera medición
         </button>
@@ -258,7 +258,7 @@ function AdherenceSelector({ value, onChange }: { value: number | null; onChange
                 'flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-all duration-150',
                 isSelected
                   ? `${cfg.bg} ${cfg.color} border-current/20`
-                  : 'border-zinc-800 text-zinc-600 hover:text-zinc-400 hover:border-zinc-700',
+                  : 'border-zinc-300 text-zinc-500 hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-800 dark:text-zinc-600 dark:hover:border-zinc-700 dark:hover:text-zinc-400',
               )}
             >
               {score}
@@ -266,7 +266,7 @@ function AdherenceSelector({ value, onChange }: { value: number | null; onChange
           );
         })}
       </div>
-      <div className='flex justify-between text-[10px] text-zinc-700'>
+      <div className='flex justify-between text-[10px] text-zinc-500 dark:text-zinc-700'>
         <span>Muy baja</span>
         <span>Excelente</span>
       </div>
@@ -284,7 +284,7 @@ function StaleReviewBadge({ lastRecordedAt }: { lastRecordedAt: string | null })
   if (daysSince < 30) return null;
 
   return (
-    <span className='inline-flex items-center gap-1.5 rounded-full bg-red-950 px-2.5 py-0.5 text-xs font-medium text-red-400'>
+    <span className='inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-400'>
       <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='h-3 w-3' aria-hidden>
         <circle cx='12' cy='12' r='10' />
         <polyline points='12 6 12 12 16 14' />
@@ -423,7 +423,7 @@ export function ProgressTab({
         {/* ── Header ── */}
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-3'>
-            <p className='text-xs font-semibold uppercase tracking-wider text-zinc-600'>
+            <p className='text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-600'>
               Historial de progreso
             </p>
             <StaleReviewBadge lastRecordedAt={lastRecordedAt} />
@@ -431,7 +431,7 @@ export function ProgressTab({
 
           <Sheet open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) setAdherenceValue(null); }}>
             <SheetTrigger asChild>
-              <button className='flex items-center gap-1.5 rounded-lg bg-[#1a7a45] px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#22c55e] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950'>
+              <button className='flex items-center gap-1.5 rounded-lg bg-[#1a7a45] px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#22c55e] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a7a45] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950'>
                 <svg
                   viewBox='0 0 24 24'
                   fill='none'
@@ -451,7 +451,7 @@ export function ProgressTab({
             {/* ── Add measurement sheet ── */}
             <SheetContent
               side='right'
-              className='w-full overflow-y-auto border-zinc-800 bg-white dark:bg-zinc-950 sm:max-w-[420px]'
+              className='w-full overflow-y-auto border-zinc-200 bg-white sm:max-w-[420px] dark:border-zinc-800 dark:bg-zinc-950'
             >
               <SheetHeader className='mb-7'>
                 <SheetTitle className='text-base font-semibold text-zinc-900 dark:text-zinc-100'>
@@ -541,16 +541,16 @@ export function ProgressTab({
                 </div>
 
                 {formError && (
-                  <p className='rounded-lg border border-red-900/40 bg-red-950/20 px-3 py-2.5 text-sm text-red-400'>
+                  <p className='rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400'>
                     {formError}
                   </p>
                 )}
 
-                <div className='flex justify-end gap-3 border-t border-zinc-800 pt-4'>
+                <div className='flex justify-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800'>
                   <button
                     type='button'
                     onClick={() => setIsOpen(false)}
-                    className='rounded-lg px-4 py-2 text-sm text-zinc-400 transition-colors hover:text-zinc-100'
+                    className='rounded-lg px-4 py-2 text-sm text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
                   >
                     Cancelar
                   </button>
@@ -574,7 +574,7 @@ export function ProgressTab({
 
         {/* ── Chart ── */}
         {entries.length >= 1 && (
-          <div className='rounded-xl border border-zinc-800/50 bg-gray-50 dark:bg-zinc-950/40 p-5'>
+          <div className='rounded-xl border border-zinc-200 bg-gray-50 p-5 dark:border-zinc-800/50 dark:bg-zinc-950/40'>
             {/* Metric selector — only when multiple metrics have data */}
             {availableMetrics.length > 1 && (
               <div className='mb-5 flex flex-wrap gap-1'>
@@ -587,7 +587,7 @@ export function ProgressTab({
                       onClick={() => setActiveMetric(metric)}
                       className={cn(
                         'rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150',
-                        isActive ? 'text-white' : 'text-zinc-600 hover:text-zinc-300',
+                        isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-600 dark:hover:text-zinc-300',
                       )}
                       style={
                         isActive
@@ -673,13 +673,13 @@ export function ProgressTab({
         {/* ── Table ── */}
         {entries.length > 0 && (
           <div>
-            <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-600'>
+            <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-600'>
               Revisiones registradas
             </p>
             <div className='overflow-x-auto'>
               <table className='w-full text-sm'>
                 <thead>
-                  <tr className='border-b border-zinc-800/70'>
+                  <tr className='border-b border-zinc-200 dark:border-zinc-800/70'>
                     <th className='pb-2.5 pr-6 text-left text-xs font-medium text-zinc-600'>
                       Fecha
                     </th>
@@ -722,7 +722,7 @@ export function ProgressTab({
                   </tr>
                 </thead>
 
-                <tbody className='divide-y divide-zinc-900'>
+                <tbody className='divide-y divide-zinc-200 dark:divide-zinc-900'>
                   {tableData.map((entry, idx) => {
                     // Previous entry for trend comparison (next in array because sorted desc)
                     const prev = idx < tableData.length - 1 ? tableData[idx + 1] : null;
@@ -730,12 +730,12 @@ export function ProgressTab({
                     return (
                       <tr
                         key={entry.id}
-                        className='group transition-colors hover:bg-zinc-900/40'
+                        className='group transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900/40'
                       >
-                        <td className='py-3 pr-6 text-zinc-300'>{fmtShort(entry.recorded_at)}</td>
+                        <td className='py-3 pr-6 text-zinc-800 dark:text-zinc-300'>{fmtShort(entry.recorded_at)}</td>
 
                         {hasData.weight_kg && (
-                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-800 dark:text-zinc-300'>
                             {entry.weight_kg !== null ? (
                               <>
                                 {entry.weight_kg}
@@ -743,13 +743,13 @@ export function ProgressTab({
                                 <TrendIcon trend={getTrend(entry.weight_kg, prev?.weight_kg ?? null)} inverse />
                               </>
                             ) : (
-                              <span className='text-zinc-700'>—</span>
+                              <span className='text-zinc-400 dark:text-zinc-700'>—</span>
                             )}
                           </td>
                         )}
 
                         {hasData.body_fat_pct && (
-                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-800 dark:text-zinc-300'>
                             {entry.body_fat_pct !== null ? (
                               <>
                                 {entry.body_fat_pct}
@@ -757,13 +757,13 @@ export function ProgressTab({
                                 <TrendIcon trend={getTrend(entry.body_fat_pct, prev?.body_fat_pct ?? null)} inverse />
                               </>
                             ) : (
-                              <span className='text-zinc-700'>—</span>
+                              <span className='text-zinc-400 dark:text-zinc-700'>—</span>
                             )}
                           </td>
                         )}
 
                         {hasData.muscle_mass_kg && (
-                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-800 dark:text-zinc-300'>
                             {entry.muscle_mass_kg !== null ? (
                               <>
                                 {entry.muscle_mass_kg}
@@ -771,13 +771,13 @@ export function ProgressTab({
                                 <TrendIcon trend={getTrend(entry.muscle_mass_kg, prev?.muscle_mass_kg ?? null)} />
                               </>
                             ) : (
-                              <span className='text-zinc-700'>—</span>
+                              <span className='text-zinc-400 dark:text-zinc-700'>—</span>
                             )}
                           </td>
                         )}
 
                         {hasData.waist_cm && (
-                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-800 dark:text-zinc-300'>
                             {entry.waist_cm !== null ? (
                               <>
                                 {entry.waist_cm}
@@ -785,13 +785,13 @@ export function ProgressTab({
                                 <TrendIcon trend={getTrend(entry.waist_cm, prev?.waist_cm ?? null)} inverse />
                               </>
                             ) : (
-                              <span className='text-zinc-700'>—</span>
+                              <span className='text-zinc-400 dark:text-zinc-700'>—</span>
                             )}
                           </td>
                         )}
 
                         {hasData.hip_cm && (
-                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-300'>
+                          <td className='py-3 pr-6 text-right tabular-nums text-zinc-800 dark:text-zinc-300'>
                             {entry.hip_cm !== null ? (
                               <>
                                 {entry.hip_cm}
@@ -799,7 +799,7 @@ export function ProgressTab({
                                 <TrendIcon trend={getTrend(entry.hip_cm, prev?.hip_cm ?? null)} inverse />
                               </>
                             ) : (
-                              <span className='text-zinc-700'>—</span>
+                              <span className='text-zinc-400 dark:text-zinc-700'>—</span>
                             )}
                           </td>
                         )}
@@ -815,7 +815,7 @@ export function ProgressTab({
                                 {entry.adherence_score}/5
                               </span>
                             ) : (
-                              <span className='text-zinc-700'>—</span>
+                              <span className='text-zinc-400 dark:text-zinc-700'>—</span>
                             )}
                           </td>
                         )}
@@ -827,7 +827,7 @@ export function ProgressTab({
                                 {entry.notes}
                               </span>
                             ) : (
-                              <span className='text-zinc-800'>—</span>
+                              <span className='text-zinc-400 dark:text-zinc-800'>—</span>
                             )}
                           </td>
                         )}
@@ -836,16 +836,16 @@ export function ProgressTab({
                         <td className='py-3 text-right'>
                           {confirmingId === entry.id ? (
                             <div className='flex items-center justify-end gap-2'>
-                              <span className='text-[11px] text-zinc-600'>¿Eliminar?</span>
+                              <span className='text-[11px] text-zinc-500 dark:text-zinc-600'>¿Eliminar?</span>
                               <button
                                 onClick={() => handleDelete(entry.id)}
-                                className='text-xs font-medium text-red-400 transition-colors hover:text-red-300'
+                                className='text-xs font-medium text-red-600 transition-colors hover:text-red-500 dark:text-red-400 dark:hover:text-red-300'
                               >
                                 Sí
                               </button>
                               <button
                                 onClick={() => setConfirmingId(null)}
-                                className='text-xs text-zinc-600 transition-colors hover:text-zinc-400'
+                                className='text-xs text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-600 dark:hover:text-zinc-400'
                               >
                                 No
                               </button>
@@ -863,7 +863,7 @@ export function ProgressTab({
                                 strokeWidth='1.5'
                                 strokeLinecap='round'
                                 strokeLinejoin='round'
-                                className='h-4 w-4 text-zinc-600 transition-colors hover:text-red-400'
+                                className='h-4 w-4 text-zinc-500 transition-colors hover:text-red-600 dark:text-zinc-600 dark:hover:text-red-400'
                                 aria-hidden
                               >
                                 <path d='M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0' />
