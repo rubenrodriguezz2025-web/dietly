@@ -217,7 +217,7 @@ function Field({
 }) {
   return (
     <div className='flex flex-col gap-1.5'>
-      <label htmlFor={name} className='text-xs font-medium text-zinc-400'>
+      <label htmlFor={name} className='text-xs font-medium text-zinc-700 dark:text-zinc-400'>
         {label}
         {required && <span className='ml-1 text-zinc-600'>*</span>}
       </label>
@@ -231,7 +231,7 @@ function Field({
         max={max}
         step={step}
         defaultValue={defaultValue}
-        className='rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-700 focus:border-[#1a7a45] focus:ring-1 focus:ring-[#1a7a45]'
+        className='rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-700'
       />
     </div>
   );
@@ -242,7 +242,7 @@ function Field({
 function AdherenceSelector({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
   return (
     <div className='flex flex-col gap-1.5'>
-      <label className='text-xs font-medium text-zinc-400'>
+      <label className='text-xs font-medium text-zinc-700 dark:text-zinc-400'>
         Adherencia al plan
       </label>
       <div className='flex gap-1.5'>
@@ -454,10 +454,10 @@ export function ProgressTab({
               className='w-full overflow-y-auto border-zinc-800 bg-white dark:bg-zinc-950 sm:max-w-[420px]'
             >
               <SheetHeader className='mb-7'>
-                <SheetTitle className='text-base font-semibold text-zinc-100'>
+                <SheetTitle className='text-base font-semibold text-zinc-900 dark:text-zinc-100'>
                   Nueva revisión
                 </SheetTitle>
-                <p className='text-sm text-zinc-500'>
+                <p className='text-sm text-zinc-600 dark:text-zinc-500'>
                   Los campos de medición son opcionales — rellena los que tengas.
                 </p>
               </SheetHeader>
@@ -522,13 +522,13 @@ export function ProgressTab({
                   <input
                     type='checkbox'
                     name='new_plan_generated'
-                    className='h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-[#1a7a45] focus:ring-[#1a7a45] focus:ring-offset-zinc-950'
+                    className='h-4 w-4 rounded border-zinc-300 bg-white text-emerald-600 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-[#1a7a45] dark:focus:ring-[#1a7a45] dark:focus:ring-offset-zinc-950'
                   />
-                  <span className='text-sm text-zinc-400'>Se generó un nuevo plan en esta revisión</span>
+                  <span className='text-sm text-zinc-600 dark:text-zinc-400'>Se generó un nuevo plan en esta revisión</span>
                 </label>
 
                 <div className='flex flex-col gap-1.5'>
-                  <label htmlFor='notes' className='text-xs font-medium text-zinc-400'>
+                  <label htmlFor='notes' className='text-xs font-medium text-zinc-700 dark:text-zinc-400'>
                     Notas
                   </label>
                   <textarea
@@ -536,7 +536,7 @@ export function ProgressTab({
                     name='notes'
                     rows={3}
                     placeholder='Observaciones de esta revisión...'
-                    className='resize-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-700 focus:border-[#1a7a45] focus:ring-1 focus:ring-[#1a7a45]'
+                    className='resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-700'
                   />
                 </div>
 
