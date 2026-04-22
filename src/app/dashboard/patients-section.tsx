@@ -9,16 +9,16 @@ import { GOAL_LABELS } from '@/types/dietly';
 
 // ── Avatar color — determinista por nombre del paciente ───────────────────────
 
-// 8 tonos distintos en dark mode, compatibles con el verde de marca
+// 8 tonos pastel claros (color-100 / color-800) para avatares ligeros
 const AVATAR_PALETTE = [
-  { bg: '#162818', color: '#4ade80' },  // emerald (marca)
-  { bg: '#162038', color: '#60a5fa' },  // blue
-  { bg: '#21183a', color: '#a78bfa' },  // violet
-  { bg: '#271910', color: '#fb923c' },  // orange
-  { bg: '#221414', color: '#f87171' },  // rose
-  { bg: '#152030', color: '#38bdf8' },  // sky
-  { bg: '#1d2612', color: '#a3e635' },  // lime
-  { bg: '#22122a', color: '#e879f9' },  // fuchsia
+  { bg: '#d1fae5', color: '#065f46' },  // emerald (marca)
+  { bg: '#dbeafe', color: '#1e40af' },  // blue
+  { bg: '#ede9fe', color: '#5b21b6' },  // violet
+  { bg: '#ffedd5', color: '#9a3412' },  // orange
+  { bg: '#ffe4e6', color: '#9f1239' },  // rose
+  { bg: '#e0f2fe', color: '#075985' },  // sky
+  { bg: '#ecfccb', color: '#3f6212' },  // lime
+  { bg: '#fae8ff', color: '#86198f' },  // fuchsia
 ] as const;
 
 function getAvatarStyle(name: string): { bg: string; color: string } {

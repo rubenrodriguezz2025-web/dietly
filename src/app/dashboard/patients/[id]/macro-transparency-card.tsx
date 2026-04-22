@@ -16,11 +16,11 @@ const GOAL_LABELS: Record<string, string> = {
 };
 
 const GOAL_BADGE_CLASS: Record<string, string> = {
-  weight_loss: 'bg-sky-950 text-sky-300 border border-sky-800/30',
-  weight_gain: 'bg-orange-950 text-orange-300 border border-orange-800/30',
-  maintenance: 'bg-zinc-800 text-zinc-400 border border-zinc-700/40',
-  muscle_gain: 'bg-emerald-950 text-emerald-300 border border-emerald-800/30',
-  health:      'bg-teal-950 text-teal-300 border border-teal-800/40',
+  weight_loss: 'bg-sky-100 text-sky-800 border border-sky-200',
+  weight_gain: 'bg-orange-100 text-orange-800 border border-orange-200',
+  maintenance: 'bg-zinc-100 text-zinc-800 border border-zinc-200',
+  muscle_gain: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+  health:      'bg-teal-100 text-teal-800 border border-teal-200',
 };
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ export function MacroTransparencyCard({ patient, targets }: Props) {
             {GOAL_LABELS[goal] ?? goal}
           </span>
           {targets.estimated && (
-            <span className='rounded-full border border-amber-800/30 bg-amber-950 px-2 py-0.5 text-[10px] font-medium text-amber-400'>
+            <span className='rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800'>
               Estimado con Mifflin-St Jeor
             </span>
           )}

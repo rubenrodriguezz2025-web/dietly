@@ -170,7 +170,7 @@ function NutritionistAvatar({
             className='h-9 w-9 rounded-full object-cover ring-1 ring-zinc-800'
           />
         ) : (
-          <div className='flex h-9 w-9 items-center justify-center rounded-full bg-[#1a7a45]/20 ring-1 ring-[#1a7a45]/30 text-xs font-semibold text-emerald-400'>
+          <div className='flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 ring-1 ring-emerald-200 text-xs font-semibold text-emerald-800'>
             {initials || '?'}
           </div>
         )}

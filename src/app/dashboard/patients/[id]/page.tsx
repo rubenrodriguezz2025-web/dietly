@@ -170,14 +170,14 @@ export default async function PatientPage({
           {(() => {
             // Avatar color determinista por nombre (mismo algoritmo que patients-section.tsx)
             const PALETTE = [
-              { bg: '#162818', color: '#4ade80' },
-              { bg: '#162038', color: '#60a5fa' },
-              { bg: '#21183a', color: '#a78bfa' },
-              { bg: '#271910', color: '#fb923c' },
-              { bg: '#221414', color: '#f87171' },
-              { bg: '#152030', color: '#38bdf8' },
-              { bg: '#1d2612', color: '#a3e635' },
-              { bg: '#22122a', color: '#e879f9' },
+              { bg: '#d1fae5', color: '#065f46' },
+              { bg: '#dbeafe', color: '#1e40af' },
+              { bg: '#ede9fe', color: '#5b21b6' },
+              { bg: '#ffedd5', color: '#9a3412' },
+              { bg: '#ffe4e6', color: '#9f1239' },
+              { bg: '#e0f2fe', color: '#075985' },
+              { bg: '#ecfccb', color: '#3f6212' },
+              { bg: '#fae8ff', color: '#86198f' },
             ];
             let hash = 0;
             for (let i = 0; i < patient.name.length; i++) {
