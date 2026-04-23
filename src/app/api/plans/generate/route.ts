@@ -227,6 +227,14 @@ ${lines.join('\n')}
 Si usas una receta personal, indícalo en el nombre del plato añadiendo ★ al inicio.`;
 }
 
+function buildIntakeContextSection(goal: string | null, whyNow: string | null): string {
+  const lines: string[] = [];
+  if (goal && goal.trim()) lines.push(`- Objetivo de consulta: ${goal.trim()}`);
+  if (whyNow && whyNow.trim()) lines.push(`- Motivación: ${whyNow.trim()}`);
+  if (lines.length === 0) return '';
+  return `\n\nCONTEXTO DEL PACIENTE (cuestionario de intake):\n${lines.join('\n')}`;
+}
+
 function buildDayPrompt(
   patient: PseudonymizedPatient,
   dayNum: number,
@@ -237,6 +245,8 @@ function buildDayPrompt(
   rejectedMealNames?: string[],
   clinicalInsights?: ClinicalInsights | null,
   cookingComplexity?: CookingComplexity,
+  intakeGoal?: string | null,
+  intakeWhyNow?: string | null,
 ): string {
   const restrictions = [
     patient.dietary_restrictions?.length ? patient.dietary_restrictions.join(', ') : null,
@@ -254,6 +264,7 @@ function buildDayPrompt(
       : '';
 
   const intakeSection = intakeAnswers ? buildIntakeSection(intakeAnswers) : '';
+  const intakeContextSection = buildIntakeContextSection(intakeGoal ?? null, intakeWhyNow ?? null);
   const recipesSection = nutritionistRecipes ? buildRecipesSection(nutritionistRecipes) : '';
   const rejectedSection = rejectedMealNames?.length
     ? `\nPLATOS RECHAZADOS POR EL PACIENTE (evita estos platos o variantes muy similares):\n${rejectedMealNames.map((n) => `  - ${n}`).join('\n')}`
@@ -291,7 +302,7 @@ PERFIL DEL PACIENTE:
 - Calorías diarias objetivo: ${targets.calories} kcal
 - Proteína objetivo: ${targets.protein_g}g (${targets.protein_per_kg}g/kg peso corporal)
 - Carbohidratos: ${targets.carbs_g}g (${carbsPctDisplay}% de calorías restantes tras proteína)
-- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${sportSection}${intakeSection}${recipesSection}${rejectedSection}${clinicalSection}${variety}
+- Grasa: ${targets.fat_g}g (${fatPctDisplay}% de calorías restantes tras proteína)${restrictions ? `\n- Restricciones/alergias: ${restrictions}` : ''}${patient.preferences ? `\n- Preferencias: ${patient.preferences}` : ''}${patient.medical_notes ? `\n- Notas médicas: ${patient.medical_notes}` : ''}${sportSection}${intakeContextSection}${intakeSection}${recipesSection}${rejectedSection}${clinicalSection}${variety}
 
 Respeta los horarios habituales del paciente como time_suggestion: desayuno ${horarioDesayuno}, almuerzo ${horarioAlmuerzo}, merienda ${horarioMerienda}, cena ${horarioCena}.
 
@@ -548,13 +559,21 @@ export async function POST(req: NextRequest) {
         // ── Intake form ───────────────────────────────────────────────────────
         const { data: intakeFormData } = await supabaseAdminClient
           .from('intake_forms')
-          .select('answers')
+          .select('answers, consultation_goal, why_now')
           .eq('patient_id', patient_id)
           .order('created_at', { ascending: false })
           .limit(1)
-          .maybeSingle() as { data: { answers: IntakeAnswers } | null };
+          .maybeSingle() as {
+            data: {
+              answers: IntakeAnswers;
+              consultation_goal: string | null;
+              why_now: string | null;
+            } | null;
+          };
 
         const intakeAnswers: IntakeAnswers | undefined = intakeFormData?.answers ?? undefined;
+        const intakeGoal: string | null = intakeFormData?.consultation_goal ?? null;
+        const intakeWhyNow: string | null = intakeFormData?.why_now ?? null;
         send({ type: 'progress', step: 'intake_ok' });
 
         // ── Platos rechazados por el paciente (de intercambios previos) ───────
@@ -755,7 +774,7 @@ export async function POST(req: NextRequest) {
           let dayData: PlanDay | null = null;
 
           // Primera llamada (con resiliencia completa: retry, 429, 529, circuit breaker)
-          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, relevantRecipes, rejectedMealNames, clinicalInsights, cooking_complexity);
+          const dayPrompt = buildDayPrompt(pseudoPatient, dayNum, targets, days, intakeAnswers, relevantRecipes, rejectedMealNames, clinicalInsights, cooking_complexity, intakeGoal, intakeWhyNow);
           try {
             const response = await callAnthropicWithResilience(
               () => anthropic.messages.create({

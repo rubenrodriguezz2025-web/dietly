@@ -16,6 +16,9 @@ const intakeSubmitSchema = z.object({
     message: 'El cuestionario debe contener al menos una respuesta.',
   }),
   consent: z.boolean().optional(),
+  consultation_goal: z.string().max(5000, 'El objetivo de consulta supera el máximo permitido.').optional(),
+  why_now: z.string().max(5000, 'El campo supera el máximo permitido.').optional(),
+  attached_files: z.array(z.string().min(1).max(500)).max(5, 'Máximo 5 archivos adjuntos.').optional(),
 });
 
 export async function POST(req: Request) {
@@ -63,7 +66,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Cuerpo de petición inválido.' }, { status: 400 });
   }
 
-  const { patient_id, intake_token, answers, consent } = parsed;
+  const { patient_id, intake_token, answers, consent, consultation_goal, why_now, attached_files } = parsed;
 
   // Validar que el intake_token corresponde al paciente
   const { data: paciente } = await supabaseAdminClient
@@ -99,10 +102,20 @@ export async function POST(req: Request) {
     }
   }
 
+  const sanitize = (v: string | undefined) =>
+    typeof v === 'string' ? v.replace(/[<>]/g, '').trim() || null : null;
+
+  const cleanAttached = (attached_files ?? [])
+    .map((p) => p.replace(/[<>]/g, '').trim())
+    .filter((p) => p.length > 0);
+
   const { error } = await supabaseAdminClient.from('intake_forms').insert({
     patient_id,
     answers: sanitizedAnswers as Record<string, Json>,
     completed_at: new Date().toISOString(),
+    consultation_goal: sanitize(consultation_goal),
+    why_now: sanitize(why_now),
+    attached_files: cleanAttached.length > 0 ? cleanAttached : null,
   });
 
   if (error) {

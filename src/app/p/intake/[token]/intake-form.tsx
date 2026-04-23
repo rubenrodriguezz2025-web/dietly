@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 const labelClass = 'block text-sm font-medium text-zinc-700 mb-1.5';
 const inputClass =
@@ -8,11 +8,75 @@ const inputClass =
 const textareaClass = `${inputClass} resize-none`;
 const selectClass = `${inputClass} cursor-pointer`;
 
+const MAX_FILES = 5;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ACCEPTED_FILE_TYPES = '.pdf,.jpg,.jpeg,.png,.doc,.docx';
+
+type AttachedFile = { path: string; name: string };
+
 export function IntakeForm({ patientId, intakeToken }: { patientId: string; intakeToken: string }) {
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consentido, setConsentido] = useState(false);
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const [archivosAdjuntos, setArchivosAdjuntos] = useState<AttachedFile[]>([]);
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    setErrorArchivo(null);
+
+    if (archivosAdjuntos.length + files.length > MAX_FILES) {
+      setErrorArchivo(`Máximo ${MAX_FILES} archivos en total.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setSubiendoArchivo(true);
+    const nuevos: AttachedFile[] = [];
+
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        setErrorArchivo(`"${file.name}" supera los 10 MB.`);
+        continue;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('patient_id', patientId);
+      formData.append('intake_token', intakeToken);
+
+      try {
+        const res = await fetch('/api/intake/upload-file', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          setErrorArchivo(body.error ?? `Error al subir "${file.name}".`);
+          continue;
+        }
+        const data = await res.json();
+        nuevos.push({ path: data.path, name: data.name ?? file.name });
+      } catch {
+        setErrorArchivo(`Error de conexión al subir "${file.name}".`);
+      }
+    }
+
+    if (nuevos.length > 0) {
+      setArchivosAdjuntos((prev) => [...prev, ...nuevos]);
+    }
+    setSubiendoArchivo(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function removeArchivo(path: string) {
+    setArchivosAdjuntos((prev) => prev.filter((f) => f.path !== path));
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,11 +104,22 @@ export function IntakeForm({ patientId, intakeToken }: { patientId: string; inta
       observaciones:          data.get('observaciones'),
     };
 
+    const consultation_goal = String(data.get('consultation_goal') ?? '').trim();
+    const why_now = String(data.get('why_now') ?? '').trim();
+
     try {
       const res = await fetch('/api/intake/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patient_id: patientId, intake_token: intakeToken, answers, consent: true }),
+        body: JSON.stringify({
+          patient_id: patientId,
+          intake_token: intakeToken,
+          answers,
+          consent: true,
+          consultation_goal: consultation_goal || undefined,
+          why_now: why_now || undefined,
+          attached_files: archivosAdjuntos.length > 0 ? archivosAdjuntos.map((f) => f.path) : undefined,
+        }),
       });
 
       if (!res.ok) {
@@ -78,6 +153,89 @@ export function IntakeForm({ patientId, intakeToken }: { patientId: string; inta
 
   return (
     <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
+      {/* Objetivo y contexto — feedback Esther Carazo */}
+      <section className='rounded-2xl border-2 border-emerald-200 bg-white p-5'>
+        <h2 className='mb-1 text-sm font-bold uppercase tracking-wider text-emerald-700'>
+          Cuéntanos sobre ti
+        </h2>
+        <p className='mb-4 text-xs text-zinc-500'>
+          Cuanto más sepa tu nutricionista, mejor preparada estará la primera consulta.
+        </p>
+        <div className='flex flex-col gap-4'>
+          <div>
+            <label className={labelClass}>
+              ¿Cuál es tu objetivo principal con esta consulta?
+            </label>
+            <textarea
+              name='consultation_goal'
+              rows={4}
+              maxLength={5000}
+              placeholder='Cuéntale a tu nutricionista qué esperas conseguir. Cuantos más detalles, mejor podrá preparar tu primera consulta.'
+              className={textareaClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>
+              ¿Por qué ahora? ¿Qué te ha motivado a buscar ayuda nutricional en este momento?
+            </label>
+            <textarea
+              name='why_now'
+              rows={3}
+              maxLength={5000}
+              placeholder='Puede ser un cambio de vida, un diagnóstico, una meta personal...'
+              className={textareaClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>
+              ¿Tienes analíticas o informes médicos recientes?
+            </label>
+            <p className='mb-2 text-xs text-zinc-500'>
+              Sube analíticas de sangre, informes médicos o cualquier documento relevante.
+              Tu nutricionista los revisará antes de la consulta.
+            </p>
+            <input
+              ref={fileInputRef}
+              type='file'
+              accept={ACCEPTED_FILE_TYPES}
+              multiple
+              onChange={handleFilesChange}
+              disabled={subiendoArchivo || archivosAdjuntos.length >= MAX_FILES}
+              className='block w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100 disabled:opacity-50'
+            />
+            <p className='mt-2 text-[11px] text-zinc-400'>
+              PDF, imagen o Word · máx. 10 MB por archivo · máx. {MAX_FILES} archivos
+            </p>
+            {subiendoArchivo && (
+              <p className='mt-2 text-xs text-emerald-700'>Subiendo archivo...</p>
+            )}
+            {errorArchivo && (
+              <p className='mt-2 text-xs text-red-600'>{errorArchivo}</p>
+            )}
+            {archivosAdjuntos.length > 0 && (
+              <ul className='mt-3 flex flex-col gap-1.5'>
+                {archivosAdjuntos.map((f) => (
+                  <li
+                    key={f.path}
+                    className='flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700'
+                  >
+                    <span className='truncate'>{f.name}</span>
+                    <button
+                      type='button'
+                      onClick={() => removeArchivo(f.path)}
+                      className='ml-2 text-zinc-400 hover:text-red-600'
+                      aria-label={`Eliminar ${f.name}`}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Horarios */}
       <section className='rounded-2xl border border-zinc-200 bg-white p-5'>
         <h2 className='mb-4 text-sm font-bold uppercase tracking-wider text-zinc-500'>
