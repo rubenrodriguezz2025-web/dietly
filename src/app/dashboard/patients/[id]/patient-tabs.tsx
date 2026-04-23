@@ -61,7 +61,14 @@ type Props = {
   patient: Patient;
   plans: NutritionPlan[] | null;
   progress: PatientProgress[];
-  intakeForm: { answers: Record<string, string>; completed_at: string; filled_by?: string } | null;
+  intakeForm: {
+    answers: Record<string, string>;
+    completed_at: string;
+    filled_by?: string;
+    consultation_goal?: string | null;
+    why_now?: string | null;
+    attached_files?: string[] | null;
+  } | null;
   intakeUrl: string | null;
   followupForms?: FollowupFormData[];
   nextReminder?: NextReminderData;

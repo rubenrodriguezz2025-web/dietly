@@ -129,7 +129,7 @@ export default async function PatientPage({
   const [intakeFormResult, consentResult] = await Promise.all([
     (supabaseAdminClient as any)
       .from('intake_forms')
-      .select('answers, completed_at, filled_by')
+      .select('answers, completed_at, filled_by, consultation_goal, why_now, attached_files')
       .eq('patient_id', id)
       .order('created_at', { ascending: false })
       .limit(1)

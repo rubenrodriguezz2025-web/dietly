@@ -11,6 +11,7 @@ import type { Patient } from '@/types/dietly';
 
 import { CopyButton } from './copy-button';
 import { DashboardIntakeForm } from './dashboard-intake-form';
+import { IntakeAttachedFiles } from './intake-attached-files';
 import { DataField, Section } from './patient-shared';
 import { SendIntakeEmailButton } from './send-intake-email-button';
 
@@ -34,7 +35,14 @@ const INTAKE_LABELS: Record<string, string> = {
 
 export type PatientCuestionarioTabProps = {
   patient: Patient;
-  intakeForm: { answers: Record<string, string>; completed_at: string; filled_by?: string } | null;
+  intakeForm: {
+    answers: Record<string, string>;
+    completed_at: string;
+    filled_by?: string;
+    consultation_goal?: string | null;
+    why_now?: string | null;
+    attached_files?: string[] | null;
+  } | null;
   intakeUrl: string | null;
   intakeSheetOpen: boolean;
   onIntakeSheetOpenChange: (open: boolean) => void;
@@ -81,6 +89,39 @@ export function PatientCuestionarioTab({
                 Editar respuestas
               </button>
             </div>
+
+            {(intakeForm.consultation_goal || intakeForm.why_now || (intakeForm.attached_files && intakeForm.attached_files.length > 0)) && (
+              <div className='flex flex-col gap-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20'>
+                {intakeForm.consultation_goal && (
+                  <div>
+                    <p className='mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400'>
+                      Objetivo de consulta
+                    </p>
+                    <p className='whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-200'>
+                      {intakeForm.consultation_goal}
+                    </p>
+                  </div>
+                )}
+                {intakeForm.why_now && (
+                  <div>
+                    <p className='mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400'>
+                      Motivación
+                    </p>
+                    <p className='whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-200'>
+                      {intakeForm.why_now}
+                    </p>
+                  </div>
+                )}
+                {intakeForm.attached_files && intakeForm.attached_files.length > 0 && (
+                  <div>
+                    <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400'>
+                      Archivos adjuntos
+                    </p>
+                    <IntakeAttachedFiles paths={intakeForm.attached_files} />
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className='grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3'>
               {Object.entries(intakeForm.answers).map(([key, value]) =>
