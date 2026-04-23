@@ -898,6 +898,7 @@ export type Database = {
           created_at: string | null
           fat_g_per_serving: number | null
           id: string
+          image_url: string | null
           ingredients: Json | null
           instructions: string | null
           name: string
@@ -915,6 +916,7 @@ export type Database = {
           created_at?: string | null
           fat_g_per_serving?: number | null
           id?: string
+          image_url?: string | null
           ingredients?: Json | null
           instructions?: string | null
           name: string
@@ -932,6 +934,7 @@ export type Database = {
           created_at?: string | null
           fat_g_per_serving?: number | null
           id?: string
+          image_url?: string | null
           ingredients?: Json | null
           instructions?: string | null
           name?: string

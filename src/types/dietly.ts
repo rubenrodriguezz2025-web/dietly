@@ -191,6 +191,7 @@ export type Recipe = {
   carbs_g_per_serving: number | null;
   fat_g_per_serving: number | null;
   values_source: RecipeValuesSource;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 };
