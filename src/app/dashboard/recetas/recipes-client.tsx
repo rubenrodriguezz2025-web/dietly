@@ -3,10 +3,10 @@
 import { useState, useTransition } from 'react';
 
 import { useToast } from '@/components/ui/use-toast';
-import type { Recipe, RecipeCategory } from '@/types/dietly';
+import type { RecipeCategory } from '@/types/dietly';
 import { RECIPE_CATEGORY_LABELS } from '@/types/dietly';
 
-import { deleteRecipe } from './actions';
+import { deleteRecipe, type RecipeWithImage } from './actions';
 import { RecipeForm } from './recipe-form';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ function RecipeCard({
   onEdit,
   onDelete,
 }: {
-  recipe: Recipe;
+  recipe: RecipeWithImage;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -97,22 +97,40 @@ function RecipeCard({
     <div className='group relative rounded-xl border border-zinc-200 bg-white p-4 transition-all duration-200 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700'>
       {/* Header */}
       <div className='flex items-start justify-between gap-3'>
-        <div className='min-w-0 flex-1'>
-          <div className='flex flex-wrap items-center gap-2'>
-            {recipe.category && (
-              <span className='rounded-full border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500'>
-                {RECIPE_CATEGORY_LABELS[recipe.category as RecipeCategory] ?? recipe.category}
+        <div className='flex min-w-0 flex-1 items-start gap-3'>
+          {recipe.image_signed_url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={recipe.image_signed_url}
+              alt={recipe.name}
+              className='h-16 w-16 flex-shrink-0 rounded-lg object-cover'
+            />
+          ) : (
+            <div className='flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600'>
+              <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+                <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                <circle cx='8.5' cy='8.5' r='1.5' />
+                <polyline points='21 15 16 10 5 21' />
+              </svg>
+            </div>
+          )}
+          <div className='min-w-0 flex-1'>
+            <div className='flex flex-wrap items-center gap-2'>
+              {recipe.category && (
+                <span className='rounded-full border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500'>
+                  {RECIPE_CATEGORY_LABELS[recipe.category as RecipeCategory] ?? recipe.category}
+                </span>
+              )}
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                recipe.values_source === 'nutritionist_verified'
+                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-400'
+                  : 'border border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600'
+              }`}>
+                {recipe.values_source === 'nutritionist_verified' ? '✓ Verificado' : '~ Estimación IA'}
               </span>
-            )}
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-              recipe.values_source === 'nutritionist_verified'
-                ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-400'
-                : 'border border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600'
-            }`}>
-              {recipe.values_source === 'nutritionist_verified' ? '✓ Verificado' : '~ Estimación IA'}
-            </span>
+            </div>
+            <h3 className='mt-1.5 font-semibold leading-tight text-zinc-900 dark:text-zinc-100'>{recipe.name}</h3>
           </div>
-          <h3 className='mt-1.5 font-semibold leading-tight text-zinc-900 dark:text-zinc-100'>{recipe.name}</h3>
         </div>
 
         {/* Actions */}
@@ -216,12 +234,12 @@ const CATEGORY_FILTER_LABELS: Record<RecipeCategory | 'all', string> = {
   ...RECIPE_CATEGORY_LABELS,
 };
 
-export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) {
-  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);
+export function RecipesClient({ initialRecipes }: { initialRecipes: RecipeWithImage[] }) {
+  const [recipes, setRecipes] = useState<RecipeWithImage[]>(initialRecipes);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<RecipeCategory | 'all'>('all');
   const [showForm, setShowForm] = useState(false);
-  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [editingRecipe, setEditingRecipe] = useState<RecipeWithImage | null>(null);
 
   const filtered = recipes.filter((r) => {
     const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase());
@@ -229,12 +247,12 @@ export function RecipesClient({ initialRecipes }: { initialRecipes: Recipe[] }) 
     return matchesSearch && matchesCategory;
   });
 
-  function handleNewSuccess(recipe: Recipe) {
+  function handleNewSuccess(recipe: RecipeWithImage) {
     setRecipes((prev) => [recipe, ...prev]);
     setShowForm(false);
   }
 
-  function handleEditSuccess(updated: Recipe) {
+  function handleEditSuccess(updated: RecipeWithImage) {
     setRecipes((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
     setEditingRecipe(null);
   }

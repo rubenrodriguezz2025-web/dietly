@@ -5,14 +5,45 @@ import { redirect } from 'next/navigation';
 
 import { logAIRequest } from '@/libs/ai/logger';
 import { SYSTEM_PROMPT_DIETISTA } from '@/libs/ai/plan-prompts';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Recipe, RecipeCategory, RecipeIngredient, RecipeValuesSource } from '@/types/dietly';
 import { getEnvVar } from '@/utils/get-env-var';
 import Anthropic from '@anthropic-ai/sdk';
 
+// ── Imagen de receta: constantes ──────────────────────────────────────────────
+
+const RECIPE_IMAGE_BUCKET = 'recipe-images';
+const MAX_RECIPE_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_RECIPE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const RECIPE_IMAGE_URL_TTL = 60 * 60; // 1 hora
+
+export type RecipeWithImage = Recipe & { image_signed_url: string | null };
+
+async function enrichWithSignedUrls(recipes: Recipe[]): Promise<RecipeWithImage[]> {
+  const withImage = recipes.filter((r) => r.image_url);
+  if (withImage.length === 0) {
+    return recipes.map((r) => ({ ...r, image_signed_url: null }));
+  }
+
+  const { data: signed } = await supabaseAdminClient.storage
+    .from(RECIPE_IMAGE_BUCKET)
+    .createSignedUrls(withImage.map((r) => r.image_url!), RECIPE_IMAGE_URL_TTL);
+
+  const urlByPath = new Map<string, string>();
+  for (const s of signed ?? []) {
+    if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
+  }
+
+  return recipes.map((r) => ({
+    ...r,
+    image_signed_url: r.image_url ? urlByPath.get(r.image_url) ?? null : null,
+  }));
+}
+
 // ── Obtener recetas del nutricionista ─────────────────────────────────────────
 
-export async function getRecipes(): Promise<{ recipes?: Recipe[]; error?: string }> {
+export async function getRecipes(): Promise<{ recipes?: RecipeWithImage[]; error?: string }> {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -24,7 +55,103 @@ export async function getRecipes(): Promise<{ recipes?: Recipe[]; error?: string
     .order('created_at', { ascending: false });
 
   if (error) return { error: 'Error cargando las recetas.' };
-  return { recipes: data as Recipe[] };
+
+  const enriched = await enrichWithSignedUrls((data as Recipe[]) ?? []);
+  return { recipes: enriched };
+}
+
+// ── Subir imagen de receta ────────────────────────────────────────────────────
+
+export async function uploadRecipeImage(
+  recipeId: string,
+  formData: FormData,
+): Promise<{ image_signed_url?: string; error?: string }> {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const file = formData.get('image');
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: 'Selecciona una imagen.' };
+  }
+  if (!ALLOWED_RECIPE_IMAGE_TYPES.includes(file.type)) {
+    return { error: 'Formato no permitido. Usa JPG, PNG o WebP.' };
+  }
+  if (file.size > MAX_RECIPE_IMAGE_SIZE) {
+    return { error: 'La imagen supera el límite de 5 MB.' };
+  }
+
+  // Verificar que la receta pertenece al nutricionista
+  const { data: recipe } = await supabase
+    .from('recipes')
+    .select('id, image_url')
+    .eq('id', recipeId)
+    .eq('nutritionist_id', user.id)
+    .maybeSingle();
+
+  if (!recipe) return { error: 'Receta no encontrada.' };
+
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
+  const path = `${user.id}/${recipeId}.${ext}`;
+
+  // Si existía una imagen previa con distinta extensión, la borramos
+  const prevPath = (recipe as { image_url: string | null }).image_url;
+  if (prevPath && prevPath !== path) {
+    await supabaseAdminClient.storage.from(RECIPE_IMAGE_BUCKET).remove([prevPath]);
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const { error: uploadErr } = await supabaseAdminClient.storage
+    .from(RECIPE_IMAGE_BUCKET)
+    .upload(path, arrayBuffer, { contentType: file.type, upsert: true });
+
+  if (uploadErr) return { error: 'Error al subir la imagen.' };
+
+  const { error: dbErr } = await supabase
+    .from('recipes')
+    .update({ image_url: path, updated_at: new Date().toISOString() })
+    .eq('id', recipeId)
+    .eq('nutritionist_id', user.id);
+
+  if (dbErr) return { error: 'Error al guardar la imagen en la receta.' };
+
+  const { data: signed } = await supabaseAdminClient.storage
+    .from(RECIPE_IMAGE_BUCKET)
+    .createSignedUrl(path, RECIPE_IMAGE_URL_TTL);
+
+  revalidatePath('/dashboard/recetas');
+  return { image_signed_url: signed?.signedUrl ?? '' };
+}
+
+// ── Eliminar imagen de receta ─────────────────────────────────────────────────
+
+export async function deleteRecipeImage(recipeId: string): Promise<{ error?: string }> {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const { data: recipe } = await supabase
+    .from('recipes')
+    .select('id, image_url')
+    .eq('id', recipeId)
+    .eq('nutritionist_id', user.id)
+    .maybeSingle() as { data: { id: string; image_url: string | null } | null };
+
+  if (!recipe) return { error: 'Receta no encontrada.' };
+  if (!recipe.image_url) return {};
+
+  await supabaseAdminClient.storage.from(RECIPE_IMAGE_BUCKET).remove([recipe.image_url]);
+
+  const { error } = await supabase
+    .from('recipes')
+    .update({ image_url: null, updated_at: new Date().toISOString() })
+    .eq('id', recipeId)
+    .eq('nutritionist_id', user.id);
+
+  if (error) return { error: 'Error al eliminar la imagen.' };
+
+  revalidatePath('/dashboard/recetas');
+  return {};
 }
 
 // ── Crear receta ──────────────────────────────────────────────────────────────
