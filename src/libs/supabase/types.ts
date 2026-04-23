@@ -333,33 +333,42 @@ export type Database = {
       intake_forms: {
         Row: {
           answers: Json
+          attached_files: string[] | null
           completed_at: string
+          consultation_goal: string | null
           created_at: string
           filled_at: string | null
           filled_by: string | null
           id: string
           nutritionist_id: string | null
           patient_id: string
+          why_now: string | null
         }
         Insert: {
           answers?: Json
+          attached_files?: string[] | null
           completed_at?: string
+          consultation_goal?: string | null
           created_at?: string
           filled_at?: string | null
           filled_by?: string | null
           id?: string
           nutritionist_id?: string | null
           patient_id: string
+          why_now?: string | null
         }
         Update: {
           answers?: Json
+          attached_files?: string[] | null
           completed_at?: string
+          consultation_goal?: string | null
           created_at?: string
           filled_at?: string | null
           filled_by?: string | null
           id?: string
           nutritionist_id?: string | null
           patient_id?: string
+          why_now?: string | null
         }
         Relationships: [
           {
